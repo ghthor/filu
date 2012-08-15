@@ -494,6 +494,58 @@ func DescribeCollision(c gospec.Context) {
 							})
 						})
 					})
+
+					c.Specify("when B starts before A and A is faster then B", func() {
+						A.Action = NewAction(1, 99)
+						B.Action = NewAction(0, 100)
+
+						// TODO Make Custom Matchers for these
+						c.Assume(B.start, Satisfies, B.start < A.start)
+						c.Assume(A.end, Satisfies, A.end < B.end)
+						c.Assume(A.duration, Satisfies, A.duration < B.duration)
+
+						collision := A.Collides(B)
+
+						c.Assume(collision.Type, Equals, CT_A_INTO_B)
+
+						c.Specify("the overlap will be 0.0 until A catches B", func() {
+
+							overlap := collision.Overlap()
+							prevOverlap := overlap
+
+							for collision.T += 1; collision.T <= A.end; collision.T += 1 {
+								overlap = collision.Overlap()
+								if overlap > prevOverlap {
+									prevOverlap = overlap
+									break
+								}
+								prevOverlap = overlap
+							}
+
+							c.Assume(collision.T, Not(Equals), A.end)
+
+							c.Specify("overlap will grow until A has ended", func() {
+								for collision.T += 1; collision.T <= A.end; collision.T += 1 {
+									overlap = collision.Overlap()
+									c.Expect(overlap, Satisfies, overlap > prevOverlap)
+									prevOverlap = overlap
+								}
+
+								c.Assume(collision.T, Equals, A.end+1)
+								c.Assume(collision.T, Satisfies, collision.T <= B.end)
+
+								c.Specify("then it will diminish until B has ended", func() {
+									for ; collision.T <= B.end; collision.T += 1 {
+										overlap = collision.Overlap()
+										c.Expect(overlap, Satisfies, overlap < prevOverlap)
+										prevOverlap = overlap
+									}
+
+									c.Expect(overlap, Equals, 0.0)
+								})
+							})
+						})
+					})
 				})
 			})
 		})
