@@ -176,6 +176,16 @@ func (c Collision) Overlap() (overlap float64) {
 		}
 
 		overlap = p[0].Percentage * p[1].Percentage
+	case CT_A_INTO_B:
+		p := [...]PartialWorldCoord{
+			c.A.DestPartial(c.T),
+			c.B.OrigPartial(c.T),
+		}
+
+		sum := p[0].Percentage + p[1].Percentage
+		if sum > 1.0 {
+			overlap = sum - 1.0
+		}
 
 	case CT_A_INTO_B_FROM_SIDE:
 		p := [...]PartialWorldCoord{
@@ -264,7 +274,7 @@ func (c *Collision) findStart() {
 			c.T = c.A.start
 		}
 
-	case CT_A_INTO_B_FROM_SIDE:
+	case CT_A_INTO_B, CT_A_INTO_B_FROM_SIDE:
 		c.T = c.A.start
 
 	default:

@@ -384,7 +384,117 @@ func DescribeCollision(c gospec.Context) {
 				A.Dest = B.Orig
 
 				collision := B.Collides(A)
+				c.Assume(collision.A, Equals, A)
+				c.Assume(collision.B, Equals, B)
 				c.Assume(collision.Type, Equals, CT_A_INTO_B)
+				c.Assume(collision.T, Equals, A.start)
+
+				collision = A.Collides(B)
+				c.Assume(collision.A, Equals, A)
+				c.Assume(collision.B, Equals, B)
+				c.Assume(collision.Type, Equals, CT_A_INTO_B)
+				c.Assume(collision.T, Equals, A.start)
+
+				c.Specify("overlap", func() {
+					c.Specify("will be 1.0 if B starts as A ends", func() {
+						B.Action = NewAction(A.end, A.end+10)
+
+						c.Assume(A.HappensDuring(B.Action), IsTrue)
+
+						collision = B.Collides(A)
+						collision.T = B.start
+
+						c.Expect(collision.Overlap(), Equals, 1.0)
+					})
+
+					c.Specify("will grow to a peak", func() {
+						peak := 0.0
+						c.Specify("when A starts before B", func() {
+							c.Assume(A.start, Satisfies, A.start < B.start)
+
+							overlap := collision.Overlap()
+							prevOverlap := overlap
+
+							end := A.end
+							if B.end > A.end {
+								end = B.end
+							}
+
+							for collision.T += 1; collision.T <= end; collision.T += 1 {
+								overlap = collision.Overlap()
+								if overlap <= prevOverlap {
+									peak = prevOverlap
+									prevOverlap = overlap
+									break
+								}
+								prevOverlap = overlap
+							}
+
+							c.Specify("and remain at that peak until B ends if A and B have the same speed", func() {
+								c.Assume(B.duration, Equals, A.duration)
+								c.Assume(collision.T, Satisfies, collision.T < A.end)
+
+								for ; collision.T <= A.end; collision.T += 1 {
+									overlap = collision.Overlap()
+									c.Expect(overlap, IsWithin(0.00000000001), peak)
+									prevOverlap = overlap
+								}
+
+								c.Specify("and then diminish till B ends", func() {
+									c.Assume(collision.T, Satisfies, collision.T < B.end)
+
+									for ; collision.T <= B.end; collision.T += 1 {
+										overlap = collision.Overlap()
+										c.Expect(overlap, Satisfies, overlap < peak)
+										c.Expect(overlap, Satisfies, overlap < prevOverlap)
+										prevOverlap = overlap
+									}
+
+									c.Expect(overlap, Equals, 0.0)
+								})
+							})
+
+							c.Specify("then peak will diminish when B is faster then A", func() {
+								B.Action = NewAction(B.start, WorldTime(int64(B.start)+A.duration-1))
+
+								c.Assume(B.HappensDuring(A.Action), IsTrue)
+								c.Assume(B.duration, Satisfies, B.duration < A.duration)
+
+								collision = A.Collides(B)
+								overlap = collision.Overlap()
+								prevOverlap = overlap
+								peak = 0.0
+
+								end := A.end
+								if B.end > A.end {
+									end = B.end
+								}
+
+								for collision.T += 1; collision.T <= end; collision.T += 1 {
+									overlap = collision.Overlap()
+
+									if overlap <= prevOverlap {
+										peak = prevOverlap
+										prevOverlap = overlap
+										break
+									}
+									prevOverlap = overlap
+								}
+
+								for collision.T += 1; collision.T <= end; collision.T += 1 {
+									overlap = collision.Overlap()
+
+									c.Expect(overlap, Satisfies, overlap < peak)
+									c.Expect(overlap, Satisfies, overlap < prevOverlap)
+
+									prevOverlap = overlap
+								}
+
+								c.Expect(overlap, Equals, 0.0)
+							})
+						})
+					})
+				})
 			})
 		})
 
