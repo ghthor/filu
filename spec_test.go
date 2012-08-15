@@ -1,7 +1,7 @@
-package world_test
+package engine_test
 
 import (
-	".././world"
+	".././engine"
 	"github.com/orfjackal/gospec/src/gospec"
 	"testing"
 )
@@ -9,11 +9,11 @@ import (
 func TestAllSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
-	r.AddSpec(world.DescribeClock)
-	r.AddSpec(world.DescribeAction)
-	r.AddSpec(world.DescribeDirection)
-	r.AddSpec(world.DescribePathAction)
-	r.AddSpec(world.DescribeCollision)
+	r.AddSpec(engine.DescribeClock)
+	r.AddSpec(engine.DescribeAction)
+	r.AddSpec(engine.DescribeDirection)
+	r.AddSpec(engine.DescribePathAction)
+	r.AddSpec(engine.DescribeCollision)
 
 	gospec.MainGoTest(r, t)
 }

@@ -1,4 +1,4 @@
-package world
+package engine
 
 import (
 	"github.com/orfjackal/gospec/src/gospec"
