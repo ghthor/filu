@@ -395,6 +395,30 @@ func DescribeCollision(c gospec.Context) {
 				c.Assume(collision.Type, Equals, CT_A_INTO_B)
 				c.Assume(collision.T, Equals, A.start)
 
+				c.Specify("will not occur if A starts at the same time as B and A finishes at the same time as B", func() {
+					A.Action = NewAction(0, 100)
+					B.Action = NewAction(0, 100)
+
+					c.Assume(A.start, Satisfies, A.start == B.start)
+					c.Assume(A.end, Satisfies, A.end == B.end)
+
+					collision := A.Collides(B)
+
+					c.Expect(collision.Type, Equals, CT_NONE)
+
+				})
+
+				c.Specify("will not occur if A starts after B and A finishes after B", func() {
+					A.Action = NewAction(1, 101)
+					B.Action = NewAction(0, 100)
+
+					c.Assume(A.start, Satisfies, A.start > B.start)
+					c.Assume(A.end, Satisfies, A.end > B.end)
+
+					collision := A.Collides(B)
+					c.Expect(collision.Type, Equals, CT_NONE)
+				})
+
 				c.Specify("overlap", func() {
 					c.Specify("will be 1.0 if B starts as A ends", func() {
 						B.Action = NewAction(A.end, A.end+10)

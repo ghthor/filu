@@ -247,7 +247,9 @@ func (A PathAction) Collides(B PathAction) (c Collision) {
 	case A.Dest == B.Orig:
 		// A is moving into the WorldCoord B is leaving
 		if c.A.Direction() == c.B.Direction() {
-			// TODO In this case there is a chance A never overlaps with B signaling no collision
+			if c.A.start >= c.B.start && c.A.end >= c.B.end {
+				return
+			}
 			c.Type = CT_A_INTO_B
 		} else {
 			c.Type = CT_A_INTO_B_FROM_SIDE
