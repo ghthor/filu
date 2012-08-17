@@ -5,34 +5,6 @@ import (
 	"fmt"
 )
 
-type Action struct {
-	start, end WorldTime
-	duration   int64
-}
-
-func NewAction(start, end WorldTime) Action {
-	return Action{
-		start,
-		end,
-		int64(end) - int64(start),
-	}
-}
-
-func (a Action) TimeLeft(from WorldTime) int64 {
-	return int64(a.end) - int64(from)
-}
-
-func (a Action) ExistsAt(t WorldTime) bool {
-	return a.start <= t && t <= a.end
-}
-
-func (a Action) HappensDuring(other Action) bool {
-	return a.ExistsAt(other.start) ||
-		a.ExistsAt(other.end) ||
-		other.ExistsAt(a.start) ||
-		other.ExistsAt(a.end)
-}
-
 type (
 	WorldCoord struct {
 		X, Y int
@@ -51,7 +23,7 @@ type (
 	}
 
 	PathAction struct {
-		Action
+		TimeSpan
 		Orig, Dest WorldCoord
 	}
 )
@@ -71,7 +43,7 @@ func (pa PathAction) OrigPartial(now WorldTime) (pwc PartialWorldCoord) {
 	} else if now >= pa.end {
 		pwc.Percentage = 0.0
 	} else {
-		pwc.Percentage = float64(pa.TimeLeft(now)) / float64(pa.duration)
+		pwc.Percentage = float64(pa.Remaining(now)) / float64(pa.duration)
 	}
 	return
 }
@@ -83,7 +55,7 @@ func (pa PathAction) DestPartial(now WorldTime) (pwc PartialWorldCoord) {
 	} else if now >= pa.end {
 		pwc.Percentage = 1.0
 	} else {
-		pwc.Percentage = 1.0 - (float64(pa.TimeLeft(now)) / float64(pa.duration))
+		pwc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.duration))
 	}
 	return
 }
@@ -214,7 +186,7 @@ const (
 func (A PathAction) Collides(B PathAction) (c Collision) {
 
 	// Check if time's overlap
-	if !A.HappensDuring(B.Action) {
+	if !A.Overlaps(B.TimeSpan) {
 		return
 	}
 

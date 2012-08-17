@@ -10,7 +10,7 @@ func TestAllSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
 	r.AddSpec(engine.DescribeClock)
-	r.AddSpec(engine.DescribeAction)
+	r.AddSpec(engine.DescribeTimeSpan)
 	r.AddSpec(engine.DescribeDirection)
 	r.AddSpec(engine.DescribePathAction)
 	r.AddSpec(engine.DescribeCollision)

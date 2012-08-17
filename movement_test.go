@@ -5,20 +5,6 @@ import (
 	. "github.com/ghthor/gospec/src/gospec"
 )
 
-func DescribeAction(c gospec.Context) {
-	clk, duration := Clock(50), int64(100)
-	a := NewAction(clk.Now(), clk.Future(duration))
-
-	c.Specify("TimeLeft reports the full duration when WorldTime is the start of the Action", func() {
-		c.Expect(a.TimeLeft(clk.Now()), Equals, duration)
-	})
-
-	c.Specify("Timeleft reports 0 when the WorldTime is the end of the Action", func() {
-		clk = Clock(clk.Future(duration))
-		c.Expect(a.TimeLeft(clk.Now()), Equals, int64(0))
-	})
-}
-
 func DescribeDirection(c gospec.Context) {
 	c.Specify("North is parallel to South", func() {
 		c.Expect(North.IsParallelTo(North), IsTrue)
@@ -51,7 +37,7 @@ func DescribePathAction(c gospec.Context) {
 	c.Specify("should calculate PartialWorldCoord percentages", func() {
 
 		pa := PathAction{
-			NewAction(10, 20),
+			NewTimeSpan(10, 20),
 			WorldCoord{0, 0},
 			WorldCoord{0, 1},
 		}
@@ -125,7 +111,7 @@ func DescribePathAction(c gospec.Context) {
 		Dest := WorldCoord{0, 1}
 
 		pa := PathAction{
-			NewAction(clk.Now(), clk.Future(duration)),
+			NewTimeSpan(clk.Now(), clk.Future(duration)),
 			Orig,
 			Dest,
 		}
@@ -212,22 +198,22 @@ func DescribePathAction(c gospec.Context) {
 
 	c.Specify("when checking for a collision", func() {
 		pa1 = PathAction{
-			NewAction(WorldTime(10), WorldTime(20)),
+			NewTimeSpan(WorldTime(10), WorldTime(20)),
 			WorldCoord{0, 0},
 			WorldCoord{0, 1},
 		}
 
 		pa2 = PathAction{
-			NewAction(WorldTime(15), WorldTime(25)),
+			NewTimeSpan(WorldTime(15), WorldTime(25)),
 			WorldCoord{0, 0},
 			WorldCoord{0, 1},
 		}
 
-		c.Assume(pa1.HappensDuring(pa2.Action), IsTrue)
+		c.Assume(pa1.Overlaps(pa2.TimeSpan), IsTrue)
 
 		c.Specify("must check if there wasn't a chance for collision", func() {
 			c.Specify("because times don't overlap", func() {
-				pa2.Action = NewAction(pa1.end+1, pa1.end+11)
+				pa2.TimeSpan = NewTimeSpan(pa1.end+1, pa1.end+11)
 				c.Expect(pa1.Collides(pa2).Type, Equals, CT_NONE)
 				c.Expect(pa2.Collides(pa1).Type, Equals, CT_NONE)
 			})
@@ -270,18 +256,18 @@ func DescribePathAction(c gospec.Context) {
 
 		c.Specify("must set the time when the collision begins when the destination is the same", func() {
 			pa1 = PathAction{
-				NewAction(WorldTime(10), WorldTime(25)),
+				NewTimeSpan(WorldTime(10), WorldTime(25)),
 				WorldCoord{0, 0},
 				WorldCoord{0, 1},
 			}
 
 			pa2 = PathAction{
-				NewAction(WorldTime(9), WorldTime(19)),
+				NewTimeSpan(WorldTime(9), WorldTime(19)),
 				WorldCoord{1, 1},
 				WorldCoord{0, 1},
 			}
 
-			c.Assume(pa1.HappensDuring(pa2.Action), IsTrue)
+			c.Assume(pa1.Overlaps(pa2.TimeSpan), IsTrue)
 
 			for pa1.start <= pa2.end && pa1.start < pa1.end {
 				c.Expect(pa1.Collides(pa2).T, Equals, pa1.start)
@@ -305,10 +291,10 @@ func DescribeCollision(c gospec.Context) {
 
 		// This is a good spec, I'm really happy with this one
 		c.Specify("A following into B's Position", func() {
-			A := PathAction{Action: NewAction(10, 20)}
-			B := PathAction{Action: NewAction(12, 22)}
+			A := PathAction{TimeSpan: NewTimeSpan(10, 20)}
+			B := PathAction{TimeSpan: NewTimeSpan(12, 22)}
 
-			c.Assume(A.HappensDuring(B.Action), IsTrue)
+			c.Assume(A.Overlaps(B.TimeSpan), IsTrue)
 
 			B.Orig = WorldCoord{0, 0}
 			B.Dest = WorldCoord{1, 0}
@@ -330,9 +316,9 @@ func DescribeCollision(c gospec.Context) {
 				c.Assume(collision.T, Equals, A.start)
 
 				c.Specify("overlap will be 1.0 if B starts as A ends", func() {
-					B.Action = NewAction(A.end, A.end+10)
+					B.TimeSpan = NewTimeSpan(A.end, A.end+10)
 
-					c.Assume(A.HappensDuring(B.Action), IsTrue)
+					c.Assume(A.Overlaps(B.TimeSpan), IsTrue)
 
 					collision = B.Collides(A)
 					collision.T = B.start
@@ -396,8 +382,8 @@ func DescribeCollision(c gospec.Context) {
 				c.Assume(collision.T, Equals, A.start)
 
 				c.Specify("will not occur if A starts at the same time as B and A finishes at the same time as B", func() {
-					A.Action = NewAction(0, 100)
-					B.Action = NewAction(0, 100)
+					A.TimeSpan = NewTimeSpan(0, 100)
+					B.TimeSpan = NewTimeSpan(0, 100)
 
 					c.Assume(A.start, Satisfies, A.start == B.start)
 					c.Assume(A.end, Satisfies, A.end == B.end)
@@ -409,8 +395,8 @@ func DescribeCollision(c gospec.Context) {
 				})
 
 				c.Specify("will not occur if A starts after B and A finishes after B", func() {
-					A.Action = NewAction(1, 101)
-					B.Action = NewAction(0, 100)
+					A.TimeSpan = NewTimeSpan(1, 101)
+					B.TimeSpan = NewTimeSpan(0, 100)
 
 					c.Assume(A.start, Satisfies, A.start > B.start)
 					c.Assume(A.end, Satisfies, A.end > B.end)
@@ -421,9 +407,9 @@ func DescribeCollision(c gospec.Context) {
 
 				c.Specify("overlap", func() {
 					c.Specify("will be 1.0 if B starts as A ends", func() {
-						B.Action = NewAction(A.end, A.end+10)
+						B.TimeSpan = NewTimeSpan(A.end, A.end+10)
 
-						c.Assume(A.HappensDuring(B.Action), IsTrue)
+						c.Assume(A.Overlaps(B.TimeSpan), IsTrue)
 
 						collision = B.Collides(A)
 						collision.T = B.start
@@ -479,9 +465,9 @@ func DescribeCollision(c gospec.Context) {
 							})
 
 							c.Specify("then peak will diminish when B is faster then A", func() {
-								B.Action = NewAction(B.start, WorldTime(int64(B.start)+A.duration-1))
+								B.TimeSpan = NewTimeSpan(B.start, WorldTime(int64(B.start)+A.duration-1))
 
-								c.Assume(B.HappensDuring(A.Action), IsTrue)
+								c.Assume(B.Overlaps(A.TimeSpan), IsTrue)
 								c.Assume(B.duration, Satisfies, B.duration < A.duration)
 
 								collision = A.Collides(B)
@@ -520,8 +506,8 @@ func DescribeCollision(c gospec.Context) {
 					})
 
 					c.Specify("when B starts before A and A is faster then B", func() {
-						A.Action = NewAction(1, 99)
-						B.Action = NewAction(0, 100)
+						A.TimeSpan = NewTimeSpan(1, 99)
+						B.TimeSpan = NewTimeSpan(0, 100)
 
 						// TODO Make Custom Matchers for these
 						c.Assume(B.start, Satisfies, B.start < A.start)
@@ -577,18 +563,18 @@ func DescribeCollision(c gospec.Context) {
 		c.Specify("A contesting B for position", func() {
 			c.Specify("head to head", func() {
 				pa1 := PathAction{
-					NewAction(10, 20),
+					NewTimeSpan(10, 20),
 					WorldCoord{0, 0},
 					WorldCoord{1, 0},
 				}
 
 				pa2 := PathAction{
-					NewAction(12, 22),
+					NewTimeSpan(12, 22),
 					WorldCoord{2, 0},
 					WorldCoord{1, 0},
 				}
 
-				c.Assume(pa1.HappensDuring(pa2.Action), IsTrue)
+				c.Assume(pa1.Overlaps(pa2.TimeSpan), IsTrue)
 
 				collision := pa1.Collides(pa2)
 				c.Assume(collision.Type, Equals, CT_HEAD_TO_HEAD)
@@ -615,13 +601,13 @@ func DescribeCollision(c gospec.Context) {
 
 			c.Specify("from the side", func() {
 				pa1 := PathAction{
-					NewAction(10, 25),
+					NewTimeSpan(10, 25),
 					WorldCoord{0, 0},
 					WorldCoord{1, 0},
 				}
 
 				pa2 := PathAction{
-					NewAction(12, 22),
+					NewTimeSpan(12, 22),
 					WorldCoord{1, 1},
 					WorldCoord{1, 0},
 				}
