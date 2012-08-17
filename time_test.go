@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"github.com/orfjackal/gospec/src/gospec"
-	. "github.com/orfjackal/gospec/src/gospec"
+	"github.com/ghthor/gospec/src/gospec"
+	. "github.com/ghthor/gospec/src/gospec"
 )
 
 func DescribeClock(c gospec.Context) {
