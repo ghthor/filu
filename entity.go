@@ -20,6 +20,7 @@ type (
 	motionInfo struct {
 		coord  WorldCoord
 		facing Direction
+		speed  uint
 
 		moveRequest *moveRequest
 
@@ -33,10 +34,11 @@ type (
 	}
 )
 
-func newMotionInfo(c WorldCoord, f Direction) *motionInfo {
+func newMotionInfo(c WorldCoord, f Direction, speed uint) *motionInfo {
 	return &motionInfo{
 		c,
 		f,
+		speed,
 		nil,
 		make([]*PathAction, 0, 2),
 	}
@@ -86,6 +88,8 @@ type PlayerDef struct {
 	Coord WorldCoord
 	// Which Direction the Player is Facing
 	Facing Direction
+	// Movement speed in Frames per PathAction
+	MovementSpeed uint
 
 	// A Connection to send WorldState too
 	Conn protocol.MessageOutputConn

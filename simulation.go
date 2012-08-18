@@ -161,7 +161,7 @@ func (s *simulation) addPlayer(pd PlayerDef) *Player {
 		Name: pd.Name,
 
 		entityId: s.nextEntityId,
-		mi:       newMotionInfo(pd.Coord, pd.Facing),
+		mi:       newMotionInfo(pd.Coord, pd.Facing, pd.MovementSpeed),
 		sim:      s,
 		conn:     pd.Conn,
 	}
@@ -223,11 +223,10 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 
 	// Apply All remaining Pending Actions as Running Actions
 	for dest, entity := range newPaths {
-		// TODO Use the entities custom speed
 		mi := entity.motionInfo()
 		mi.moveRequest = nil
 		mi.pathActions = append(mi.pathActions, &PathAction{
-			NewTimeSpan(t, t+40),
+			NewTimeSpan(t, t+WorldTime(mi.speed)),
 			mi.coord,
 			dest,
 		})

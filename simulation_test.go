@@ -50,10 +50,11 @@ func DescribeSimulation(c gospec.Context) {
 		var conn noopConn
 
 		pd := PlayerDef{
-			Name:   "thundercleese",
-			Facing: North,
-			Coord:  WorldCoord{0, 0},
-			Conn:   conn,
+			Name:          "thundercleese",
+			Facing:        North,
+			Coord:         WorldCoord{0, 0},
+			MovementSpeed: 40,
+			Conn:          conn,
 		}
 
 		player := sim.addPlayer(pd)
@@ -65,10 +66,11 @@ func DescribeSimulation(c gospec.Context) {
 			sim.Start()
 
 			pd = PlayerDef{
-				Name:   "zorak",
-				Facing: South,
-				Coord:  WorldCoord{0, 0},
-				Conn:   conn,
+				Name:          "zorak",
+				Facing:        South,
+				Coord:         WorldCoord{0, 0},
+				MovementSpeed: 40,
+				Conn:          conn,
 			}
 
 			player = sim.AddPlayer(pd)
@@ -88,13 +90,13 @@ func DescribeWorldState(c gospec.Context) {
 		playerA := &Player{
 			Name:     "thundercleese",
 			entityId: 0,
-			mi:       newMotionInfo(WorldCoord{0, 0}, North),
+			mi:       newMotionInfo(WorldCoord{0, 0}, North, 40),
 			conn:     conn,
 		}
 		playerB := &Player{
 			Name:     "zorak",
 			entityId: 1,
-			mi:       newMotionInfo(WorldCoord{1, 0}, North),
+			mi:       newMotionInfo(WorldCoord{1, 0}, North, 35),
 			conn:     conn,
 		}
 
@@ -120,6 +122,7 @@ func DescribeWorldState(c gospec.Context) {
 			pathActionA := playerA.mi.pathActions[0]
 			c.Expect(pathActionA.Orig, Equals, WorldCoord{0, 0})
 			c.Expect(pathActionA.Dest, Equals, WorldCoord{0, 0}.Neighbor(North))
+			c.Expect(pathActionA.duration, Equals, int64(playerA.mi.speed))
 
 			c.Expect(playerB.mi.moveRequest, IsNil)
 			c.Expect(len(playerB.mi.pathActions), Equals, 1)
@@ -127,6 +130,7 @@ func DescribeWorldState(c gospec.Context) {
 			pathActionB := playerB.mi.pathActions[0]
 			c.Expect(pathActionB.Orig, Equals, WorldCoord{1, 0})
 			c.Expect(pathActionB.Dest, Equals, WorldCoord{1, 0}.Neighbor(North))
+			c.Expect(pathActionB.duration, Equals, int64(playerB.mi.speed))
 		})
 	})
 }
@@ -137,7 +141,7 @@ func DescribePlayer(c gospec.Context) {
 	player := &Player{
 		Name:     "thundercleese",
 		entityId: 0,
-		mi:       newMotionInfo(WorldCoord{0, 0}, North),
+		mi:       newMotionInfo(WorldCoord{0, 0}, North, 40),
 		conn:     conn,
 	}
 
