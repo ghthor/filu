@@ -16,6 +16,20 @@ type (
 	}
 )
 
+func (c WorldCoord) Neighbor(d Direction) WorldCoord {
+	switch d {
+	case North:
+		c.Y++
+	case South:
+		c.Y--
+	case East:
+		c.X++
+	case West:
+		c.X--
+	}
+	return c
+}
+
 type (
 	StandAction struct {
 		WorldCoord
