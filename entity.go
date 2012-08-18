@@ -2,7 +2,6 @@ package engine
 
 import (
 	"../server/protocol"
-	"fmt"
 	"strings"
 )
 
@@ -127,9 +126,12 @@ func (p *Player) mux() {
 		for {
 			select {
 			case input := <-p.collectInput:
-				// Process Input
-				// Create ActionReq's, like a MoveRequest
-				fmt.Println(input)
+				switch input.cmd {
+				case "move":
+					p.mi.moveRequest = newMoveRequest(input)
+				default:
+					panic("Unknown InputCmd: " + input.cmd)
+				}
 
 			// The simulation has requested access to the motionInfo
 			// This 'locks' the motionInfo until the server publishs a WorldState

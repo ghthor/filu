@@ -104,7 +104,7 @@ func DescribePlayer(c gospec.Context) {
 
 		go func() {
 			select {
-			case player.collectInput <- InputCmd{}:
+			case player.collectInput <- InputCmd{0, "move", "north"}:
 				panic("MotionInfo not locked")
 			case <-conn.packets:
 				locked <- true
@@ -116,11 +116,19 @@ func DescribePlayer(c gospec.Context) {
 
 		c.Specify("and is unlocked afterwards", func() {
 			select {
-			case player.collectInput <- InputCmd{}:
+			case player.collectInput <- InputCmd{0, "move", "north"}:
 			default:
 				panic("MotionInfo not unlocked")
 			}
 		})
+	})
+
+	c.Specify("a request to move is generated when the user inputs a move cmd", func() {
+		player.SubmitInput("move=0", "north")
+
+		moveRequest := player.motionInfo().moveRequest
+
+		c.Expect(moveRequest, Not(IsNil))
 	})
 }
 
