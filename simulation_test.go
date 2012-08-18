@@ -90,13 +90,13 @@ func DescribeWorldState(c gospec.Context) {
 		playerA := &Player{
 			Name:     "thundercleese",
 			entityId: 0,
-			mi:       newMotionInfo(WorldCoord{0, 0}, North, 40),
+			mi:       newMotionInfo(WorldCoord{0, 0}, South, 35),
 			conn:     conn,
 		}
 		playerB := &Player{
 			Name:     "zorak",
 			entityId: 1,
-			mi:       newMotionInfo(WorldCoord{1, 0}, North, 35),
+			mi:       newMotionInfo(WorldCoord{1, 0}, North, 40),
 			conn:     conn,
 		}
 
@@ -112,25 +112,27 @@ func DescribeWorldState(c gospec.Context) {
 
 		c.Specify("consume moveRequest's and produce PathActions", func() {
 			playerA.SubmitInput("move=0", "north")
-			playerB.SubmitInput("move=0", "north")
+			playerB.SubmitInput("move=0", "south")
 
 			worldState.stepTo(WorldTime(1))
 
 			c.Expect(playerA.mi.moveRequest, IsNil)
+			c.Expect(playerA.mi.facing, Equals, North)
 			c.Expect(len(playerA.mi.pathActions), Equals, 1)
 
 			pathActionA := playerA.mi.pathActions[0]
 			c.Expect(pathActionA.Orig, Equals, WorldCoord{0, 0})
 			c.Expect(pathActionA.Dest, Equals, WorldCoord{0, 0}.Neighbor(North))
-			c.Expect(pathActionA.duration, Equals, int64(playerA.mi.speed))
+			c.Expect(pathActionA.duration, Equals, int64(35))
 
 			c.Expect(playerB.mi.moveRequest, IsNil)
+			c.Expect(playerB.mi.facing, Equals, South)
 			c.Expect(len(playerB.mi.pathActions), Equals, 1)
 
 			pathActionB := playerB.mi.pathActions[0]
 			c.Expect(pathActionB.Orig, Equals, WorldCoord{1, 0})
-			c.Expect(pathActionB.Dest, Equals, WorldCoord{1, 0}.Neighbor(North))
-			c.Expect(pathActionB.duration, Equals, int64(playerB.mi.speed))
+			c.Expect(pathActionB.Dest, Equals, WorldCoord{1, 0}.Neighbor(South))
+			c.Expect(pathActionB.duration, Equals, int64(40))
 		})
 	})
 }

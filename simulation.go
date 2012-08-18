@@ -181,6 +181,10 @@ func (s *simulation) addPlayer(pd PlayerDef) *Player {
 func (s *simulation) AddClient(c stateConn) {
 }
 
+func (s *WorldState) step() *WorldState {
+	return s.stepTo(s.time + 1)
+}
+
 func (s *WorldState) stepTo(t WorldTime) *WorldState {
 
 	// TODO this is going to cause awful allocations
@@ -193,7 +197,6 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 			if pa.end == t {
 				mi.pathActions = mi.pathActions[:0]
 				mi.coord = pa.Dest
-				mi.facing = pa.Direction()
 			}
 		}
 
@@ -224,12 +227,16 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 	// Apply All remaining Pending Actions as Running Actions
 	for dest, entity := range newPaths {
 		mi := entity.motionInfo()
-		mi.moveRequest = nil
-		mi.pathActions = append(mi.pathActions, &PathAction{
+		pathAction := &PathAction{
 			NewTimeSpan(t, t+WorldTime(mi.speed)),
 			mi.coord,
 			dest,
-		})
+		}
+
+		// Update MoveRequest
+		mi.moveRequest = nil
+		mi.facing = pathAction.Direction()
+		mi.pathActions = append(mi.pathActions, pathAction)
 	}
 	// Write out new state and return
 	s.time = t
