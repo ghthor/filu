@@ -123,3 +123,51 @@ func DescribePlayer(c gospec.Context) {
 		})
 	})
 }
+
+func DescribeInputCommands(c gospec.Context) {
+	c.Specify("creating movement requests from InputCmds", func() {
+		c.Specify("north", func() {
+			moveRequest := newMoveRequest(InputCmd{
+				0,
+				"move",
+				"north",
+			})
+
+			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.Direction, Equals, North)
+		})
+
+		c.Specify("east", func() {
+			moveRequest := newMoveRequest(InputCmd{
+				0,
+				"move",
+				"east",
+			})
+
+			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.Direction, Equals, East)
+		})
+
+		c.Specify("south", func() {
+			moveRequest := newMoveRequest(InputCmd{
+				0,
+				"move",
+				"south",
+			})
+
+			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.Direction, Equals, South)
+		})
+
+		c.Specify("west", func() {
+			moveRequest := newMoveRequest(InputCmd{
+				0,
+				"move",
+				"west",
+			})
+
+			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.Direction, Equals, West)
+		})
+	})
+}

@@ -53,6 +53,29 @@ type InputCmd struct {
 	params     string
 }
 
+func newMoveRequest(input InputCmd) *moveRequest {
+	switch input.params {
+	case "north":
+		return &moveRequest{
+			Direction: North,
+		}
+	case "east":
+		return &moveRequest{
+			Direction: East,
+		}
+	case "south":
+		return &moveRequest{
+			Direction: South,
+		}
+	case "west":
+		return &moveRequest{
+			Direction: West,
+		}
+
+	}
+	panic("never reached")
+}
+
 // This object is used to create a player
 // All the Fields must be provided
 type PlayerDef struct {
