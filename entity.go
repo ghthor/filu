@@ -2,8 +2,8 @@ package engine
 
 import (
 	"../server/protocol"
-	"../server/protocol/encoding"
 	"fmt"
+	"strings"
 )
 
 type (
@@ -47,6 +47,12 @@ func (mi motionInfo) isMoving() bool {
 	return len(mi.pathActions) == 0
 }
 
+type InputCmd struct {
+	timeIssued WorldTime
+	cmd        string
+	params     string
+}
+
 // This object is used to create a player
 // All the Fields must be provided
 type PlayerDef struct {
@@ -80,7 +86,7 @@ type Player struct {
 	conn protocol.MessageOutputConn
 
 	// Communication channels used inside the muxer
-	collectInput    chan encoding.Packet
+	collectInput    chan InputCmd
 	serveMotionInfo chan *motionInfo
 	routeWorldState chan *WorldState
 }
@@ -90,7 +96,7 @@ func (p *Player) Id() EntityId {
 }
 
 func (p *Player) mux() {
-	p.collectInput = make(chan encoding.Packet)
+	p.collectInput = make(chan InputCmd)
 	p.serveMotionInfo = make(chan *motionInfo)
 	p.routeWorldState = make(chan *WorldState)
 
@@ -128,4 +134,12 @@ func (p *Player) motionInfo() *motionInfo          { return <-p.serveMotionInfo 
 func (p *Player) SendWorldState(state *WorldState) { p.routeWorldState <- state }
 
 // External interface of the muxer presented to the Node
-func (p *Player) SubmitInput(packet encoding.Packet) { p.collectInput <- packet }
+func (p *Player) SubmitInput(cmd, params string) {
+	// TODO parse WorldTime
+	parts := strings.Split(cmd, "=")
+
+	p.collectInput <- InputCmd{
+		cmd:    parts[0],
+		params: params,
+	}
+}

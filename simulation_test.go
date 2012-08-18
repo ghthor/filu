@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"../server/protocol/encoding"
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
 )
@@ -105,7 +104,7 @@ func DescribePlayer(c gospec.Context) {
 
 		go func() {
 			select {
-			case player.collectInput <- encoding.Packet{}:
+			case player.collectInput <- InputCmd{}:
 				panic("MotionInfo not locked")
 			case <-conn.packets:
 				locked <- true
@@ -117,7 +116,7 @@ func DescribePlayer(c gospec.Context) {
 
 		c.Specify("and is unlocked afterwards", func() {
 			select {
-			case player.collectInput <- encoding.Packet{}:
+			case player.collectInput <- InputCmd{}:
 			default:
 				panic("MotionInfo not unlocked")
 			}
