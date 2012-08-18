@@ -51,11 +51,20 @@ type UserInput struct {
 	Payload interface{}
 }
 
+// This object is used to create a player
+// All the Fields must be provided
 type PlayerDef struct {
-	Name   string
+
+	// The Players Name
+	Name string
+
+	// Where the Player is locationed
+	Coord WorldCoord
+	// Which Direction the Player is Facing
 	Facing Direction
-	Coord  WorldCoord
-	Conn   protocol.Conn
+
+	// A Connection to send WorldState too
+	Conn protocol.Conn
 
 	// This is Used internally by the simulation to return the new
 	// Player object after is has been created
@@ -63,8 +72,9 @@ type PlayerDef struct {
 }
 
 type Player struct {
-	entityId EntityId
+	// The Players Name
 	Name     string
+	entityId EntityId
 	mi       *motionInfo
 
 	// Communication channels used inside the muxer
@@ -75,6 +85,7 @@ type Player struct {
 	// A handle to the simulation this player is in
 	sim Simulation
 
+	// A Connection to send WorldState too
 	conn protocol.Conn
 }
 
