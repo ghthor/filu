@@ -6,7 +6,7 @@ import (
 )
 
 func DescribeSimulation(c gospec.Context) {
-	sim := NewSimulation(40)
+	sim := newSimulation(40)
 
 	c.Specify("starting and stopping", func() {
 
@@ -56,4 +56,10 @@ func DescribeSimulation(c gospec.Context) {
 			c.Expect(len(sim.state.entities), Equals, 2)
 		})
 	})
+
+	c.Specify("simulation loop runs at the intended fps", nil)
+}
+
+func DescribeWorldState(c gospec.Context) {
+	c.Specify("processes movement requests and generates appropiate actions", nil)
 }
