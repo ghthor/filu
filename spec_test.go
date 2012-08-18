@@ -15,6 +15,7 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribePathAction)
 	r.AddSpec(engine.DescribeCollision)
 	r.AddSpec(engine.DescribeSimulation)
+	r.AddSpec(engine.DescribePlayer)
 
 	gospec.MainGoTest(r, t)
 }

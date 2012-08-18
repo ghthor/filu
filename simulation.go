@@ -56,6 +56,14 @@ func NewSimulation(fps int) Simulation {
 	return newSimulation(fps)
 }
 
+func newWorldState(clock Clock) *WorldState {
+	return &WorldState{
+		time:            clock.Now(),
+		entities:        make(map[EntityId]entity),
+		movableEntities: make(map[EntityId]movableEntity),
+	}
+}
+
 func newSimulation(fps int) *simulation {
 	clk := Clock(0)
 

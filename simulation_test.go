@@ -12,6 +12,15 @@ func (c noopConn) SendMessage(msg, payload string) error {
 	return nil
 }
 
+type spyConn struct {
+	packets chan string
+}
+
+func (c spyConn) SendMessage(msg, payload string) error {
+	c.packets <- msg + ":" + payload
+	return nil
+}
+
 func DescribeSimulation(c gospec.Context) {
 	sim := newSimulation(40)
 
@@ -74,4 +83,41 @@ func DescribeSimulation(c gospec.Context) {
 
 func DescribeWorldState(c gospec.Context) {
 	c.Specify("processes movement requests and generates appropiate actions", nil)
+}
+
+func DescribePlayer(c gospec.Context) {
+	conn := spyConn{make(chan string)}
+
+	player := &Player{
+		Name:     "thundercleese",
+		entityId: 0,
+		mi:       newMotionInfo(WorldCoord{0, 0}, North),
+		conn:     conn,
+	}
+
+	player.mux()
+
+	c.Specify("motionInfo becomes locked when accessed by the simulation until the worldstate is published", func() {
+		_ = player.motionInfo()
+
+		locked := make(chan bool)
+
+		go func() {
+			select {
+			case player.collectInput <- UserInput{}:
+				panic("MotionInfo not locked")
+			case <-conn.packets:
+				locked <- true
+			}
+		}()
+
+		player.SendWorldState(newWorldState(Clock(0)))
+		c.Expect(<-locked, IsTrue)
+
+		select {
+		case player.collectInput <- UserInput{}:
+		default:
+			panic("MotionInfo not unlocked")
+		}
+	})
 }
