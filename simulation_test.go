@@ -133,6 +133,31 @@ func DescribeWorldState(c gospec.Context) {
 			c.Expect(pathActionB.Orig, Equals, WorldCoord{1, 0})
 			c.Expect(pathActionB.Dest, Equals, WorldCoord{1, 0}.Neighbor(South))
 			c.Expect(pathActionB.duration, Equals, int64(40))
+
+			c.Specify("and the pathActions are removed when they have completed", func() {
+				aEnd := worldState.time + WorldTime(playerA.mi.speed)
+				bEnd := worldState.time + WorldTime(playerB.mi.speed)
+
+				for i := worldState.time + 1; i < aEnd; i++ {
+					worldState.stepTo(i)
+					c.Expect(len(playerA.mi.pathActions), Equals, 1)
+					c.Expect(len(playerB.mi.pathActions), Equals, 1)
+				}
+				worldState.step()
+
+				c.Expect(len(playerA.mi.pathActions), Equals, 0)
+				c.Expect(len(playerB.mi.pathActions), Equals, 1)
+
+				for i := worldState.time + 1; i < bEnd; i++ {
+					worldState.stepTo(i)
+					c.Expect(len(playerA.mi.pathActions), Equals, 0)
+					c.Expect(len(playerB.mi.pathActions), Equals, 1)
+				}
+				worldState.step()
+
+				c.Expect(len(playerA.mi.pathActions), Equals, 0)
+				c.Expect(len(playerB.mi.pathActions), Equals, 0)
+			})
 		})
 	})
 }

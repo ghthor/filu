@@ -194,7 +194,7 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 
 		// Removed finished pathActions
 		for _, pa := range mi.pathActions {
-			if pa.end == t {
+			if pa.end <= t {
 				mi.pathActions = mi.pathActions[:0]
 				mi.coord = pa.Dest
 			}
