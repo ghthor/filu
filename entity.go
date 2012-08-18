@@ -64,7 +64,7 @@ type PlayerDef struct {
 	Facing Direction
 
 	// A Connection to send WorldState too
-	Conn protocol.Conn
+	Conn protocol.MessageOutputConn
 
 	// This is Used internally by the simulation to return the new
 	// Player object after is has been created
@@ -77,16 +77,16 @@ type Player struct {
 	entityId EntityId
 	mi       *motionInfo
 
-	// Communication channels used inside the muxer
-	collectInput    chan UserInput
-	serveMotionInfo chan *motionInfo
-	routeWorldState chan *WorldState
-
 	// A handle to the simulation this player is in
 	sim Simulation
 
 	// A Connection to send WorldState too
-	conn protocol.Conn
+	conn protocol.MessageOutputConn
+
+	// Communication channels used inside the muxer
+	collectInput    chan UserInput
+	serveMotionInfo chan *motionInfo
+	routeWorldState chan *WorldState
 }
 
 func (p *Player) Id() EntityId {

@@ -5,6 +5,13 @@ import (
 	. "github.com/ghthor/gospec/src/gospec"
 )
 
+type noopConn int
+
+func (c noopConn) SendMessage(msg, payload string) error {
+	c++
+	return nil
+}
+
 func DescribeSimulation(c gospec.Context) {
 	sim := newSimulation(40)
 
@@ -28,10 +35,14 @@ func DescribeSimulation(c gospec.Context) {
 	c.Specify("Adding a player", func() {
 		c.Assume(sim.nextEntityId, Equals, EntityId(0))
 
+		// Need a Client endpoint
+		var conn noopConn
+
 		pd := PlayerDef{
 			Name:   "thundercleese",
 			Facing: North,
 			Coord:  WorldCoord{0, 0},
+			Conn:   conn,
 		}
 
 		player := sim.addPlayer(pd)
@@ -46,6 +57,7 @@ func DescribeSimulation(c gospec.Context) {
 				Name:   "zorak",
 				Facing: South,
 				Coord:  WorldCoord{0, 0},
+				Conn:   conn,
 			}
 
 			player = sim.AddPlayer(pd)
