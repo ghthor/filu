@@ -52,6 +52,11 @@ func (ws *WorldState) String() string {
 	return fmt.Sprintf(":%v\tEntities:%v", ws.time, len(ws.entities))
 }
 
+func (ws *WorldState) AddMovableEntity(e movableEntity) {
+	ws.entities[e.Id()] = e
+	ws.movableEntities[e.Id()] = e
+}
+
 func NewSimulation(fps int) Simulation {
 	return newSimulation(fps)
 }
@@ -217,10 +222,10 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 	}
 
 	// Apply All remaining Pending Actions as Running Actions
-
 	for dest, entity := range newPaths {
 		// TODO Use the entities custom speed
 		mi := entity.motionInfo()
+		mi.moveRequest = nil
 		mi.pathActions = append(mi.pathActions, &PathAction{
 			NewTimeSpan(t, t+40),
 			mi.coord,
@@ -228,5 +233,6 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 		})
 	}
 	// Write out new state and return
+	s.time = t
 	return s
 }
