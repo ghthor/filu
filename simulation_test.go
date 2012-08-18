@@ -115,10 +115,12 @@ func DescribePlayer(c gospec.Context) {
 		player.SendWorldState(newWorldState(Clock(0)))
 		c.Expect(<-locked, IsTrue)
 
-		select {
-		case player.collectInput <- encoding.Packet{}:
-		default:
-			panic("MotionInfo not unlocked")
-		}
+		c.Specify("and is unlocked afterwards", func() {
+			select {
+			case player.collectInput <- encoding.Packet{}:
+			default:
+				panic("MotionInfo not unlocked")
+			}
+		})
 	})
 }
