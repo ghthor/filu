@@ -37,8 +37,11 @@ type (
 		nextEntityId EntityId
 		state        *WorldState
 
-		clients   []stateConn
-		newPlayer chan PlayerDef
+		clients []stateConn
+
+		// Comm channels for adding/removing Players
+		newPlayer  chan PlayerDef
+		dcedPlayer chan dcedPlayer
 
 		fps int
 
@@ -81,8 +84,10 @@ func newSimulation(fps int) *simulation {
 			movableEntities: make(map[EntityId]movableEntity, 10),
 		},
 
-		clients:   make([]stateConn, 0, 10),
-		newPlayer: make(chan PlayerDef),
+		clients: make([]stateConn, 0, 10),
+
+		newPlayer:  make(chan PlayerDef),
+		dcedPlayer: make(chan dcedPlayer),
 
 		fps: fps,
 
@@ -118,6 +123,8 @@ func (s *simulation) startLoop() {
 			case <-ticker.C:
 			case playerDef := <-s.newPlayer:
 				playerDef.newPlayer <- s.addPlayer(playerDef)
+			case dced := <-s.dcedPlayer:
+				dced.removed <- s.removePlayer(dced.player)
 			case <-s.stop:
 				break stepLoop
 
@@ -167,14 +174,48 @@ func (s *simulation) addPlayer(pd PlayerDef) *Player {
 	}
 	s.nextEntityId++
 
+	// Add the Player entity
 	s.state.entities[p.entityId] = p
 	s.state.movableEntities[p.entityId] = p
 
-	// Start the muxer
-	p.mux()
-
 	// Add the Player as a client that recieves WorldState's
 	s.clients = append(s.clients, p)
+
+	// Start the muxer
+	p.mux()
+	return p
+}
+
+type dcedPlayer struct {
+	player  *Player
+	removed chan *Player
+}
+
+func (s *simulation) RemovePlayer(p *Player) {
+	dced := dcedPlayer{
+		p,
+		make(chan *Player),
+	}
+	s.dcedPlayer <- dced
+	<-dced.removed
+	return
+}
+
+func (s *simulation) removePlayer(p *Player) *Player {
+	// Stop the muxer
+	p.stopMux()
+
+	// Remove the Player entity
+	delete(s.state.entities, p.Id())
+	delete(s.state.movableEntities, p.Id())
+
+	// Remove the client
+	for i, c := range s.clients {
+		if c == p {
+			s.clients = append(s.clients[:i], s.clients[i+1:]...)
+			break
+		}
+	}
 	return p
 }
 

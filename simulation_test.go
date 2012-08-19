@@ -44,7 +44,7 @@ func DescribeSimulation(c gospec.Context) {
 		c.Expect(sim.clock, Equals, Clock(1))
 	})
 
-	c.Specify("Adding a player", func() {
+	c.Specify("Adding and removing players", func() {
 		c.Assume(sim.nextEntityId, Equals, EntityId(0))
 
 		// Need a Client endpoint
@@ -58,28 +58,60 @@ func DescribeSimulation(c gospec.Context) {
 			Conn:          conn,
 		}
 
-		player := sim.addPlayer(pd)
+		c.Specify("adding", func() {
+			player := sim.addPlayer(pd)
 
-		c.Expect(player.Id(), Equals, EntityId(0))
-		c.Expect(len(sim.state.entities), Equals, 1)
+			c.Expect(player.Id(), Equals, EntityId(0))
+			c.Expect(len(sim.state.entities), Equals, 1)
+			c.Expect(len(sim.state.movableEntities), Equals, 1)
+			c.Expect(len(sim.clients), Equals, 1)
+		})
 
-		c.Specify("while the simulation is running", func() {
+		c.Specify("adding while the simulation is running", func() {
 			sim.Start()
 
-			pd = PlayerDef{
-				Name:          "zorak",
-				Facing:        South,
-				Coord:         WorldCoord{0, 0},
-				MovementSpeed: 40,
-				Conn:          conn,
-			}
-
-			player = sim.AddPlayer(pd)
+			player := sim.AddPlayer(pd)
 
 			sim.Stop()
 
-			c.Expect(player.Id(), Equals, EntityId(1))
-			c.Expect(len(sim.state.entities), Equals, 2)
+			c.Expect(player.Id(), Equals, EntityId(0))
+			c.Expect(len(sim.state.entities), Equals, 1)
+			c.Expect(len(sim.state.movableEntities), Equals, 1)
+			c.Expect(len(sim.clients), Equals, 1)
+		})
+
+		c.Specify("removing", func() {
+			player := sim.addPlayer(pd)
+
+			c.Assume(player.Id(), Equals, EntityId(0))
+			c.Assume(len(sim.state.entities), Equals, 1)
+			c.Assume(len(sim.state.movableEntities), Equals, 1)
+			c.Assume(len(sim.clients), Equals, 1)
+
+			sim.removePlayer(player)
+
+			c.Expect(len(sim.state.entities), Equals, 0)
+			c.Expect(len(sim.state.movableEntities), Equals, 0)
+			c.Expect(len(sim.clients), Equals, 0)
+		})
+
+		c.Specify("removing while the simulation is running", func() {
+			player := sim.addPlayer(pd)
+
+			c.Assume(player.Id(), Equals, EntityId(0))
+			c.Assume(len(sim.state.entities), Equals, 1)
+			c.Assume(len(sim.state.movableEntities), Equals, 1)
+			c.Assume(len(sim.clients), Equals, 1)
+
+			sim.Start()
+
+			sim.RemovePlayer(player)
+
+			sim.Stop()
+
+			c.Expect(len(sim.state.entities), Equals, 0)
+			c.Expect(len(sim.state.movableEntities), Equals, 0)
+			c.Expect(len(sim.clients), Equals, 0)
 		})
 	})
 
@@ -174,6 +206,7 @@ func DescribePlayer(c gospec.Context) {
 	}
 
 	player.mux()
+	defer player.stopMux()
 
 	c.Specify("motionInfo becomes locked when accessed by the simulation until the worldstate is published", func() {
 		_ = player.motionInfo()

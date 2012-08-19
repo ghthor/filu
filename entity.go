@@ -120,6 +120,7 @@ type Player struct {
 	collectInput    chan InputCmd
 	serveMotionInfo chan *motionInfo
 	routeWorldState chan *WorldState
+	killMux         chan bool
 }
 
 func (p *Player) Id() EntityId {
@@ -130,9 +131,17 @@ func (p *Player) mux() {
 	p.collectInput = make(chan InputCmd)
 	p.serveMotionInfo = make(chan *motionInfo)
 	p.routeWorldState = make(chan *WorldState)
+	p.killMux = make(chan bool)
 
 	go func() {
 		for {
+			// Prioritize stopping the mux loop
+			select {
+			case <-p.killMux:
+				return
+			default:
+			}
+
 			select {
 			case input := <-p.collectInput:
 				switch input.cmd {
@@ -156,11 +165,19 @@ func (p *Player) mux() {
 						// Package up this localized WorldState and send it over the wire
 						p.conn.SendMessage("worldState", worldState.String())
 						break lockedMotionInfo
+					case <-p.killMux:
+						return
 					}
 				}
+			case <-p.killMux:
+				return
 			}
 		}
 	}()
+}
+
+func (p *Player) stopMux() {
+	p.killMux <- true
 }
 
 // External interface of the muxer presented to the simulation
