@@ -2,7 +2,6 @@ package engine
 
 import (
 	"../server/protocol"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -169,12 +168,12 @@ func (p *Player) motionInfo() *motionInfo          { return <-p.serveMotionInfo 
 func (p *Player) SendWorldState(state *WorldState) { p.routeWorldState <- state }
 
 // External interface of the muxer presented to the Node
-func (p *Player) SubmitInput(cmd, params string) {
+func (p *Player) SubmitInput(cmd, params string) error {
 	parts := strings.Split(cmd, "=")
 
 	timeIssued, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	p.collectInput <- InputCmd{
@@ -182,4 +181,5 @@ func (p *Player) SubmitInput(cmd, params string) {
 		cmd:        parts[0],
 		params:     params,
 	}
+	return nil
 }

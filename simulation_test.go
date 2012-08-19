@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
+	"strconv"
 )
 
 type noopConn int
@@ -256,7 +257,7 @@ func DescribeInputCommands(c gospec.Context) {
 		})
 	})
 
-	c.Specify("worldTime is parsed from message string", func() {
+	c.Specify("embedding worldtime in the cmd msg", func() {
 		player := &Player{
 			Name:         "thundercleese",
 			entityId:     0,
@@ -265,19 +266,35 @@ func DescribeInputCommands(c gospec.Context) {
 			collectInput: make(chan InputCmd, 1),
 		}
 
-		player.SubmitInput("move=0", "north")
-		input := <-player.collectInput
+		c.Specify("string splits on = and parses 64bit int", func() {
+			player.SubmitInput("move=0", "north")
+			input := <-player.collectInput
 
-		c.Expect(input.timeIssued, Equals, WorldTime(0))
+			c.Expect(input.timeIssued, Equals, WorldTime(0))
 
-		player.SubmitInput("move=1824081", "north")
-		input = <-player.collectInput
+			player.SubmitInput("move=1824081", "north")
+			input = <-player.collectInput
 
-		c.Expect(input.timeIssued, Equals, WorldTime(1824081))
+			c.Expect(input.timeIssued, Equals, WorldTime(1824081))
 
-		player.SubmitInput("move=99", "north")
-		input = <-player.collectInput
+			player.SubmitInput("move=99", "north")
+			input = <-player.collectInput
 
-		c.Expect(input.timeIssued, Equals, WorldTime(99))
+			c.Expect(input.timeIssued, Equals, WorldTime(99))
+		})
+
+		c.Specify("errors with invalid input and doesn't publish the command", func() {
+			err := player.SubmitInput("move=a", "north")
+			e := err.(*strconv.NumError)
+
+			c.Expect(e, Not(IsNil))
+			c.Expect(e.Err, Equals, strconv.ErrSyntax)
+
+			err = player.SubmitInput("move=", "north")
+			e = err.(*strconv.NumError)
+
+			c.Expect(e, Not(IsNil))
+			c.Expect(e.Err, Equals, strconv.ErrSyntax)
+		})
 	})
 }
