@@ -132,6 +132,9 @@ func DescribeSimulation(c gospec.Context) {
 			c.Expect(len(sim.state.movableEntities), Equals, 0)
 			c.Expect(len(sim.clients), Equals, 0)
 		})
+
+		// TODO drain the newPlayer/dcedPlayer channels after the loop has broken
+		c.Specify("when the simulation is stopping shouldn't block", nil)
 	})
 
 	c.Specify("simulation loop runs at the intended fps", nil)
