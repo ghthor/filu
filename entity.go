@@ -172,7 +172,7 @@ func (p *Player) SendWorldState(state *WorldState) { p.routeWorldState <- state 
 func (p *Player) SubmitInput(cmd, params string) {
 	parts := strings.Split(cmd, "=")
 
-	timeIssued, err := strconv.ParseInt(parts[1], 10, 0)
+	timeIssued, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		log.Fatal(err)
 	}
