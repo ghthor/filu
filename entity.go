@@ -2,6 +2,8 @@ package engine
 
 import (
 	"../server/protocol"
+	"log"
+	"strconv"
 	"strings"
 )
 
@@ -58,18 +60,22 @@ func newMoveRequest(input InputCmd) *moveRequest {
 	switch input.params {
 	case "north":
 		return &moveRequest{
+			t:         input.timeIssued,
 			Direction: North,
 		}
 	case "east":
 		return &moveRequest{
+			t:         input.timeIssued,
 			Direction: East,
 		}
 	case "south":
 		return &moveRequest{
+			t:         input.timeIssued,
 			Direction: South,
 		}
 	case "west":
 		return &moveRequest{
+			t:         input.timeIssued,
 			Direction: West,
 		}
 
@@ -164,11 +170,16 @@ func (p *Player) SendWorldState(state *WorldState) { p.routeWorldState <- state 
 
 // External interface of the muxer presented to the Node
 func (p *Player) SubmitInput(cmd, params string) {
-	// TODO parse WorldTime
 	parts := strings.Split(cmd, "=")
 
+	timeIssued, err := strconv.ParseInt(parts[1], 10, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	p.collectInput <- InputCmd{
-		cmd:    parts[0],
-		params: params,
+		timeIssued: WorldTime(timeIssued),
+		cmd:        parts[0],
+		params:     params,
 	}
 }

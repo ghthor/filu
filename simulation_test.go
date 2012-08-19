@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
+	"runtime"
 )
 
 type noopConn int
@@ -254,5 +255,37 @@ func DescribeInputCommands(c gospec.Context) {
 			c.Expect(moveRequest.t, Equals, WorldTime(0))
 			c.Expect(moveRequest.Direction, Equals, West)
 		})
+	})
+
+	c.Specify("worldTime is parsed from message string", func() {
+		player := &Player{
+			Name:     "thundercleese",
+			entityId: 0,
+			mi:       newMotionInfo(WorldCoord{0, 0}, North, 40),
+			conn:     conn,
+		}
+
+		player.mux()
+
+		player.SubmitInput("move=0", "north")
+		runtime.Gosched()
+		moveRequest := player.mi.moveRequest
+
+		c.Expect(moveRequest, Not(IsNil))
+		c.Expect(moveRequest.t, Equals, WorldTime(0))
+
+		player.SubmitInput("move=1824081", "north")
+		runtime.Gosched()
+		moveRequest = player.mi.moveRequest
+
+		c.Expect(moveRequest, Not(IsNil))
+		c.Expect(moveRequest.t, Equals, WorldTime(1824081))
+
+		player.SubmitInput("move=99", "north")
+		runtime.Gosched()
+		moveRequest = player.mi.moveRequest
+
+		c.Expect(moveRequest, Not(IsNil))
+		c.Expect(moveRequest.t, Equals, WorldTime(99))
 	})
 }
