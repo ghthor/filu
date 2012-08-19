@@ -23,6 +23,7 @@ type (
 		Stop()
 
 		AddPlayer(PlayerDef) *Player
+		RemovePlayer(*Player)
 		AddClient(stateConn)
 	}
 )

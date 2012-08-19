@@ -200,3 +200,7 @@ func (p *Player) SubmitInput(cmd, params string) error {
 	}
 	return nil
 }
+
+func (p *Player) Disconnect() {
+	p.sim.RemovePlayer(p)
+}

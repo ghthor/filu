@@ -113,6 +113,25 @@ func DescribeSimulation(c gospec.Context) {
 			c.Expect(len(sim.state.movableEntities), Equals, 0)
 			c.Expect(len(sim.clients), Equals, 0)
 		})
+
+		c.Specify("player removes self while simulation is running", func() {
+			player := sim.addPlayer(pd)
+
+			c.Assume(player.Id(), Equals, EntityId(0))
+			c.Assume(len(sim.state.entities), Equals, 1)
+			c.Assume(len(sim.state.movableEntities), Equals, 1)
+			c.Assume(len(sim.clients), Equals, 1)
+
+			sim.Start()
+
+			player.Disconnect()
+
+			sim.Stop()
+
+			c.Expect(len(sim.state.entities), Equals, 0)
+			c.Expect(len(sim.state.movableEntities), Equals, 0)
+			c.Expect(len(sim.clients), Equals, 0)
+		})
 	})
 
 	c.Specify("simulation loop runs at the intended fps", nil)
