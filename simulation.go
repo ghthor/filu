@@ -114,6 +114,7 @@ func (s *simulation) startLoop() {
 	stepLoop:
 		for {
 			s.step()
+
 			select {
 			case <-s.stop:
 				break stepLoop
@@ -136,6 +137,8 @@ func (s *simulation) startLoop() {
 		s.running = false
 		s.Unlock()
 		s.stop <- true
+
+		ticker.Stop()
 	}()
 }
 
