@@ -82,6 +82,13 @@ func newMoveRequest(input InputCmd) *moveRequest {
 	panic("never reached")
 }
 
+// Externaly Accessible Actions
+type PlayerEntity interface {
+	entity
+	SubmitInput(cmd, params string) error
+	Disconnect()
+}
+
 // This object is used to create a player
 // All the Fields must be provided
 type PlayerDef struct {

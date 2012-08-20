@@ -22,14 +22,14 @@ type (
 		IsRunning() bool
 		Stop()
 
-		AddPlayer(PlayerDef) *Player
-		RemovePlayer(*Player)
-		AddClient(stateConn)
+		AddPlayer(PlayerDef) PlayerEntity
+		RemovePlayer(PlayerEntity)
+		AddClient(StateConn)
 	}
 )
 
 type (
-	stateConn interface {
+	StateConn interface {
 		SendWorldState(*WorldState)
 	}
 
@@ -38,7 +38,7 @@ type (
 		nextEntityId EntityId
 		state        *WorldState
 
-		clients []stateConn
+		clients []StateConn
 
 		// Comm channels for adding/removing Players
 		newPlayer  chan PlayerDef
@@ -85,7 +85,7 @@ func newSimulation(fps int) *simulation {
 			movableEntities: make(map[EntityId]movableEntity, 10),
 		},
 
-		clients: make([]stateConn, 0, 10),
+		clients: make([]StateConn, 0, 10),
 
 		newPlayer:  make(chan PlayerDef),
 		dcedPlayer: make(chan dcedPlayer),
@@ -161,7 +161,7 @@ func (s *simulation) IsRunning() bool {
 	return s.running
 }
 
-func (s *simulation) AddPlayer(pd PlayerDef) *Player {
+func (s *simulation) AddPlayer(pd PlayerDef) PlayerEntity {
 	pd.newPlayer = make(chan *Player)
 	s.newPlayer <- pd
 	return <-pd.newPlayer
@@ -195,9 +195,9 @@ type dcedPlayer struct {
 	removed chan *Player
 }
 
-func (s *simulation) RemovePlayer(p *Player) {
+func (s *simulation) RemovePlayer(p PlayerEntity) {
 	dced := dcedPlayer{
-		p,
+		p.(*Player),
 		make(chan *Player),
 	}
 	s.dcedPlayer <- dced
@@ -223,7 +223,7 @@ func (s *simulation) removePlayer(p *Player) *Player {
 	return p
 }
 
-func (s *simulation) AddClient(c stateConn) {
+func (s *simulation) AddClient(c StateConn) {
 }
 
 func (s *WorldState) step() *WorldState {
