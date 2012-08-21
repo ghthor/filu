@@ -10,11 +10,18 @@ import (
 The Client generates InputEvents and sends them to the server.  The Node processes these input events and packages them up for the simulation. When the simulation runs it gathers all the Clients InputEvent's and Currently executing Actions and steps simulates a step forward in time generating the next WorldState.  This WorldState is then published to all the clients via a channel
 */
 type (
+	// Internal format used by the simulation
 	WorldState struct {
 		processingTime  time.Duration
 		time            WorldTime
 		entities        map[EntityId]entity
 		movableEntities map[EntityId]movableEntity
+	}
+
+	// External format used to send state to the clients
+	WorldStateJson struct {
+		Time     WorldTime     `json:"time"`
+		Entities []interface{} `json:"entities"`
 	}
 
 	Simulation interface {
@@ -30,7 +37,7 @@ type (
 
 type (
 	StateConn interface {
-		SendWorldState(*WorldState)
+		SendWorldState(WorldStateJson)
 	}
 
 	simulation struct {
@@ -146,7 +153,7 @@ func (s *simulation) step() {
 	s.clock = s.clock.Tick()
 	s.state = s.state.stepTo(s.clock.Now())
 	for _, c := range s.clients {
-		c.SendWorldState(s.state)
+		c.SendWorldState(s.state.Json())
 	}
 }
 
@@ -285,5 +292,19 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 	}
 	// Write out new state and return
 	s.time = t
+	return s
+}
+
+func (ws *WorldState) Json() WorldStateJson {
+	s := WorldStateJson{
+		ws.time,
+		make([]interface{}, len(ws.entities)),
+	}
+
+	i := 0
+	for _, e := range ws.entities {
+		s.Entities[i] = e.Json()
+		i++
+	}
 	return s
 }

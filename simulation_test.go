@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
 	"strconv"
@@ -8,7 +10,7 @@ import (
 
 type noopConn int
 
-func (c noopConn) SendMessage(msg, payload string) error {
+func (c noopConn) SendJson(msg string, obj interface{}) error {
 	c++
 	return nil
 }
@@ -19,8 +21,13 @@ type spyConn struct {
 	packets chan string
 }
 
-func (c spyConn) SendMessage(msg, payload string) error {
-	c.packets <- msg + ":" + payload
+func (c spyConn) SendJson(msg string, obj interface{}) error {
+	jsonBytes, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	c.packets <- msg + ":" + string(jsonBytes)
 	return nil
 }
 
@@ -140,6 +147,22 @@ func DescribeSimulation(c gospec.Context) {
 	c.Specify("simulation loop runs at the intended fps", nil)
 }
 
+type MockEntity int
+
+func (e MockEntity) Id() EntityId { return EntityId(e) }
+func (e MockEntity) Json() interface{} {
+	return struct {
+		Id   EntityId `json:"id"`
+		Name string   `json:"name"`
+	}{
+		e.Id(),
+		e.String(),
+	}
+}
+func (e MockEntity) String() string {
+	return fmt.Sprintf("MockEntity%v", e.Id())
+}
+
 func DescribeWorldState(c gospec.Context) {
 	c.Specify("processes movement requests and generates PathActions", func() {
 		playerA := &Player{
@@ -215,6 +238,22 @@ func DescribeWorldState(c gospec.Context) {
 			})
 		})
 	})
+
+	c.Specify("generates json compatitable state object", func() {
+		worldState := newWorldState(Clock(0))
+
+		entity := MockEntity(0)
+		worldState.entities[entity.Id()] = entity
+
+		jsonState := worldState.Json()
+
+		c.Assume(jsonState.Time, Equals, WorldTime(0))
+		c.Assume(len(jsonState.Entities), Equals, 1)
+
+		jsonBytes, err := json.Marshal(jsonState)
+		c.Expect(err, IsNil)
+		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0"}]}`)
+	})
 }
 
 func DescribePlayer(c gospec.Context) {
@@ -244,7 +283,7 @@ func DescribePlayer(c gospec.Context) {
 			}
 		}()
 
-		player.SendWorldState(newWorldState(Clock(0)))
+		player.SendWorldState(newWorldState(Clock(0)).Json())
 		c.Expect(<-locked, IsTrue)
 
 		c.Specify("and is unlocked afterwards", func() {
@@ -262,6 +301,22 @@ func DescribePlayer(c gospec.Context) {
 		moveRequest := player.motionInfo().moveRequest
 
 		c.Expect(moveRequest, Not(IsNil))
+	})
+
+	c.Specify("generates json compatitable state object", func() {
+		jsonBytes, err := json.Marshal(player.Json())
+		c.Expect(err, IsNil)
+		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","pathActions":null,"coord":{"x":0,"y":0}}`)
+
+		player.mi.pathActions = append(player.mi.pathActions, &PathAction{
+			NewTimeSpan(0, 10),
+			WorldCoord{0, 0},
+			WorldCoord{0, 1},
+		})
+
+		jsonBytes, err = json.Marshal(player.Json())
+		c.Expect(err, IsNil)
+		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","pathActions":[{"start":0,"end":10,"orig":{"x":0,"y":0},"dest":{"x":0,"y":1}}],"coord":{"x":0,"y":0}}`)
 	})
 }
 

@@ -7,7 +7,8 @@ import (
 
 type (
 	WorldCoord struct {
-		X, Y int
+		X int `json:"x"`
+		Y int `json:"y"`
 	}
 
 	PartialWorldCoord struct {
@@ -40,6 +41,13 @@ type (
 		TimeSpan
 		Orig, Dest WorldCoord
 	}
+
+	PathActionJson struct {
+		Start WorldTime  `json:"start"`
+		End   WorldTime  `json:"end"`
+		Orig  WorldCoord `json:"orig"`
+		Dest  WorldCoord `json:"dest"`
+	}
 )
 
 func (p PartialWorldCoord) String() string {
@@ -48,6 +56,15 @@ func (p PartialWorldCoord) String() string {
 
 func (pa PathAction) String() string {
 	return fmt.Sprintf("PA{s:%v d:%v e:%v f:%v t:%v}", pa.start, pa.duration, pa.end, pa.Orig, pa.Dest)
+}
+
+func (pa PathAction) Json() PathActionJson {
+	return PathActionJson{
+		pa.start,
+		pa.end,
+		pa.Orig,
+		pa.Dest,
+	}
 }
 
 func (pa PathAction) OrigPartial(now WorldTime) (pwc PartialWorldCoord) {

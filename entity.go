@@ -11,6 +11,7 @@ type (
 
 	entity interface {
 		Id() EntityId
+		Json() interface{}
 	}
 
 	moveRequest struct {
@@ -104,7 +105,7 @@ type PlayerDef struct {
 	MovementSpeed uint
 
 	// A Connection to send WorldState too
-	Conn protocol.MessageOutputConn
+	Conn protocol.JsonOutputConn
 
 	// This is Used internally by the simulation to return the new
 	// Player object after is has been created
@@ -121,23 +122,46 @@ type Player struct {
 	sim Simulation
 
 	// A Connection to send WorldState too
-	conn protocol.MessageOutputConn
+	conn protocol.JsonOutputConn
 
 	// Communication channels used inside the muxer
 	collectInput    chan InputCmd
 	serveMotionInfo chan *motionInfo
-	routeWorldState chan *WorldState
+	routeWorldState chan WorldStateJson
 	killMux         chan bool
+}
+
+type PlayerJson struct {
+	Id          EntityId         `json:"id"`
+	Name        string           `json:"name"`
+	PathActions []PathActionJson `json:"pathActions"`
+	Coord       WorldCoord       `json:"coord"`
 }
 
 func (p *Player) Id() EntityId {
 	return p.entityId
 }
 
+func (p *Player) Json() interface{} {
+	ps := PlayerJson{
+		Id:    p.entityId,
+		Name:  p.Name,
+		Coord: p.mi.coord,
+	}
+
+	if len(p.mi.pathActions) > 0 {
+		ps.PathActions = make([]PathActionJson, len(p.mi.pathActions))
+		for i, pa := range p.mi.pathActions {
+			ps.PathActions[i] = pa.Json()
+		}
+	}
+	return ps
+}
+
 func (p *Player) mux() {
 	p.collectInput = make(chan InputCmd)
 	p.serveMotionInfo = make(chan *motionInfo)
-	p.routeWorldState = make(chan *WorldState)
+	p.routeWorldState = make(chan WorldStateJson)
 	p.killMux = make(chan bool)
 
 	go func() {
@@ -170,7 +194,7 @@ func (p *Player) mux() {
 					case worldState := <-p.routeWorldState:
 						// Take the worldState and cut out anything the client shouldn't know
 						// Package up this localized WorldState and send it over the wire
-						p.conn.SendMessage("worldState", worldState.String())
+						p.conn.SendJson("update", worldState)
 						break lockedMotionInfo
 					case <-p.killMux:
 						return
@@ -188,8 +212,8 @@ func (p *Player) stopMux() {
 }
 
 // External interface of the muxer presented to the simulation
-func (p *Player) motionInfo() *motionInfo          { return <-p.serveMotionInfo }
-func (p *Player) SendWorldState(state *WorldState) { p.routeWorldState <- state }
+func (p *Player) motionInfo() *motionInfo             { return <-p.serveMotionInfo }
+func (p *Player) SendWorldState(state WorldStateJson) { p.routeWorldState <- state }
 
 // External interface of the muxer presented to the Node
 func (p *Player) SubmitInput(cmd, params string) error {
