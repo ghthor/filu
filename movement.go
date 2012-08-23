@@ -322,3 +322,20 @@ func (d Direction) Reverse() Direction {
 	}
 	panic("never reached")
 }
+
+func (d Direction) String() string {
+	switch d {
+	case North:
+		return "north"
+
+	case East:
+		return "east"
+
+	case South:
+		return "south"
+
+	case West:
+		return "west"
+	}
+	panic("never reached")
+}

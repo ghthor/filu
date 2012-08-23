@@ -306,7 +306,7 @@ func DescribePlayer(c gospec.Context) {
 	c.Specify("generates json compatitable state object", func() {
 		jsonBytes, err := json.Marshal(player.Json())
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","pathActions":null,"coord":{"x":0,"y":0}}`)
+		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":null,"coord":{"x":0,"y":0}}`)
 
 		player.mi.pathActions = append(player.mi.pathActions, &PathAction{
 			NewTimeSpan(0, 10),
@@ -316,7 +316,7 @@ func DescribePlayer(c gospec.Context) {
 
 		jsonBytes, err = json.Marshal(player.Json())
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","pathActions":[{"start":0,"end":10,"orig":{"x":0,"y":0},"dest":{"x":0,"y":1}}],"coord":{"x":0,"y":0}}`)
+		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":[{"start":0,"end":10,"orig":{"x":0,"y":0},"dest":{"x":0,"y":1}}],"coord":{"x":0,"y":0}}`)
 	})
 }
 

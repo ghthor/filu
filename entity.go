@@ -134,6 +134,7 @@ type Player struct {
 type PlayerJson struct {
 	Id          EntityId         `json:"id"`
 	Name        string           `json:"name"`
+	Facing      string           `json:"facing"`
 	PathActions []PathActionJson `json:"pathActions"`
 	Coord       WorldCoord       `json:"coord"`
 }
@@ -144,9 +145,10 @@ func (p *Player) Id() EntityId {
 
 func (p *Player) Json() interface{} {
 	ps := PlayerJson{
-		Id:    p.entityId,
-		Name:  p.Name,
-		Coord: p.mi.coord,
+		Id:     p.entityId,
+		Name:   p.Name,
+		Facing: p.mi.facing.String(),
+		Coord:  p.mi.coord,
 	}
 
 	if len(p.mi.pathActions) > 0 {

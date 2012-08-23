@@ -29,6 +29,13 @@ func DescribeDirection(c gospec.Context) {
 		c.Expect(West.IsParallelTo(East), IsTrue)
 		c.Expect(West.IsParallelTo(West), IsTrue)
 	})
+
+	c.Specify("converts to a string", func() {
+		c.Expect(North.String(), Equals, "north")
+		c.Expect(East.String(), Equals, "east")
+		c.Expect(South.String(), Equals, "south")
+		c.Expect(West.String(), Equals, "west")
+	})
 }
 
 func DescribePathAction(c gospec.Context) {
