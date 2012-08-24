@@ -279,16 +279,23 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 	// Apply All remaining Pending Actions as Running Actions
 	for dest, entity := range newPaths {
 		mi := entity.motionInfo()
+
 		pathAction := &PathAction{
 			NewTimeSpan(t, t+WorldTime(mi.speed)),
 			mi.coord,
 			dest,
 		}
 
-		// Update MoveRequest
+		// Consume the moveRequest
 		mi.moveRequest = nil
+
+		// If entity is facing the direction of movement, apply the pathAction
+		if mi.facing == pathAction.Direction() {
+			mi.pathActions = append(mi.pathActions, pathAction)
+		}
+
+		// Update the facing
 		mi.facing = pathAction.Direction()
-		mi.pathActions = append(mi.pathActions, pathAction)
 	}
 	// Write out new state and return
 	s.time = t

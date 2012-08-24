@@ -168,13 +168,13 @@ func DescribeWorldState(c gospec.Context) {
 		playerA := &Player{
 			Name:     "thundercleese",
 			entityId: 0,
-			mi:       newMotionInfo(WorldCoord{0, 0}, South, 35),
+			mi:       newMotionInfo(WorldCoord{0, 0}, North, 35),
 			conn:     conn,
 		}
 		playerB := &Player{
 			Name:     "zorak",
 			entityId: 1,
-			mi:       newMotionInfo(WorldCoord{1, 0}, North, 40),
+			mi:       newMotionInfo(WorldCoord{1, 0}, South, 40),
 			conn:     conn,
 		}
 
@@ -236,6 +236,41 @@ func DescribeWorldState(c gospec.Context) {
 				c.Expect(len(playerA.mi.pathActions), Equals, 0)
 				c.Expect(len(playerB.mi.pathActions), Equals, 0)
 			})
+		})
+
+		c.Specify("consume moveRequest's and changes entities facing", func() {
+			step := func() {
+				worldState.step()
+				json := worldState.Json()
+				playerA.SendWorldState(json)
+				playerB.SendWorldState(json)
+			}
+
+			playerA.SubmitInput("move=0", "west")
+			playerB.SubmitInput("move=0", "west")
+
+			step()
+
+			c.Expect(playerA.mi.moveRequest, IsNil)
+			c.Expect(playerA.mi.facing, Equals, West)
+			c.Expect(len(playerA.mi.pathActions), Equals, 0)
+
+			c.Expect(playerB.mi.moveRequest, IsNil)
+			c.Expect(playerB.mi.facing, Equals, West)
+			c.Expect(len(playerB.mi.pathActions), Equals, 0)
+
+			playerA.SubmitInput("move=0", "north")
+			playerB.SubmitInput("move=0", "south")
+
+			step()
+
+			c.Expect(playerA.mi.moveRequest, IsNil)
+			c.Expect(playerA.mi.facing, Equals, North)
+			c.Expect(len(playerA.mi.pathActions), Equals, 0)
+
+			c.Expect(playerB.mi.moveRequest, IsNil)
+			c.Expect(playerB.mi.facing, Equals, South)
+			c.Expect(len(playerB.mi.pathActions), Equals, 0)
 		})
 	})
 
