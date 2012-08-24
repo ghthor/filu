@@ -338,6 +338,20 @@ func DescribePlayer(c gospec.Context) {
 		c.Expect(moveRequest, Not(IsNil))
 	})
 
+	c.Specify("a requst to move is canceled by a moveCancel cmd", func() {
+		player.SubmitInput("move=0", "north")
+		player.SubmitInput("moveCancel=0", "north")
+
+		c.Expect(player.motionInfo().moveRequest, IsNil)
+	})
+
+	c.Specify("a moveCancel cmd is dropped if it doesn't cancel the current move request", func() {
+		player.SubmitInput("move=0", "north")
+		player.SubmitInput("moveCancel=0", "south")
+
+		c.Expect(player.motionInfo().moveRequest, Not(IsNil))
+	})
+
 	c.Specify("generates json compatitable state object", func() {
 		jsonBytes, err := json.Marshal(player.Json())
 		c.Expect(err, IsNil)

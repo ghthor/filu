@@ -180,6 +180,12 @@ func (p *Player) mux() {
 				switch input.cmd {
 				case "move":
 					p.mi.moveRequest = newMoveRequest(input)
+				case "moveCancel":
+					if p.mi.moveRequest != nil {
+						if p.mi.moveRequest.Direction.String() == input.params {
+							p.mi.moveRequest = nil
+						}
+					}
 				default:
 					panic("Unknown InputCmd: " + input.cmd)
 				}
