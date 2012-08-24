@@ -190,7 +190,7 @@ func (pa PathAction) Direction() Direction {
 	case x > 0 && y == 0:
 		return East
 
-	case x == 0 && y == 0:
+	default:
 	}
 
 	panic("invalid PathAction")
