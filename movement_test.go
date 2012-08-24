@@ -38,6 +38,32 @@ func DescribeDirection(c gospec.Context) {
 	})
 }
 
+func DescribeWorldCoord(c gospec.Context) {
+	worldCoord := WorldCoord{0, 0}
+
+	c.Specify("neighbors", func() {
+		c.Expect(worldCoord.Neighbor(North), Equals, WorldCoord{0, 1})
+		c.Expect(worldCoord.Neighbor(East), Equals, WorldCoord{1, 0})
+		c.Expect(worldCoord.Neighbor(South), Equals, WorldCoord{0, -1})
+		c.Expect(worldCoord.Neighbor(West), Equals, WorldCoord{-1, 0})
+	})
+
+	c.Specify("determining directions between points", func() {
+		c.Expect(worldCoord.DirectionTo(WorldCoord{0, 1}), Equals, North)
+		c.Expect(worldCoord.DirectionTo(WorldCoord{1, 0}), Equals, East)
+		c.Expect(worldCoord.DirectionTo(WorldCoord{0, -1}), Equals, South)
+		c.Expect(worldCoord.DirectionTo(WorldCoord{-1, 0}), Equals, West)
+
+		defer func() {
+			x := recover()
+			c.Expect(x, Not(IsNil))
+			c.Expect(x, Equals, "unable to calculate Direction")
+		}()
+
+		worldCoord.DirectionTo(WorldCoord{1, 1})
+	})
+}
+
 func DescribePathAction(c gospec.Context) {
 
 	// TODO This test might not cover really short durations

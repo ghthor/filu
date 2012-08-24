@@ -31,6 +31,29 @@ func (c WorldCoord) Neighbor(d Direction) WorldCoord {
 	return c
 }
 
+func (c WorldCoord) DirectionTo(other WorldCoord) Direction {
+	x := other.X - c.X
+	y := other.Y - c.Y
+
+	switch {
+	case x == 0 && y < 0:
+		return South
+
+	case x == 0 && y > 0:
+		return North
+
+	case x < 0 && y == 0:
+		return West
+
+	case x > 0 && y == 0:
+		return East
+
+	default:
+	}
+
+	panic("unable to calculate Direction")
+}
+
 type (
 	StandAction struct {
 		WorldCoord
