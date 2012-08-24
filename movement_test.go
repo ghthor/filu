@@ -319,6 +319,77 @@ func DescribePathAction(c gospec.Context) {
 	})
 }
 
+func DescribeMoveAction(c gospec.Context) {
+	c.Specify("an entity can move in any direction immediately after moving", func() {
+		pathAction1 := &PathAction{
+			NewTimeSpan(WorldTime(0), WorldTime(20)),
+			WorldCoord{0, 0},
+			WorldCoord{0, 1},
+		}
+
+		pathAction2 := &PathAction{
+			NewTimeSpan(WorldTime(20), WorldTime(40)),
+			WorldCoord{0, 1},
+			WorldCoord{1, 1},
+		}
+
+		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsTrue)
+
+		pathAction2.start = pathAction1.end + 1
+		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsFalse)
+	})
+
+	c.Specify("an entity can't move before turning", func() {
+		pathAction := &PathAction{
+			NewTimeSpan(WorldTime(21), WorldTime(41)),
+			WorldCoord{0, 1},
+			WorldCoord{1, 1},
+		}
+
+		turnAction := TurnAction{
+			to:   pathAction.Direction().Reverse(),
+			time: WorldTime(pathAction.Start()),
+		}
+
+		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
+	})
+
+	c.Specify("An entity can't move immediatly after turning", func() {
+		pathAction := &PathAction{
+			NewTimeSpan(WorldTime(21), WorldTime(41)),
+			WorldCoord{0, 1},
+			WorldCoord{1, 1},
+		}
+
+		turnAction := TurnAction{
+			to:   pathAction.Direction(),
+			time: WorldTime(pathAction.Start() - TurnActionDelay),
+		}
+
+		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
+
+		turnAction.time = turnAction.time - 1
+		c.Expect(pathAction.CanHappenAfter(turnAction), IsTrue)
+	})
+
+	c.Specify("an entity can't immediatly turn after turning", func() {
+		turnAction1 := TurnAction{
+			South, North,
+			WorldTime(0),
+		}
+
+		turnAction2 := TurnAction{
+			North, South,
+			WorldTime(TurnActionDelay),
+		}
+
+		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsFalse)
+
+		turnAction2.time = WorldTime(TurnActionDelay + 1)
+		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsTrue)
+	})
+}
+
 func DescribeCollision(c gospec.Context) {
 	c.Specify("overlap for a collision that is", func() {
 

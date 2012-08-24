@@ -59,9 +59,15 @@ func (p PartialWorldCoord) String() string {
 }
 
 type (
-	StandAction struct {
-		WorldCoord
-		Facing Direction
+	MoveAction interface {
+		Start() WorldTime
+		End() WorldTime
+		CanHappenAfter(action MoveAction) bool
+	}
+
+	TurnAction struct {
+		from, to Direction
+		time     WorldTime
 	}
 
 	PathAction struct {
@@ -77,6 +83,31 @@ type (
 	}
 )
 
+// Currenting in Frames, optimized for 40fps
+// TODO Conditionalize this with the fps
+const TurnActionDelay = 10
+
+func (a TurnAction) Start() WorldTime { return a.time }
+func (a TurnAction) End() WorldTime   { return a.time }
+func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
+	if anAction == nil {
+		return true
+	}
+
+	switch action := anAction.(type) {
+	case TurnAction:
+		if a.time-action.time > TurnActionDelay {
+			return true
+		} else {
+			return false
+		}
+	case *PathAction:
+		return true
+	default:
+	}
+	panic("unknown MoveAction type")
+}
+
 func (pa PathAction) String() string {
 	return fmt.Sprintf("PA{s:%v d:%v e:%v f:%v t:%v}", pa.start, pa.duration, pa.end, pa.Orig, pa.Dest)
 }
@@ -88,6 +119,34 @@ func (pa PathAction) Json() PathActionJson {
 		pa.Orig,
 		pa.Dest,
 	}
+}
+
+func (pa *PathAction) Start() WorldTime { return pa.TimeSpan.start }
+func (pa *PathAction) End() WorldTime   { return pa.TimeSpan.end }
+
+func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
+	if anAction == nil {
+		return true
+	}
+
+	switch action := anAction.(type) {
+	case TurnAction:
+		if pa.Start()-action.End() > TurnActionDelay && action.to == pa.Direction() {
+			return true
+		} else {
+			return false
+		}
+	case *PathAction:
+		if pa.Start() == action.End() {
+			return true
+		} else if pa.Direction() == action.Direction() {
+			return true
+		} else {
+			return false
+		}
+	default:
+	}
+	panic("unknown MoveAction type")
 }
 
 func (pa PathAction) OrigPartial(now WorldTime) (pwc PartialWorldCoord) {
