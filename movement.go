@@ -54,6 +54,10 @@ func (c WorldCoord) DirectionTo(other WorldCoord) Direction {
 	panic("unable to calculate Direction")
 }
 
+func (p PartialWorldCoord) String() string {
+	return fmt.Sprintf("PL{%v %v}", p.WorldCoord, p.Percentage)
+}
+
 type (
 	StandAction struct {
 		WorldCoord
@@ -72,10 +76,6 @@ type (
 		Dest  WorldCoord `json:"dest"`
 	}
 )
-
-func (p PartialWorldCoord) String() string {
-	return fmt.Sprintf("PL{%v %v}", p.WorldCoord, p.Percentage)
-}
 
 func (pa PathAction) String() string {
 	return fmt.Sprintf("PA{s:%v d:%v e:%v f:%v t:%v}", pa.start, pa.duration, pa.end, pa.Orig, pa.Dest)
