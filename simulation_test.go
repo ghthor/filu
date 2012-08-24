@@ -164,7 +164,7 @@ func (e MockEntity) String() string {
 }
 
 func DescribeWorldState(c gospec.Context) {
-	c.Specify("processes movement requests and generates PathActions", func() {
+	c.Specify("process movement requests", func() {
 		playerA := &Player{
 			Name:     "thundercleese",
 			entityId: 0,
@@ -192,7 +192,8 @@ func DescribeWorldState(c gospec.Context) {
 			playerA.SubmitInput("move=0", "north")
 			playerB.SubmitInput("move=0", "south")
 
-			worldState.stepTo(WorldTime(1))
+			// Have to step forward 4 times because of the facing change requirement
+			worldState.step()
 
 			c.Expect(playerA.mi.moveRequest, IsNil)
 			c.Expect(playerA.mi.facing, Equals, North)
@@ -259,18 +260,32 @@ func DescribeWorldState(c gospec.Context) {
 			c.Expect(playerB.mi.facing, Equals, West)
 			c.Expect(len(playerB.mi.pathActions), Equals, 0)
 
-			playerA.SubmitInput("move=0", "north")
-			playerB.SubmitInput("move=0", "south")
+			// TODO 10 ticks == 250ms at 40fps, this should be based on the fps
+			c.Specify("only after TurnActionDelay ticks have passed", func() {
 
-			step()
+				facingWillChangeAt := worldState.time + TurnActionDelay
 
-			c.Expect(playerA.mi.moveRequest, IsNil)
-			c.Expect(playerA.mi.facing, Equals, North)
-			c.Expect(len(playerA.mi.pathActions), Equals, 0)
+				playerA.SubmitInput("move=0", "north")
+				playerB.SubmitInput("move=0", "south")
 
-			c.Expect(playerB.mi.moveRequest, IsNil)
-			c.Expect(playerB.mi.facing, Equals, South)
-			c.Expect(len(playerB.mi.pathActions), Equals, 0)
+				for step(); worldState.time <= facingWillChangeAt; step() {
+					c.Expect(playerA.mi.moveRequest, Not(IsNil))
+					c.Expect(playerA.mi.facing, Equals, West)
+					c.Expect(len(playerA.mi.pathActions), Equals, 0)
+
+					c.Expect(playerB.mi.moveRequest, Not(IsNil))
+					c.Expect(playerB.mi.facing, Equals, West)
+					c.Expect(len(playerB.mi.pathActions), Equals, 0)
+				}
+
+				c.Expect(playerA.mi.moveRequest, IsNil)
+				c.Expect(playerA.mi.facing, Equals, North)
+				c.Expect(len(playerA.mi.pathActions), Equals, 0)
+
+				c.Expect(playerB.mi.moveRequest, IsNil)
+				c.Expect(playerB.mi.facing, Equals, South)
+				c.Expect(len(playerB.mi.pathActions), Equals, 0)
+			})
 		})
 	})
 

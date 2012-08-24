@@ -28,6 +28,8 @@ type (
 
 		// fifo
 		pathActions []*PathAction
+
+		lastMoveAction MoveAction
 	}
 
 	movableEntity interface {
@@ -36,18 +38,36 @@ type (
 	}
 )
 
-func newMotionInfo(c WorldCoord, f Direction, speed uint) *motionInfo {
+func newMotionInfo(coord WorldCoord, facing Direction, speed uint) *motionInfo {
 	return &motionInfo{
-		c,
-		f,
+		coord,
+		facing,
 		speed,
 		nil,
 		make([]*PathAction, 0, 2),
+		nil,
 	}
 }
 
 func (mi motionInfo) isMoving() bool {
 	return len(mi.pathActions) == 0
+}
+
+func (mi *motionInfo) Apply(moveAction MoveAction) {
+	switch action := moveAction.(type) {
+	case TurnAction:
+		mi.facing = action.to
+		mi.lastMoveAction = action
+
+	case *PathAction:
+		mi.facing = action.Direction()
+		mi.pathActions = append(mi.pathActions, action)
+
+	default:
+		panic("unknown MoveRequest type")
+	}
+
+	mi.moveRequest = nil
 }
 
 type InputCmd struct {

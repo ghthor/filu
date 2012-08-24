@@ -247,6 +247,7 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 		// Removed finished pathActions
 		for _, pa := range mi.pathActions {
 			if pa.end <= t {
+				mi.lastMoveAction = pa
 				mi.pathActions = mi.pathActions[:0]
 				mi.coord = pa.Dest
 			}
@@ -268,6 +269,27 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 		mi := entity.motionInfo()
 		dest := mi.coord.Neighbor(mi.moveRequest.Direction)
 
+		direction := mi.coord.DirectionTo(dest)
+
+		// Facing the direction of request
+		if mi.facing != direction {
+
+			// TODO This is a weird check, dunno how to fix it
+			if pathAction, ok := mi.lastMoveAction.(*PathAction); ok && pathAction.End() == t {
+			} else {
+				turnAction := TurnAction{
+					mi.facing, direction,
+					t,
+				}
+
+				// Attempt to Turn Facing
+				if turnAction.CanHappenAfter(mi.lastMoveAction) {
+					mi.Apply(turnAction)
+				}
+				continue
+			}
+		}
+
 		if newPaths[dest] == nil {
 			newPaths[dest] = entity
 		} else {
@@ -286,16 +308,9 @@ func (s *WorldState) stepTo(t WorldTime) *WorldState {
 			dest,
 		}
 
-		// Consume the moveRequest
-		mi.moveRequest = nil
-
-		// If entity is facing the direction of movement, apply the pathAction
-		if mi.facing == pathAction.Direction() {
-			mi.pathActions = append(mi.pathActions, pathAction)
+		if pathAction.CanHappenAfter(mi.lastMoveAction) {
+			mi.Apply(pathAction)
 		}
-
-		// Update the facing
-		mi.facing = pathAction.Direction()
 	}
 	// Write out new state and return
 	s.time = t
