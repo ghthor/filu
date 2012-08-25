@@ -13,6 +13,7 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribeTimeSpan)
 	r.AddSpec(engine.DescribeDirection)
 	r.AddSpec(engine.DescribeWorldCoord)
+	r.AddSpec(engine.DescribeAABB)
 	r.AddSpec(engine.DescribePathAction)
 	r.AddSpec(engine.DescribeMoveAction)
 	r.AddSpec(engine.DescribeCollision)
