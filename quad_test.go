@@ -45,6 +45,92 @@ func DescribeAABB(c gospec.Context) {
 		})
 	})
 
+	c.Specify("can calulate the intersection of 2 AABBs", func() {
+		aabb := AABB{
+			WorldCoord{0, 0},
+			WorldCoord{10, -10},
+		}
+
+		c.Specify("when they overlap", func() {
+			other := AABB{
+				WorldCoord{5, -5},
+				WorldCoord{15, -15},
+			}
+
+			intersection := AABB{
+				WorldCoord{5, -5},
+				WorldCoord{10, -10},
+			}
+
+			intersectionResult, err := aabb.Intersection(other)
+			c.Assume(err, IsNil)
+			c.Expect(intersectionResult, Equals, intersection)
+
+			intersectionResult, err = other.Intersection(aabb)
+			c.Assume(err, IsNil)
+			c.Expect(intersectionResult, Equals, intersection)
+
+			other = AABB{
+				WorldCoord{-5, 5},
+				WorldCoord{5, -5},
+			}
+
+			intersection = AABB{
+				WorldCoord{0, 0},
+				WorldCoord{5, -5},
+			}
+
+			intersectionResult, err = aabb.Intersection(other)
+			c.Assume(err, IsNil)
+			c.Expect(intersectionResult, Equals, intersection)
+
+			intersectionResult, err = other.Intersection(aabb)
+			c.Assume(err, IsNil)
+			c.Expect(intersectionResult, Equals, intersection)
+		})
+
+		c.Specify("when one is contained inside the other", func() {
+			// aabb Contains other
+			other := AABB{
+				WorldCoord{5, -5},
+				WorldCoord{6, -6},
+			}
+
+			intersection, err := aabb.Intersection(other)
+			c.Assume(err, IsNil)
+			c.Expect(intersection, Equals, other)
+
+			intersection, err = other.Intersection(aabb)
+			c.Assume(err, IsNil)
+			c.Expect(intersection, Equals, other)
+
+			// other Contains aabb
+			other = AABB{
+				WorldCoord{-1, 1},
+				WorldCoord{11, -11},
+			}
+
+			intersection, err = aabb.Intersection(other)
+			c.Assume(err, IsNil)
+			c.Expect(intersection, Equals, aabb)
+
+			intersection, err = other.Intersection(aabb)
+			c.Assume(err, IsNil)
+			c.Expect(intersection, Equals, aabb)
+		})
+
+		c.Specify("and an error is returned if the rectangles do not overlap", func() {
+			other := AABB{
+				WorldCoord{11, -11},
+				WorldCoord{11, -11},
+			}
+
+			_, err := aabb.Intersection(other)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err.Error(), Equals, "no overlap")
+		})
+	})
+
 	c.Specify("flip topleft and bottomright if they are inverted", func() {
 		aabb = AABB{
 			WorldCoord{0, 0},
