@@ -85,10 +85,11 @@ type (
 	}
 
 	quadLeaf struct {
-		parent      quad
-		aabb        AABB
-		entities    []entity
-		maxEntities int
+		parent          quad
+		aabb            AABB
+		entities        []entity
+		movableEntities []movableEntity
+		maxEntities     int
 	}
 
 	quadTree struct {
@@ -165,6 +166,7 @@ func newQuadTree(aabb AABB, entities []entity, maxPerQuad int) (quad, error) {
 		nil,
 		aabb,
 		make([]entity, 0, maxPerQuad),
+		make([]movableEntity, 0, maxPerQuad),
 		maxPerQuad,
 	}, nil
 }
@@ -179,6 +181,11 @@ func (q *quadLeaf) Insert(e entity) quad {
 	}
 
 	q.entities = append(q.entities, e)
+
+	// Collect Movable Entities
+	if me, ok := e.(movableEntity); ok {
+		q.movableEntities = append(q.movableEntities, me)
+	}
 	return q
 }
 
@@ -189,6 +196,13 @@ func (q *quadLeaf) InsertAll(entities []entity) quad {
 	}
 
 	q.entities = append(q.entities, entities...)
+
+	// Collect Movable Entities
+	for _, e := range entities {
+		if me, ok := e.(movableEntity); ok {
+			q.movableEntities = append(q.movableEntities, me)
+		}
+	}
 	return q
 }
 
@@ -226,6 +240,7 @@ func (q *quadLeaf) divide() (qt *quadTree) {
 			qt,
 			aabbs[i],
 			make([]entity, 0, cap(q.entities)),
+			make([]movableEntity, 0, cap(q.entities)),
 			q.maxEntities,
 		}
 	}

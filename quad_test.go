@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
 )
@@ -142,6 +143,27 @@ func DescribeAABB(c gospec.Context) {
 	})
 }
 
+type MockMobileEntity struct {
+	id EntityId
+	mi *motionInfo
+}
+
+func (e *MockMobileEntity) Id() EntityId      { return e.id }
+func (e *MockMobileEntity) Coord() WorldCoord { return e.mi.coord }
+func (e *MockMobileEntity) Json() interface{} {
+	return struct {
+		Id   EntityId `json:"id"`
+		Name string   `json:"name"`
+	}{
+		e.Id(),
+		e.String(),
+	}
+}
+func (e *MockMobileEntity) motionInfo() *motionInfo { return e.mi }
+func (e *MockMobileEntity) String() string {
+	return fmt.Sprintf("MockMobileEntity%v", e.Id())
+}
+
 func DescribeQuad(c gospec.Context) {
 	c.Specify("AABB can be split into 4 quads", func() {
 		aabb := AABB{
@@ -238,12 +260,25 @@ func DescribeQuad(c gospec.Context) {
 		}, nil, 1)
 		c.Assume(err, IsNil)
 
-		qt = qt.Insert(MockEntity{})
+		c.Specify("as an entity", func() {
+			qt = qt.Insert(MockEntity{})
 
-		leaf, isAQuadLeaf := qt.(*quadLeaf)
-		c.Assume(isAQuadLeaf, IsTrue)
+			leaf, isAQuadLeaf := qt.(*quadLeaf)
+			c.Assume(isAQuadLeaf, IsTrue)
 
-		c.Expect(len(leaf.entities), Equals, 1)
+			c.Expect(len(leaf.entities), Equals, 1)
+			c.Expect(len(leaf.movableEntities), Equals, 0)
+		})
+
+		c.Specify("as an movableEntity", func() {
+			qt = qt.Insert(&MockMobileEntity{mi: newMotionInfo(WorldCoord{0, 0}, North, 20)})
+
+			leaf, isAQuadLeaf := qt.(*quadLeaf)
+			c.Assume(isAQuadLeaf, IsTrue)
+
+			c.Expect(len(leaf.entities), Equals, 1)
+			c.Expect(len(leaf.movableEntities), Equals, 1)
+		})
 	})
 
 	c.Specify("quadTree divides when per quad entity limit is reached", func() {
