@@ -147,9 +147,13 @@ func DescribeSimulation(c gospec.Context) {
 	c.Specify("simulation loop runs at the intended fps", nil)
 }
 
-type MockEntity int
+type MockEntity struct {
+	id    EntityId
+	coord WorldCoord
+}
 
-func (e MockEntity) Id() EntityId { return EntityId(e) }
+func (e MockEntity) Id() EntityId      { return e.id }
+func (e MockEntity) Coord() WorldCoord { return e.coord }
 func (e MockEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`
@@ -292,7 +296,7 @@ func DescribeWorldState(c gospec.Context) {
 	c.Specify("generates json compatitable state object", func() {
 		worldState := newWorldState(Clock(0))
 
-		entity := MockEntity(0)
+		entity := MockEntity{id: 0}
 		worldState.entities[entity.Id()] = entity
 
 		jsonState := worldState.Json()

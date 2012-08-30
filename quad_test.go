@@ -230,4 +230,38 @@ func DescribeQuad(c gospec.Context) {
 			c.Expect(err.Error(), Equals, "aabb is inverted")
 		})
 	})
+
+	c.Specify("entity is inserted into quadtree", func() {
+		qt, err := newQuadTree(AABB{
+			WorldCoord{-1000, 1000},
+			WorldCoord{1000, -1000},
+		}, nil, 1)
+		c.Assume(err, IsNil)
+
+		qt = qt.Insert(MockEntity{})
+
+		leaf, isAQuadLeaf := qt.(*quadLeaf)
+		c.Assume(isAQuadLeaf, IsTrue)
+
+		c.Expect(len(leaf.entities), Equals, 1)
+	})
+
+	c.Specify("quadTree divides when per quad entity limit is reached", func() {
+		qt, err := newQuadTree(AABB{
+			WorldCoord{-1000, 1000},
+			WorldCoord{1000, -1000},
+		}, nil, 1)
+		c.Assume(err, IsNil)
+
+		nwEntity := MockEntity{0, WorldCoord{-1, 1}}
+		neEntity := MockEntity{1, WorldCoord{0, 1}}
+		qt = qt.Insert(nwEntity)
+		qt = qt.Insert(neEntity)
+
+		treeNode, isAQuadTree := qt.(*quadTree)
+		c.Assume(isAQuadTree, IsTrue)
+
+		c.Expect(treeNode.quads[QUAD_NW].Contains(nwEntity), IsTrue)
+		c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsTrue)
+	})
 }

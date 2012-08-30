@@ -11,6 +11,7 @@ type (
 
 	entity interface {
 		Id() EntityId
+		Coord() WorldCoord
 		Json() interface{}
 	}
 
@@ -161,6 +162,10 @@ type PlayerJson struct {
 
 func (p *Player) Id() EntityId {
 	return p.entityId
+}
+
+func (p *Player) Coord() WorldCoord {
+	return p.mi.coord
 }
 
 func (p *Player) Json() interface{} {

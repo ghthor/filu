@@ -4,11 +4,9 @@ import (
 	"errors"
 )
 
-type (
-	AABB struct {
-		TopL, BotR WorldCoord
-	}
-)
+type AABB struct {
+	TopL, BotR WorldCoord
+}
 
 func (aabb AABB) Contains(c WorldCoord) bool {
 	return (aabb.TopL.X <= c.X && aabb.BotR.X >= c.X &&
@@ -77,6 +75,29 @@ func (aabb AABB) Invert() AABB {
 	}
 }
 
+type (
+	quad interface {
+		Parent() quad
+		AABB() AABB
+		Insert(entity) quad
+		InsertAll([]entity) quad
+		Contains(entity) bool
+	}
+
+	quadLeaf struct {
+		parent      quad
+		aabb        AABB
+		entities    []entity
+		maxEntities int
+	}
+
+	quadTree struct {
+		parent quad
+		aabb   AABB
+		quads  [4]quad
+	}
+)
+
 const (
 	QUAD_NW = iota
 	QUAD_NE
@@ -125,4 +146,121 @@ func splitAABBToQuads(aabb AABB) ([4]AABB, error) {
 	aabbs[QUAD_SW] = sw
 
 	return aabbs, nil
+}
+
+func newQuadTree(aabb AABB, entities []entity, maxPerQuad int) (quad, error) {
+	if aabb.IsInverted() {
+		return nil, errors.New("aabb is Inverted")
+	}
+
+	if aabb.Area() <= 1 {
+		return nil, errors.New("aabb Area is invalid")
+	}
+
+	if entities != nil {
+		panic("unimplemented")
+	}
+
+	return &quadLeaf{
+		nil,
+		aabb,
+		make([]entity, 0, maxPerQuad),
+		maxPerQuad,
+	}, nil
+}
+
+func (q *quadLeaf) Parent() quad { return q.parent }
+func (q *quadLeaf) AABB() AABB   { return q.aabb }
+
+func (q *quadLeaf) Insert(e entity) quad {
+	// Check if this Quad is full
+	if len(q.entities) == q.maxEntities {
+		return q.divide().Insert(e)
+	}
+
+	q.entities = append(q.entities, e)
+	return q
+}
+
+func (q *quadLeaf) InsertAll(entities []entity) quad {
+	// Check if Quad will overflow in size
+	if len(q.entities)+len(entities) > q.maxEntities {
+		return q.divide().InsertAll(entities)
+	}
+
+	q.entities = append(q.entities, entities...)
+	return q
+}
+
+func (q *quadLeaf) Contains(e entity) bool {
+	for _, entity := range q.entities {
+		if entity.Id() == e.Id() {
+			return true
+		}
+	}
+	return false
+}
+
+func (q *quadLeaf) divide() (qt *quadTree) {
+	if q.aabb.Width() == 1 {
+		panic("unable to divide quad with width of 1")
+	}
+
+	if q.aabb.Height() == 1 {
+		panic("unable to divide quad with height of 1")
+	}
+
+	qt = &quadTree{
+		parent: q.parent,
+		aabb:   q.aabb,
+	}
+
+	aabbs, err := splitAABBToQuads(q.aabb)
+	if err != nil {
+		panic("error spliting aabb into quads")
+	}
+
+	//TODO Reuse this leaf forming 3 new leaves + this 1
+	for i, _ := range qt.quads {
+		qt.quads[i] = &quadLeaf{
+			qt,
+			aabbs[i],
+			make([]entity, 0, cap(q.entities)),
+			q.maxEntities,
+		}
+	}
+
+	qt.InsertAll(q.entities)
+
+	return qt
+}
+
+func (q *quadTree) Parent() quad { return q.parent }
+func (q *quadTree) AABB() AABB   { return q.aabb }
+
+func (q *quadTree) Insert(e entity) quad {
+	for i, quad := range q.quads {
+		if quad.AABB().Contains(e.Coord()) {
+			quad = quad.Insert(e)
+			q.quads[i] = quad
+			return q
+		}
+	}
+	panic("no quads could contain entity")
+}
+
+func (q *quadTree) InsertAll(entities []entity) quad {
+	for _, entity := range entities {
+		q.Insert(entity)
+	}
+	return q
+}
+
+func (q *quadTree) Contains(e entity) bool {
+	for _, quad := range q.quads {
+		if quad.Contains(e) {
+			return true
+		}
+	}
+	return false
 }
