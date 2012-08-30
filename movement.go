@@ -31,6 +31,12 @@ func (c WorldCoord) Neighbor(d Direction) WorldCoord {
 	return c
 }
 
+func (c WorldCoord) Add(x, y int) WorldCoord {
+	c.X += x
+	c.Y += y
+	return c
+}
+
 func (c WorldCoord) DirectionTo(other WorldCoord) Direction {
 	x := other.X - c.X
 	y := other.Y - c.Y

@@ -13,6 +13,18 @@ func (aabb AABB) Contains(c WorldCoord) bool {
 		aabb.TopL.Y >= c.Y && aabb.BotR.Y <= c.Y)
 }
 
+func (aabb AABB) HasOnEdge(c WorldCoord) (onEdge bool) {
+	x, y := c.X, c.Y
+	switch {
+	case (x == aabb.TopL.X || x == aabb.BotR.X) && (y <= aabb.TopL.Y && y >= aabb.BotR.Y):
+		fallthrough
+	case (y == aabb.TopL.Y || y == aabb.BotR.Y) && (x >= aabb.TopL.X && x <= aabb.BotR.X):
+		onEdge = true
+	default:
+	}
+	return
+}
+
 func (aabb AABB) Width() int {
 	return aabb.BotR.X - aabb.TopL.X + 1
 }

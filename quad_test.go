@@ -46,6 +46,72 @@ func DescribeAABB(c gospec.Context) {
 		})
 	})
 
+	c.Specify("can identify coords that lay on it's edges", func() {
+		edgeCheck := func(aabb AABB) {
+			c.Assume(aabb.IsInverted(), IsFalse)
+
+			// Horizontal Edges
+			for _, y := range [...]int{aabb.TopL.Y, aabb.BotR.Y} {
+				for x := aabb.TopL.X; x <= aabb.BotR.X; x++ {
+					c.Expect(aabb.HasOnEdge(WorldCoord{x, y}), IsTrue)
+				}
+			}
+
+			// Vertical Edges
+			for _, x := range [...]int{aabb.TopL.X, aabb.BotR.X} {
+				for y := aabb.TopL.Y - 1; y > aabb.BotR.Y; y-- {
+					c.Expect(aabb.HasOnEdge(WorldCoord{x, y}), IsTrue)
+				}
+			}
+
+			outside := AABB{
+				aabb.TopL.Add(-1, 1),
+				aabb.BotR.Add(1, -1),
+			}
+
+			// Horizontal Edges
+			for _, y := range [...]int{outside.TopL.Y, outside.BotR.Y} {
+				for x := outside.TopL.X; x <= outside.BotR.X; x++ {
+					c.Expect(aabb.HasOnEdge(WorldCoord{x, y}), IsFalse)
+				}
+			}
+
+			// Vertical Edges
+			for _, x := range [...]int{outside.TopL.X, outside.BotR.X} {
+				for y := outside.TopL.Y - 1; y > outside.BotR.Y; y-- {
+					c.Expect(aabb.HasOnEdge(WorldCoord{x, y}), IsFalse)
+				}
+			}
+		}
+
+		edgeCheck(aabb)
+
+		edgeCheck(AABB{
+			WorldCoord{0, 0},
+			WorldCoord{1, -1},
+		})
+
+		edgeCheck(AABB{
+			WorldCoord{1, 1},
+			WorldCoord{1, -1},
+		})
+
+		edgeCheck(AABB{
+			WorldCoord{-10, 10},
+			WorldCoord{10, -10},
+		})
+
+		edgeCheck(AABB{
+			WorldCoord{-10, 10},
+			WorldCoord{-10, -10},
+		})
+
+		edgeCheck(AABB{
+			WorldCoord{-10, -10},
+			WorldCoord{10, -10},
+		})
+	})
+
 	c.Specify("can calulate the intersection of 2 AABBs", func() {
 		aabb := AABB{
 			WorldCoord{0, 0},
