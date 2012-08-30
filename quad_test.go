@@ -380,4 +380,55 @@ func DescribeQuad(c gospec.Context) {
 		c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsTrue)
 		c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsTrue)
 	})
+
+	c.Specify("stepping forward in time", func() {
+		world, err := newQuadTree(AABB{
+			WorldCoord{-20, 20},
+			WorldCoord{20, -20},
+		}, nil, 2)
+		c.Assume(err, IsNil)
+
+		world = world.Insert(MockEntity{0, WorldCoord{-10, 10}})
+		world = world.Insert(MockEntity{1, WorldCoord{10, 10}})
+		world = world.Insert(MockEntity{2, WorldCoord{10, -10}})
+
+		quadTree, isAQuadTree := world.(*quadTree)
+		c.Assume(isAQuadTree, IsTrue)
+
+		c.Specify("adjusts entity's position when pathActions have completed", func() {
+
+			path := &PathAction{
+				NewTimeSpan(0, 20),
+				WorldCoord{0, 0},
+				WorldCoord{-1, 0},
+			}
+			entity := &MockMobileEntity{
+				2,
+				&motionInfo{
+					path.Orig,
+					path.Direction(),
+					uint(path.duration),
+					nil,
+					[]*PathAction{path},
+					nil,
+				},
+			}
+
+			world = world.Insert(entity)
+			c.Assume(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
+
+			world.AdjustPositions(path.End() - 1)
+			c.Expect(len(entity.mi.pathActions), Equals, 1)
+			c.Expect(entity.Coord(), Equals, path.Orig)
+			c.Expect(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
+
+			world.AdjustPositions(path.End())
+			c.Expect(len(entity.mi.pathActions), Equals, 0)
+			c.Expect(entity.Coord(), Equals, path.Dest)
+
+			c.Specify("and moves entity into the proper quad", func() {
+				c.Expect(quadTree.quads[QUAD_SW].Contains(entity), IsTrue)
+			})
+		})
+	})
 }

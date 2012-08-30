@@ -94,6 +94,7 @@ type (
 		Insert(entity) quad
 		InsertAll([]entity) quad
 		Contains(entity) bool
+		AdjustPositions(WorldTime) []movableEntity
 	}
 
 	quadLeaf struct {
@@ -227,6 +228,32 @@ func (q *quadLeaf) Contains(e entity) bool {
 	return false
 }
 
+func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
+	// Worst Case sizing
+	movedOutside := make([]movableEntity, 0, len(q.movableEntities))
+	for _, e := range q.movableEntities {
+		mi := e.motionInfo()
+
+		// Removed finished pathActions
+		for _, pa := range mi.pathActions {
+			if pa.end <= t {
+				mi.lastMoveAction = pa
+				mi.pathActions = mi.pathActions[:0]
+				mi.coord = pa.Dest
+
+				if !q.aabb.Contains(mi.coord) {
+					movedOutside = append(movedOutside, e)
+				}
+			}
+		}
+	}
+
+	if q.parent == nil && len(movedOutside) > 0 {
+		panic("entity was moved outside of the world's bounds")
+	}
+	return movedOutside
+}
+
 func (q *quadLeaf) divide() (qt *quadTree) {
 	if q.aabb.Width() == 1 {
 		panic("unable to divide quad with width of 1")
@@ -290,4 +317,26 @@ func (q *quadTree) Contains(e entity) bool {
 		}
 	}
 	return false
+}
+
+func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
+	changedQuad := make([]movableEntity, 0, 4)
+	for _, quad := range q.quads {
+		changedQuad = append(changedQuad, quad.AdjustPositions(t)...)
+	}
+
+	movedOutside := make([]movableEntity, 0, len(changedQuad))
+	for _, e := range changedQuad {
+		if q.aabb.Contains(e.Coord()) {
+			// Safe to call Insert w/o assignment because quadTree never divides
+			q.Insert(e)
+		} else {
+			movedOutside = append(movedOutside, e)
+		}
+	}
+
+	if q.parent == nil && len(movedOutside) > 0 {
+		panic("entity was moved outside of the world's bounds")
+	}
+	return movedOutside
 }
