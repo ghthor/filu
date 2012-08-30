@@ -76,3 +76,53 @@ func (aabb AABB) Invert() AABB {
 		aabb.BotR, aabb.TopL,
 	}
 }
+
+const (
+	QUAD_NW = iota
+	QUAD_NE
+	QUAD_SE
+	QUAD_SW
+)
+
+func splitAABBToQuads(aabb AABB) ([4]AABB, error) {
+	var aabbs [4]AABB
+
+	if aabb.IsInverted() {
+		return aabbs, errors.New("aabb is inverted")
+	}
+
+	w, h := aabb.Width(), aabb.Height()
+
+	if w < 2 || h < 2 {
+		return aabbs, errors.New("aabb is too small to split")
+	}
+
+	// NorthWest
+	nw := AABB{
+		aabb.TopL,
+		WorldCoord{aabb.TopL.X + (w/2 - 1), aabb.TopL.Y - (h/2 - 1)},
+	}
+
+	// NorthEast
+	ne := AABB{
+		WorldCoord{nw.BotR.X + 1, aabb.TopL.Y},
+		WorldCoord{aabb.BotR.X, nw.BotR.Y},
+	}
+
+	se := AABB{
+		WorldCoord{ne.TopL.X, ne.BotR.Y - 1},
+		aabb.BotR,
+	}
+
+	sw := AABB{
+		WorldCoord{aabb.TopL.X, se.TopL.Y},
+		WorldCoord{nw.BotR.X, aabb.BotR.Y},
+	}
+
+	aabbs[QUAD_NW] = nw
+	aabbs[QUAD_NE] = ne
+	aabbs[QUAD_SE] = se
+	aabbs[QUAD_SW] = sw
+
+	return aabbs, nil
+}

@@ -141,3 +141,93 @@ func DescribeAABB(c gospec.Context) {
 		c.Expect(aabb.Invert().IsInverted(), IsFalse)
 	})
 }
+
+func DescribeQuad(c gospec.Context) {
+	c.Specify("AABB can be split into 4 quads", func() {
+		aabb := AABB{
+			WorldCoord{0, 0},
+			WorldCoord{10, -9},
+		}
+
+		quads := [4]AABB{{
+			WorldCoord{0, 0},
+			WorldCoord{4, -4},
+		}, {
+			WorldCoord{5, 0},
+			WorldCoord{10, -4},
+		}, {
+			WorldCoord{5, -5},
+			WorldCoord{10, -9},
+		}, {
+			WorldCoord{0, -5},
+			WorldCoord{4, -9},
+		}}
+
+		quadsResult, err := splitAABBToQuads(aabb)
+		c.Assume(err, IsNil)
+
+		for i, quad := range quadsResult {
+			c.Expect(quad, Equals, quads[i])
+		}
+
+		// Width == Height == 2
+		aabb = AABB{
+			WorldCoord{2, -2},
+			WorldCoord{3, -3},
+		}
+
+		quads = [4]AABB{{
+			WorldCoord{2, -2},
+			WorldCoord{2, -2},
+		}, {
+			WorldCoord{3, -2},
+			WorldCoord{3, -2},
+		}, {
+			WorldCoord{3, -3},
+			WorldCoord{3, -3},
+		}, {
+			WorldCoord{2, -3},
+			WorldCoord{2, -3},
+		}}
+
+		quadsResult, err = splitAABBToQuads(aabb)
+		c.Assume(err, IsNil)
+
+		for i, quad := range quadsResult {
+			c.Expect(quad, Equals, quads[i])
+		}
+
+		c.Specify("only if the height is greater than 1", func() {
+			aabb = AABB{
+				WorldCoord{1, 1},
+				WorldCoord{2, 1},
+			}
+
+			_, err := splitAABBToQuads(aabb)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err.Error(), Equals, "aabb is too small to split")
+		})
+
+		c.Specify("only if the width is greater than 1", func() {
+			aabb = AABB{
+				WorldCoord{1, 1},
+				WorldCoord{1, 0},
+			}
+
+			_, err := splitAABBToQuads(aabb)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err.Error(), Equals, "aabb is too small to split")
+		})
+
+		c.Specify("only if it isn't inverted", func() {
+			aabb = AABB{
+				WorldCoord{0, 0},
+				WorldCoord{-1, 1},
+			}
+
+			_, err := splitAABBToQuads(aabb)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err.Error(), Equals, "aabb is inverted")
+		})
+	})
+}
