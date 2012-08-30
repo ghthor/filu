@@ -253,6 +253,7 @@ func DescribeQuad(c gospec.Context) {
 		}, nil, 1)
 		c.Assume(err, IsNil)
 
+		// root tree divides
 		nwEntity := MockEntity{0, WorldCoord{-1, 1}}
 		neEntity := MockEntity{1, WorldCoord{0, 1}}
 		qt = qt.Insert(nwEntity)
@@ -263,5 +264,19 @@ func DescribeQuad(c gospec.Context) {
 
 		c.Expect(treeNode.quads[QUAD_NW].Contains(nwEntity), IsTrue)
 		c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsTrue)
+
+		// Subtree divides
+		entity := MockEntity{3, WorldCoord{999, 2}}
+		qt = qt.Insert(entity)
+
+		treeNode, isAQuadTree = qt.(*quadTree)
+		c.Assume(isAQuadTree, IsTrue)
+		c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsTrue)
+		c.Expect(treeNode.quads[QUAD_NE].Contains(entity), IsTrue)
+
+		treeNode, isAQuadTree = treeNode.quads[QUAD_NE].(*quadTree)
+		c.Assume(isAQuadTree, IsTrue)
+		c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsTrue)
+		c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsTrue)
 	})
 }
