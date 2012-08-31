@@ -94,6 +94,7 @@ type (
 		Insert(entity) quad
 		InsertAll([]entity) quad
 		Contains(entity) bool
+		QueryAll(AABB) []entity
 
 		// Step 1 - Serial
 		// TODO Rename to UpdatePositions
@@ -232,6 +233,16 @@ func (q *quadLeaf) Contains(e entity) bool {
 		}
 	}
 	return false
+}
+
+func (q *quadLeaf) QueryAll(aabb AABB) []entity {
+	matches := make([]entity, 0, len(q.entities))
+	for _, e := range q.entities {
+		if aabb.Contains(e.Coord()) {
+			matches = append(matches, e)
+		}
+	}
+	return matches
 }
 
 func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
@@ -395,6 +406,16 @@ func (q *quadTree) Contains(e entity) bool {
 		}
 	}
 	return false
+}
+
+func (q *quadTree) QueryAll(aabb AABB) []entity {
+	matches := make([]entity, 0, 10)
+	for _, quad := range q.quads {
+		if quad.AABB().Overlaps(aabb) {
+			matches = append(matches, quad.QueryAll(aabb)...)
+		}
+	}
+	return matches
 }
 
 func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {

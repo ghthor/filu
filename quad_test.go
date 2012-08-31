@@ -319,6 +319,35 @@ func DescribeQuad(c gospec.Context) {
 		})
 	})
 
+	c.Specify("quad can be queried with an AABB to return all entities that are inside", func() {
+		qt, err := newQuadTree(AABB{
+			WorldCoord{-1000, 1000},
+			WorldCoord{1000, -1000},
+		}, nil, 1)
+		c.Assume(err, IsNil)
+
+		qt = qt.Insert(MockEntity{0, WorldCoord{0, 0}})
+		qt = qt.Insert(MockEntity{1, WorldCoord{10, 10}})
+		qt = qt.Insert(MockEntity{2, WorldCoord{-10, -10}})
+		qt = qt.Insert(MockEntity{3, WorldCoord{999, -1000}})
+
+		entities := qt.QueryAll(AABB{
+			WorldCoord{0, 0},
+			WorldCoord{10, -10},
+		})
+		c.Expect(len(entities), Equals, 1)
+
+		entities = qt.QueryAll(AABB{
+			WorldCoord{-90, 90},
+			WorldCoord{-1, -9},
+		})
+		c.Expect(len(entities), Equals, 0)
+
+		entities = qt.QueryAll(qt.AABB())
+		c.Expect(len(entities), Equals, 4)
+
+	})
+
 	c.Specify("entity is inserted into quadtree", func() {
 		qt, err := newQuadTree(AABB{
 			WorldCoord{-1000, 1000},
