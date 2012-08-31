@@ -411,6 +411,7 @@ func DescribeQuad(c gospec.Context) {
 					nil,
 					[]*PathAction{path},
 					nil,
+					nil,
 				},
 			}
 

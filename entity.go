@@ -31,6 +31,7 @@ type (
 		pathActions []*PathAction
 
 		lastMoveAction MoveAction
+		UndoLastApply  func()
 	}
 
 	movableEntity interface {
@@ -47,6 +48,7 @@ func newMotionInfo(coord WorldCoord, facing Direction, speed uint) *motionInfo {
 		nil,
 		make([]*PathAction, 0, 2),
 		nil,
+		nil,
 	}
 }
 
@@ -57,10 +59,20 @@ func (mi motionInfo) isMoving() bool {
 func (mi *motionInfo) Apply(moveAction MoveAction) {
 	switch action := moveAction.(type) {
 	case TurnAction:
+		mi.UndoLastApply = nil
 		mi.facing = action.to
 		mi.lastMoveAction = action
 
 	case *PathAction:
+		prevFacing := mi.facing
+		prevMoveRequest := mi.moveRequest
+		mi.UndoLastApply = func() {
+			mi.UndoLastApply = nil
+			mi.facing = prevFacing
+			mi.pathActions = mi.pathActions[:0]
+			mi.moveRequest = prevMoveRequest
+		}
+
 		mi.facing = action.Direction()
 		mi.pathActions = append(mi.pathActions, action)
 
