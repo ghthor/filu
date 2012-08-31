@@ -53,7 +53,7 @@ func newMotionInfo(coord WorldCoord, facing Direction, speed uint) *motionInfo {
 }
 
 func (mi motionInfo) isMoving() bool {
-	return len(mi.pathActions) == 0
+	return len(mi.pathActions) != 0
 }
 
 func (mi *motionInfo) Apply(moveAction MoveAction) {
