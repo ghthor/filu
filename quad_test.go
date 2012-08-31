@@ -363,6 +363,11 @@ func DescribeQuad(c gospec.Context) {
 
 			c.Expect(len(leaf.entities), Equals, 1)
 			c.Expect(len(leaf.movableEntities), Equals, 0)
+
+			c.Specify("and removed", func() {
+				qt.Remove(MockEntity{})
+				c.Expect(len(leaf.entities), Equals, 0)
+			})
 		})
 
 		c.Specify("as an movableEntity", func() {
@@ -373,6 +378,12 @@ func DescribeQuad(c gospec.Context) {
 
 			c.Expect(len(leaf.entities), Equals, 1)
 			c.Expect(len(leaf.movableEntities), Equals, 1)
+
+			c.Specify("and removed", func() {
+				qt.Remove(&MockMobileEntity{})
+				c.Expect(len(leaf.entities), Equals, 0)
+				c.Expect(len(leaf.movableEntities), Equals, 0)
+			})
 		})
 	})
 
@@ -408,6 +419,30 @@ func DescribeQuad(c gospec.Context) {
 		c.Assume(isAQuadTree, IsTrue)
 		c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsTrue)
 		c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsTrue)
+
+		c.Specify("and removes entities from children", func() {
+			treeNode, isAQuadTree := qt.(*quadTree)
+			c.Assume(isAQuadTree, IsTrue)
+
+			qt.Remove(nwEntity)
+			c.Expect(treeNode.quads[QUAD_NW].Contains(nwEntity), IsFalse)
+			c.Expect(qt.Contains(nwEntity), IsFalse)
+
+			qt.Remove(neEntity)
+			qt.Remove(entity)
+
+			treeNode, isAQuadTree = qt.(*quadTree)
+			c.Assume(isAQuadTree, IsTrue)
+
+			c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsFalse)
+			c.Expect(treeNode.quads[QUAD_NE].Contains(entity), IsFalse)
+
+			treeNode, isAQuadTree = treeNode.quads[QUAD_NE].(*quadTree)
+			c.Assume(isAQuadTree, IsTrue)
+
+			c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsFalse)
+			c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsFalse)
+		})
 	})
 
 	c.Specify("stepping forward in time", func() {

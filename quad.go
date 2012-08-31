@@ -93,6 +93,7 @@ type (
 		AABB() AABB
 		Insert(entity) quad
 		InsertAll([]entity) quad
+		Remove(entity)
 		Contains(entity) bool
 		QueryAll(AABB) []entity
 
@@ -207,6 +208,22 @@ func (q *quadLeaf) Insert(e entity) quad {
 		q.movableEntities = append(q.movableEntities, me)
 	}
 	return q
+}
+
+func (q *quadLeaf) Remove(e entity) {
+	for i, entity := range q.entities {
+		if entity.Id() == e.Id() {
+			q.entities = append(q.entities[:i], q.entities[i+1:]...)
+		}
+	}
+
+	if _, ok := e.(movableEntity); ok {
+		for i, entity := range q.movableEntities {
+			if entity.Id() == e.Id() {
+				q.movableEntities = append(q.movableEntities[:i], q.movableEntities[i+1:]...)
+			}
+		}
+	}
 }
 
 func (q *quadLeaf) InsertAll(entities []entity) quad {
@@ -390,6 +407,15 @@ func (q *quadTree) Insert(e entity) quad {
 		}
 	}
 	panic("no quads could contain entity")
+}
+
+func (q *quadTree) Remove(e entity) {
+	for _, quad := range q.quads {
+		if quad.AABB().Contains(e.Coord()) {
+			quad.Remove(e)
+			return
+		}
+	}
 }
 
 func (q *quadTree) InsertAll(entities []entity) quad {
