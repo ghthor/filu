@@ -12,10 +12,9 @@ The Client generates InputEvents and sends them to the server.  The Node process
 type (
 	// Internal format used by the simulation
 	WorldState struct {
-		processingTime  time.Duration
-		time            WorldTime
-		entities        map[EntityId]entity
-		movableEntities map[EntityId]movableEntity
+		processingTime time.Duration
+		time           WorldTime
+		quadTree       quad
 	}
 
 	// External format used to send state to the clients
@@ -60,12 +59,11 @@ type (
 )
 
 func (ws *WorldState) String() string {
-	return fmt.Sprintf(":%v\tEntities:%v", ws.time, len(ws.entities))
+	return fmt.Sprintf(":%v\tEntities:%v", ws.time, len(ws.quadTree.QueryAll(ws.quadTree.AABB())))
 }
 
 func (ws *WorldState) AddMovableEntity(e movableEntity) {
-	ws.entities[e.Id()] = e
-	ws.movableEntities[e.Id()] = e
+	ws.quadTree = ws.quadTree.Insert(e)
 }
 
 func NewSimulation(fps int) Simulation {
@@ -73,10 +71,17 @@ func NewSimulation(fps int) Simulation {
 }
 
 func newWorldState(clock Clock) *WorldState {
+	quadTree, err := newQuadTree(AABB{
+		WorldCoord{-1000, 1000},
+		WorldCoord{1000, -1000},
+	}, nil, 20)
+
+	if err != nil {
+		panic("error creating quadTree: " + err.Error())
+	}
 	return &WorldState{
-		time:            clock.Now(),
-		entities:        make(map[EntityId]entity),
-		movableEntities: make(map[EntityId]movableEntity),
+		time:     clock.Now(),
+		quadTree: quadTree,
 	}
 }
 
@@ -86,11 +91,7 @@ func newSimulation(fps int) *simulation {
 	s := &simulation{
 		clock: clk,
 
-		state: &WorldState{
-			time:            clk.Now(),
-			entities:        make(map[EntityId]entity, 10),
-			movableEntities: make(map[EntityId]movableEntity, 10),
-		},
+		state: newWorldState(clk),
 
 		clients: make([]StateConn, 0, 10),
 
@@ -186,8 +187,7 @@ func (s *simulation) addPlayer(pd PlayerDef) *Player {
 	s.nextEntityId++
 
 	// Add the Player entity
-	s.state.entities[p.entityId] = p
-	s.state.movableEntities[p.entityId] = p
+	s.state.AddMovableEntity(p)
 
 	// Add the Player as a client that recieves WorldState's
 	s.clients = append(s.clients, p)
@@ -217,8 +217,7 @@ func (s *simulation) removePlayer(p *Player) *Player {
 	p.stopMux()
 
 	// Remove the Player entity
-	delete(s.state.entities, p.Id())
-	delete(s.state.movableEntities, p.Id())
+	s.state.quadTree.Remove(p)
 
 	// Remove the client
 	for i, c := range s.clients {
@@ -238,93 +237,22 @@ func (s *WorldState) step() *WorldState {
 }
 
 func (s *WorldState) stepTo(t WorldTime) *WorldState {
+	s.quadTree.AdjustPositions(t)
+	s.quadTree.StepTo(t, nil)
 
-	// TODO this is going to cause awful allocations
-	attemptingMove := make([]movableEntity, 0, 20)
-	for _, entity := range s.movableEntities {
-		mi := entity.motionInfo()
-
-		// Removed finished pathActions
-		for _, pa := range mi.pathActions {
-			if pa.end <= t {
-				mi.lastMoveAction = pa
-				mi.pathActions = mi.pathActions[:0]
-				mi.coord = pa.Dest
-			}
-		}
-
-		// Select entities with pending moveRequests
-		if mi.moveRequest != nil && len(mi.pathActions) == 0 {
-			attemptingMove = append(attemptingMove, entity)
-		}
-	}
-	// TODO Filter out already moving
-
-	// TODO Filter out Actions that are impossible - Walking into a wall
-
-	// Filter Conflicting Actions - 2+ Characters moving in to the same Coord
-	// TODO this is going to cause awful allocations
-	newPaths := make(map[WorldCoord]movableEntity, len(attemptingMove))
-	for _, entity := range attemptingMove {
-		mi := entity.motionInfo()
-		dest := mi.coord.Neighbor(mi.moveRequest.Direction)
-
-		direction := mi.coord.DirectionTo(dest)
-
-		// Facing the direction of request
-		if mi.facing != direction {
-
-			// TODO This is a weird check, dunno how to fix it
-			if pathAction, ok := mi.lastMoveAction.(*PathAction); ok && pathAction.End() == t {
-			} else {
-				turnAction := TurnAction{
-					mi.facing, direction,
-					t,
-				}
-
-				// Attempt to Turn Facing
-				if turnAction.CanHappenAfter(mi.lastMoveAction) {
-					mi.Apply(turnAction)
-				}
-				continue
-			}
-		}
-
-		if newPaths[dest] == nil {
-			newPaths[dest] = entity
-		} else {
-			// TODO Resolve Conflicting Actions based on speed
-			newPaths[dest] = entity
-		}
-	}
-
-	// Apply All remaining Pending Actions as Running Actions
-	for dest, entity := range newPaths {
-		mi := entity.motionInfo()
-
-		pathAction := &PathAction{
-			NewTimeSpan(t, t+WorldTime(mi.speed)),
-			mi.coord,
-			dest,
-		}
-
-		if pathAction.CanHappenAfter(mi.lastMoveAction) {
-			mi.Apply(pathAction)
-		}
-	}
-	// Write out new state and return
 	s.time = t
 	return s
 }
 
 func (ws *WorldState) Json() WorldStateJson {
+	entities := ws.quadTree.QueryAll(ws.quadTree.AABB())
 	s := WorldStateJson{
 		ws.time,
-		make([]interface{}, len(ws.entities)),
+		make([]interface{}, len(entities)),
 	}
 
 	i := 0
-	for _, e := range ws.entities {
+	for _, e := range entities {
 		s.Entities[i] = e.Json()
 		i++
 	}

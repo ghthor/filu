@@ -69,8 +69,7 @@ func DescribeSimulation(c gospec.Context) {
 			player := sim.addPlayer(pd)
 
 			c.Expect(player.Id(), Equals, EntityId(0))
-			c.Expect(len(sim.state.entities), Equals, 1)
-			c.Expect(len(sim.state.movableEntities), Equals, 1)
+			c.Expect(sim.state.quadTree.Contains(player), IsTrue)
 			c.Expect(len(sim.clients), Equals, 1)
 		})
 
@@ -82,8 +81,7 @@ func DescribeSimulation(c gospec.Context) {
 			sim.Stop()
 
 			c.Expect(player.Id(), Equals, EntityId(0))
-			c.Expect(len(sim.state.entities), Equals, 1)
-			c.Expect(len(sim.state.movableEntities), Equals, 1)
+			c.Expect(sim.state.quadTree.Contains(player), IsTrue)
 			c.Expect(len(sim.clients), Equals, 1)
 		})
 
@@ -91,14 +89,13 @@ func DescribeSimulation(c gospec.Context) {
 			player := sim.addPlayer(pd)
 
 			c.Assume(player.Id(), Equals, EntityId(0))
-			c.Assume(len(sim.state.entities), Equals, 1)
-			c.Assume(len(sim.state.movableEntities), Equals, 1)
+			c.Assume(sim.state.quadTree.Contains(player), IsTrue)
 			c.Assume(len(sim.clients), Equals, 1)
 
-			sim.removePlayer(player)
+			removed := sim.removePlayer(player)
 
-			c.Expect(len(sim.state.entities), Equals, 0)
-			c.Expect(len(sim.state.movableEntities), Equals, 0)
+			c.Expect(removed, Equals, player)
+			c.Expect(sim.state.quadTree.Contains(player), IsFalse)
 			c.Expect(len(sim.clients), Equals, 0)
 		})
 
@@ -106,8 +103,7 @@ func DescribeSimulation(c gospec.Context) {
 			player := sim.addPlayer(pd)
 
 			c.Assume(player.Id(), Equals, EntityId(0))
-			c.Assume(len(sim.state.entities), Equals, 1)
-			c.Assume(len(sim.state.movableEntities), Equals, 1)
+			c.Assume(sim.state.quadTree.Contains(player), IsTrue)
 			c.Assume(len(sim.clients), Equals, 1)
 
 			sim.Start()
@@ -116,8 +112,7 @@ func DescribeSimulation(c gospec.Context) {
 
 			sim.Stop()
 
-			c.Expect(len(sim.state.entities), Equals, 0)
-			c.Expect(len(sim.state.movableEntities), Equals, 0)
+			c.Expect(sim.state.quadTree.Contains(player), IsFalse)
 			c.Expect(len(sim.clients), Equals, 0)
 		})
 
@@ -125,8 +120,7 @@ func DescribeSimulation(c gospec.Context) {
 			player := sim.addPlayer(pd)
 
 			c.Assume(player.Id(), Equals, EntityId(0))
-			c.Assume(len(sim.state.entities), Equals, 1)
-			c.Assume(len(sim.state.movableEntities), Equals, 1)
+			c.Assume(sim.state.quadTree.Contains(player), IsTrue)
 			c.Assume(len(sim.clients), Equals, 1)
 
 			sim.Start()
@@ -135,8 +129,7 @@ func DescribeSimulation(c gospec.Context) {
 
 			sim.Stop()
 
-			c.Expect(len(sim.state.entities), Equals, 0)
-			c.Expect(len(sim.state.movableEntities), Equals, 0)
+			c.Expect(sim.state.quadTree.Contains(player), IsFalse)
 			c.Expect(len(sim.clients), Equals, 0)
 		})
 
@@ -168,136 +161,11 @@ func (e MockEntity) String() string {
 }
 
 func DescribeWorldState(c gospec.Context) {
-	c.Specify("process movement requests", func() {
-		playerA := &Player{
-			Name:     "thundercleese",
-			entityId: 0,
-			mi:       newMotionInfo(WorldCoord{0, 0}, North, 35),
-			conn:     conn,
-		}
-		playerB := &Player{
-			Name:     "zorak",
-			entityId: 1,
-			mi:       newMotionInfo(WorldCoord{1, 0}, South, 40),
-			conn:     conn,
-		}
-
-		playerA.mux()
-		playerB.mux()
-
-		worldState := newWorldState(Clock(0))
-		worldState.AddMovableEntity(playerA)
-		worldState.AddMovableEntity(playerB)
-
-		c.Assume(len(worldState.entities), Equals, 2)
-		c.Assume(len(worldState.movableEntities), Equals, 2)
-
-		c.Specify("consume moveRequest's and produce PathActions", func() {
-			playerA.SubmitInput("move=0", "north")
-			playerB.SubmitInput("move=0", "south")
-
-			// Have to step forward 4 times because of the facing change requirement
-			worldState.step()
-
-			c.Expect(playerA.mi.moveRequest, IsNil)
-			c.Expect(playerA.mi.facing, Equals, North)
-			c.Expect(len(playerA.mi.pathActions), Equals, 1)
-
-			pathActionA := playerA.mi.pathActions[0]
-			c.Expect(pathActionA.Orig, Equals, WorldCoord{0, 0})
-			c.Expect(pathActionA.Dest, Equals, WorldCoord{0, 0}.Neighbor(North))
-			c.Expect(pathActionA.duration, Equals, int64(35))
-
-			c.Expect(playerB.mi.moveRequest, IsNil)
-			c.Expect(playerB.mi.facing, Equals, South)
-			c.Expect(len(playerB.mi.pathActions), Equals, 1)
-
-			pathActionB := playerB.mi.pathActions[0]
-			c.Expect(pathActionB.Orig, Equals, WorldCoord{1, 0})
-			c.Expect(pathActionB.Dest, Equals, WorldCoord{1, 0}.Neighbor(South))
-			c.Expect(pathActionB.duration, Equals, int64(40))
-
-			c.Specify("and the pathActions are removed when they have completed", func() {
-				aEnd := worldState.time + WorldTime(playerA.mi.speed)
-				bEnd := worldState.time + WorldTime(playerB.mi.speed)
-
-				for i := worldState.time + 1; i < aEnd; i++ {
-					worldState.stepTo(i)
-					c.Expect(len(playerA.mi.pathActions), Equals, 1)
-					c.Expect(len(playerB.mi.pathActions), Equals, 1)
-				}
-				worldState.step()
-
-				c.Expect(len(playerA.mi.pathActions), Equals, 0)
-				c.Expect(len(playerB.mi.pathActions), Equals, 1)
-
-				for i := worldState.time + 1; i < bEnd; i++ {
-					worldState.stepTo(i)
-					c.Expect(len(playerA.mi.pathActions), Equals, 0)
-					c.Expect(len(playerB.mi.pathActions), Equals, 1)
-				}
-				worldState.step()
-
-				c.Expect(len(playerA.mi.pathActions), Equals, 0)
-				c.Expect(len(playerB.mi.pathActions), Equals, 0)
-			})
-		})
-
-		c.Specify("consume moveRequest's and changes entities facing", func() {
-			step := func() {
-				worldState.step()
-				json := worldState.Json()
-				playerA.SendWorldState(json)
-				playerB.SendWorldState(json)
-			}
-
-			playerA.SubmitInput("move=0", "west")
-			playerB.SubmitInput("move=0", "west")
-
-			step()
-
-			c.Expect(playerA.mi.moveRequest, IsNil)
-			c.Expect(playerA.mi.facing, Equals, West)
-			c.Expect(len(playerA.mi.pathActions), Equals, 0)
-
-			c.Expect(playerB.mi.moveRequest, IsNil)
-			c.Expect(playerB.mi.facing, Equals, West)
-			c.Expect(len(playerB.mi.pathActions), Equals, 0)
-
-			// TODO 10 ticks == 250ms at 40fps, this should be based on the fps
-			c.Specify("only after TurnActionDelay ticks have passed", func() {
-
-				facingWillChangeAt := worldState.time + TurnActionDelay
-
-				playerA.SubmitInput("move=0", "north")
-				playerB.SubmitInput("move=0", "south")
-
-				for step(); worldState.time <= facingWillChangeAt; step() {
-					c.Expect(playerA.mi.moveRequest, Not(IsNil))
-					c.Expect(playerA.mi.facing, Equals, West)
-					c.Expect(len(playerA.mi.pathActions), Equals, 0)
-
-					c.Expect(playerB.mi.moveRequest, Not(IsNil))
-					c.Expect(playerB.mi.facing, Equals, West)
-					c.Expect(len(playerB.mi.pathActions), Equals, 0)
-				}
-
-				c.Expect(playerA.mi.moveRequest, IsNil)
-				c.Expect(playerA.mi.facing, Equals, North)
-				c.Expect(len(playerA.mi.pathActions), Equals, 0)
-
-				c.Expect(playerB.mi.moveRequest, IsNil)
-				c.Expect(playerB.mi.facing, Equals, South)
-				c.Expect(len(playerB.mi.pathActions), Equals, 0)
-			})
-		})
-	})
-
 	c.Specify("generates json compatitable state object", func() {
 		worldState := newWorldState(Clock(0))
 
 		entity := MockEntity{id: 0}
-		worldState.entities[entity.Id()] = entity
+		worldState.quadTree.Insert(entity)
 
 		jsonState := worldState.Json()
 
