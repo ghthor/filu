@@ -395,6 +395,68 @@ func DescribeQuad(c gospec.Context) {
 		quadTree, isAQuadTree := world.(*quadTree)
 		c.Assume(isAQuadTree, IsTrue)
 
+		worldTime := WorldTime(0)
+		step := func() {
+			worldTime++
+			world.AdjustPositions(worldTime)
+			world.StepTo(worldTime, nil)
+		}
+
+		c.Specify("consume movement requests and apply appropiate path actions", func() {
+			entitySpeed := uint(20)
+			entity := &MockMobileEntity{2, newMotionInfo(WorldCoord{0, 0}, North, entitySpeed)}
+
+			world = world.Insert(entity)
+			c.Assume(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
+
+			entity.mi.moveRequest = &moveRequest{0, North}
+
+			step()
+
+			// Movement Info state expectations
+			c.Expect(entity.mi.moveRequest, IsNil)
+			c.Expect(entity.mi.facing, Equals, North)
+			c.Expect(len(entity.mi.pathActions), Equals, 1)
+			c.Expect(entity.mi.isMoving(), IsTrue)
+
+			// PathAction expectations
+			pathAction := entity.mi.pathActions[0]
+			c.Expect(pathAction.Orig, Equals, WorldCoord{0, 0})
+			c.Expect(pathAction.Dest, Equals, WorldCoord{0, 0}.Neighbor(North))
+			c.Expect(pathAction.duration, Equals, int64(entitySpeed))
+		})
+
+		c.Specify("consume movement requests and apply appropiate turn facing actions", func() {
+			entity := &MockMobileEntity{2, newMotionInfo(WorldCoord{0, 0}, North, 20)}
+
+			world = world.Insert(entity)
+			c.Assume(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
+
+			entity.mi.moveRequest = &moveRequest{0, South}
+
+			step()
+
+			c.Expect(entity.mi.moveRequest, IsNil)
+			c.Expect(entity.mi.facing, Equals, South)
+			c.Expect(len(entity.mi.pathActions), Equals, 0)
+
+			c.Specify("only after TurnActionDelay ticks have passed", func() {
+				facingWillChangeAt := worldTime + TurnActionDelay
+
+				entity.mi.moveRequest = &moveRequest{0, North}
+
+				for step(); worldTime <= facingWillChangeAt; step() {
+					c.Expect(entity.mi.moveRequest, Not(IsNil))
+					c.Expect(entity.mi.facing, Equals, South)
+					c.Expect(len(entity.mi.pathActions), Equals, 0)
+				}
+
+				c.Expect(entity.mi.moveRequest, IsNil)
+				c.Expect(entity.mi.facing, Equals, North)
+				c.Expect(len(entity.mi.pathActions), Equals, 0)
+			})
+		})
+
 		c.Specify("adjusts entity's position when pathActions have completed", func() {
 
 			path := &PathAction{

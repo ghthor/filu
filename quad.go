@@ -94,7 +94,13 @@ type (
 		Insert(entity) quad
 		InsertAll([]entity) quad
 		Contains(entity) bool
+
+		// Step 1 - Serial
+		// TODO Rename to UpdatePositions
 		AdjustPositions(WorldTime) []movableEntity
+
+		// Step 2 - Concurrent
+		StepTo(WorldTime, chan []movableEntity)
 	}
 
 	quadLeaf struct {
@@ -254,6 +260,78 @@ func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
 	return movedOutside
 }
 
+type pathRequest struct {
+	entity     movableEntity
+	pathAction *PathAction
+}
+
+func (q *quadLeaf) StepTo(t WorldTime, unsolvable chan []movableEntity) {
+
+	// This loop filters out Actions that can't happen yet because of TurnAction Delays
+	pathRequests := make([]pathRequest, 0, len(q.movableEntities))
+	for _, e := range q.movableEntities {
+		mi := e.motionInfo()
+
+		// No movement Request
+		if mi.moveRequest == nil {
+			continue
+		}
+
+		// Can't accept movement Request becuase entity is already moving
+		if mi.isMoving() {
+			continue
+		}
+
+		dest := mi.coord.Neighbor(mi.moveRequest.Direction)
+		direction := mi.coord.DirectionTo(dest)
+
+		// If the last MoveAction was a PathAction that ended on this Step
+		if pathAction, ok := mi.lastMoveAction.(*PathAction); (ok && pathAction.End() == t) || (mi.facing == direction) {
+			pathAction = &PathAction{
+				NewTimeSpan(t, t+WorldTime(mi.speed)),
+				mi.coord,
+				dest,
+			}
+
+			if pathAction.CanHappenAfter(mi.lastMoveAction) {
+				pathRequests = append(pathRequests, pathRequest{e, pathAction})
+				mi.Apply(pathAction)
+			}
+		} else if mi.facing != direction {
+			turnAction := TurnAction{
+				mi.facing, direction,
+				t,
+			}
+
+			// Attempt to Turn Facing
+			if turnAction.CanHappenAfter(mi.lastMoveAction) {
+				mi.Apply(turnAction)
+			}
+		}
+	}
+
+	// Solve Collisions
+	//for i, pathRequest :=
+
+	// Don't let anyone move out of the world
+	if q.parent == nil {
+		if unsolvable != nil {
+			panic("invalid step from root")
+		}
+
+		for _, pr := range pathRequests {
+			mi := pr.entity.motionInfo()
+			if !q.aabb.Contains(mi.pathActions[0].Dest) {
+				mi.UndoLastApply()
+			}
+		}
+		return
+	}
+
+	unsolvables := make([]movableEntity, 0, len(q.movableEntities))
+	unsolvable <- unsolvables
+}
+
 func (q *quadLeaf) divide() (qt *quadTree) {
 	if q.aabb.Width() == 1 {
 		panic("unable to divide quad with width of 1")
@@ -339,4 +417,35 @@ func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
 		panic("entity was moved outside of the world's bounds")
 	}
 	return movedOutside
+}
+
+func (q *quadTree) StepTo(t WorldTime, unsolvable chan []movableEntity) {
+	leftToSolve := make(chan []movableEntity, 4)
+
+	for _, quad := range q.quads {
+		go quad.StepTo(t, leftToSolve)
+	}
+
+	entities := make([]movableEntity, 0, 10)
+	for i := 0; i < 4; i++ {
+		unsolved := <-leftToSolve
+		entities = append(entities, unsolved...)
+	}
+
+	// Don't let anyone move out of the world
+	if q.parent == nil {
+		if unsolvable != nil {
+			panic("invalid step from root")
+		}
+
+		for _, e := range entities {
+			mi := e.motionInfo()
+			if !q.aabb.Contains(mi.pathActions[0].Dest) {
+				mi.UndoLastApply()
+			}
+		}
+		return
+	}
+	//TODO Solve the Unsolvables
+	unsolvable <- nil
 }
