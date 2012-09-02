@@ -12,6 +12,7 @@ type (
 	entity interface {
 		Id() EntityId
 		Coord() WorldCoord
+		AABB() AABB
 		Json() interface{}
 	}
 
@@ -199,6 +200,10 @@ func (p *Player) Id() EntityId {
 
 func (p *Player) Coord() WorldCoord {
 	return p.mi.coord
+}
+
+func (p *Player) AABB() (aabb AABB) {
+	return p.mi.AABB()
 }
 
 func (p *Player) Json() interface{} {

@@ -147,6 +147,7 @@ type MockEntity struct {
 
 func (e MockEntity) Id() EntityId      { return e.id }
 func (e MockEntity) Coord() WorldCoord { return e.coord }
+func (e MockEntity) AABB() AABB        { return AABB{e.coord, e.coord} }
 func (e MockEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`

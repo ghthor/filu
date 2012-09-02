@@ -216,6 +216,7 @@ type MockMobileEntity struct {
 
 func (e *MockMobileEntity) Id() EntityId      { return e.id }
 func (e *MockMobileEntity) Coord() WorldCoord { return e.mi.coord }
+func (e *MockMobileEntity) AABB() AABB        { return e.mi.AABB() }
 func (e *MockMobileEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`
@@ -345,7 +346,6 @@ func DescribeQuad(c gospec.Context) {
 
 		entities = qt.QueryAll(qt.AABB())
 		c.Expect(len(entities), Equals, 4)
-
 	})
 
 	c.Specify("entity is inserted into quadtree", func() {

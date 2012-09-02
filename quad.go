@@ -256,7 +256,7 @@ func (q *quadLeaf) Contains(e entity) bool {
 func (q *quadLeaf) QueryAll(aabb AABB) []entity {
 	matches := make([]entity, 0, len(q.entities))
 	for _, e := range q.entities {
-		if aabb.Contains(e.Coord()) {
+		if aabb.Overlaps(e.AABB()) {
 			matches = append(matches, e)
 		}
 	}
