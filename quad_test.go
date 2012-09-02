@@ -557,5 +557,17 @@ func DescribeQuad(c gospec.Context) {
 				c.Expect(quadTree.quads[QUAD_SW].Contains(entity), IsTrue)
 			})
 		})
+
+		c.Specify("bound movement inside the world's bounds", func() {
+			entity := &MockMobileEntity{2, newMotionInfo(world.AABB().TopL, North, 20)}
+			entity.mi.moveRequest = &moveRequest{0, North}
+
+			world = world.Insert(entity)
+
+			step()
+
+			c.Expect(entity.mi.moveRequest, Not(IsNil))
+			c.Expect(len(entity.mi.pathActions), Equals, 0)
+		})
 	})
 }

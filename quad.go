@@ -338,15 +338,23 @@ func (q *quadLeaf) StepTo(t WorldTime, unsolvable chan []movableEntity) {
 		}
 	}
 
+	unsolvables := make([]movableEntity, 0, len(pathRequests))
 	// Solve Collisions
-	//for i, pathRequest :=
+	for _, pr := range pathRequests {
+		pa := pr.pathAction
+		e := pr.entity
 
-	// Don't let anyone move out of the world
+		if !q.aabb.Contains(pa.Dest) {
+			unsolvables = append(unsolvables, e)
+		}
+	}
+
 	if q.parent == nil {
 		if unsolvable != nil {
 			panic("invalid step from root")
 		}
 
+		// Bounds check the world
 		for _, pr := range pathRequests {
 			mi := pr.entity.motionInfo()
 			if !q.aabb.Contains(mi.pathActions[0].Dest) {
@@ -356,7 +364,6 @@ func (q *quadLeaf) StepTo(t WorldTime, unsolvable chan []movableEntity) {
 		return
 	}
 
-	unsolvables := make([]movableEntity, 0, len(q.movableEntities))
 	unsolvable <- unsolvables
 }
 
@@ -485,6 +492,7 @@ func (q *quadTree) StepTo(t WorldTime, unsolvable chan []movableEntity) {
 			panic("invalid step from root")
 		}
 
+		// Bounds check the world
 		for _, e := range entities {
 			mi := e.motionInfo()
 			if !q.aabb.Contains(mi.pathActions[0].Dest) {
