@@ -102,7 +102,8 @@ type (
 		AdjustPositions(WorldTime) []movableEntity
 
 		// Step 2 - Concurrent
-		StepTo(WorldTime, chan []movableEntity)
+		StepTo(WorldTime)
+		stepTo(WorldTime, chan []movableEntity)
 	}
 
 	quadLeaf struct {
@@ -288,12 +289,34 @@ func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
 	return movedOutside
 }
 
+func stepBounded(q quad, t WorldTime) {
+	unsolvable := make(chan []movableEntity)
+	go q.stepTo(t, unsolvable)
+	entities := <-unsolvable
+
+	// Bounds check the world
+	for _, e := range entities {
+		mi := e.motionInfo()
+		if !q.AABB().Contains(mi.pathActions[0].Dest) {
+			mi.UndoLastApply()
+		}
+	}
+}
+
+func (q *quadLeaf) StepTo(t WorldTime) {
+	if q.parent != nil {
+		panic("StepTo called on child quadLeaf")
+	}
+
+	stepBounded(q, t)
+}
+
 type pathRequest struct {
 	entity     movableEntity
 	pathAction *PathAction
 }
 
-func (q *quadLeaf) StepTo(t WorldTime, unsolvable chan []movableEntity) {
+func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 
 	// This loop filters out Actions that can't happen yet because of TurnAction Delays
 	pathRequests := make([]pathRequest, 0, len(q.movableEntities))
@@ -347,21 +370,6 @@ func (q *quadLeaf) StepTo(t WorldTime, unsolvable chan []movableEntity) {
 		if !q.aabb.Contains(pa.Dest) {
 			unsolvables = append(unsolvables, e)
 		}
-	}
-
-	if q.parent == nil {
-		if unsolvable != nil {
-			panic("invalid step from root")
-		}
-
-		// Bounds check the world
-		for _, pr := range pathRequests {
-			mi := pr.entity.motionInfo()
-			if !q.aabb.Contains(mi.pathActions[0].Dest) {
-				mi.UndoLastApply()
-			}
-		}
-		return
 	}
 
 	unsolvable <- unsolvables
@@ -473,11 +481,19 @@ func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
 	return movedOutside
 }
 
-func (q *quadTree) StepTo(t WorldTime, unsolvable chan []movableEntity) {
+func (q *quadTree) StepTo(t WorldTime) {
+	if q.parent != nil {
+		panic("StepTo called on child quadTree")
+	}
+
+	stepBounded(q, t)
+}
+
+func (q *quadTree) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 	leftToSolve := make(chan []movableEntity, 4)
 
 	for _, quad := range q.quads {
-		go quad.StepTo(t, leftToSolve)
+		go quad.stepTo(t, leftToSolve)
 	}
 
 	entities := make([]movableEntity, 0, 10)
@@ -486,21 +502,6 @@ func (q *quadTree) StepTo(t WorldTime, unsolvable chan []movableEntity) {
 		entities = append(entities, unsolved...)
 	}
 
-	// Don't let anyone move out of the world
-	if q.parent == nil {
-		if unsolvable != nil {
-			panic("invalid step from root")
-		}
-
-		// Bounds check the world
-		for _, e := range entities {
-			mi := e.motionInfo()
-			if !q.aabb.Contains(mi.pathActions[0].Dest) {
-				mi.UndoLastApply()
-			}
-		}
-		return
-	}
 	//TODO Solve the Unsolvables
-	unsolvable <- nil
+	unsolvable <- entities
 }

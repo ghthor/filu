@@ -463,7 +463,7 @@ func DescribeQuad(c gospec.Context) {
 		step := func() {
 			worldTime++
 			world.AdjustPositions(worldTime)
-			world.StepTo(worldTime, nil)
+			world.StepTo(worldTime)
 		}
 
 		c.Specify("consume movement requests and apply appropiate path actions", func() {

@@ -238,7 +238,7 @@ func (s *WorldState) step() *WorldState {
 
 func (s *WorldState) stepTo(t WorldTime) *WorldState {
 	s.quadTree.AdjustPositions(t)
-	s.quadTree.StepTo(t, nil)
+	s.quadTree.StepTo(t)
 
 	s.time = t
 	return s
