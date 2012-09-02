@@ -56,6 +56,27 @@ func (mi motionInfo) isMoving() bool {
 	return len(mi.pathActions) != 0
 }
 
+func (mi motionInfo) AABB() (aabb AABB) {
+	if mi.isMoving() {
+		pa := mi.pathActions[0]
+		switch pa.Direction() {
+		case West:
+			fallthrough
+		case North:
+			aabb.TopL = pa.Dest
+			aabb.BotR = pa.Orig
+		case East:
+			fallthrough
+		case South:
+			aabb.TopL = pa.Orig
+			aabb.BotR = pa.Dest
+		}
+	} else {
+		aabb = AABB{mi.coord, mi.coord}
+	}
+	return
+}
+
 func (mi *motionInfo) Apply(moveAction MoveAction) {
 	switch action := moveAction.(type) {
 	case TurnAction:
