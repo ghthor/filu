@@ -568,6 +568,27 @@ func DescribeQuad(c gospec.Context) {
 
 			c.Expect(entity.mi.moveRequest, Not(IsNil))
 			c.Expect(len(entity.mi.pathActions), Equals, 0)
+
+			// Check that quadLeaf performs the exact same way as quadTree
+			worldTime = WorldTime(0)
+			world, err = newQuadTree(AABB{
+				WorldCoord{-20, 20},
+				WorldCoord{20, -20},
+			}, nil, 2)
+			c.Assume(err, IsNil)
+
+			entity = &MockMobileEntity{0, newMotionInfo(world.AABB().TopL, North, 20)}
+			entity.mi.moveRequest = &moveRequest{0, North}
+
+			world = world.Insert(entity)
+
+			_, isQuadLeaf := world.(*quadLeaf)
+			c.Assume(isQuadLeaf, IsTrue)
+
+			step()
+
+			c.Expect(entity.mi.moveRequest, Not(IsNil))
+			c.Expect(len(entity.mi.pathActions), Equals, 0)
 		})
 	})
 }
