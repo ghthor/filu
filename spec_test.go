@@ -20,6 +20,7 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribePathAction)
 	r.AddSpec(engine.DescribeMoveAction)
 	r.AddSpec(engine.DescribeMovableEntity)
+	r.AddSpec(engine.DescribeEntityCollision)
 	r.AddSpec(engine.DescribeMockEntities)
 
 	r.AddSpec(engine.DescribeQuad)

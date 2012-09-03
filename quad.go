@@ -75,6 +75,12 @@ func (aabb AABB) Intersection(other AABB) (AABB, error) {
 	}, nil
 }
 
+func (aabb AABB) Expand(mag int) AABB {
+	aabb.TopL = aabb.TopL.Add(-mag, mag)
+	aabb.BotR = aabb.BotR.Add(mag, -mag)
+	return aabb
+}
+
 // Is BotR actually TopL?
 func (aabb AABB) IsInverted() bool {
 	return aabb.BotR.Y > aabb.TopL.Y && aabb.BotR.X < aabb.TopL.X
@@ -96,6 +102,7 @@ type (
 		Remove(entity)
 		Contains(entity) bool
 		QueryAll(AABB) []entity
+		QueryCollidables(WorldCoord) []collidableEntity
 
 		// Step 1 - Serial
 		// TODO Rename to UpdatePositions
@@ -287,6 +294,16 @@ func (q *quadLeaf) QueryAll(aabb AABB) []entity {
 	return matches
 }
 
+func (q *quadLeaf) QueryCollidables(c WorldCoord) []collidableEntity {
+	matches := make([]collidableEntity, 0, len(q.collidable))
+	for _, ce := range q.collidable {
+		if ce.AABB().Contains(c) {
+			matches = append(matches, ce)
+		}
+	}
+	return matches
+}
+
 func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
 	// Worst Case sizing
 	movedOutside := make([]movableEntity, 0, len(q.movable))
@@ -335,15 +352,10 @@ func (q *quadLeaf) StepTo(t WorldTime) {
 	stepBounded(q, t)
 }
 
-type pathRequest struct {
-	entity     movableEntity
-	pathAction *PathAction
-}
-
 func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 
 	// This loop filters out Actions that can't happen yet because of TurnAction Delays
-	pathRequests := make([]pathRequest, 0, len(q.movable))
+	beganMoving := make([]movableEntity, 0, len(q.movable))
 	for _, e := range q.movable {
 		mi := e.motionInfo()
 
@@ -369,8 +381,8 @@ func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 			}
 
 			if pathAction.CanHappenAfter(mi.lastMoveAction) {
-				pathRequests = append(pathRequests, pathRequest{e, pathAction})
 				mi.Apply(pathAction)
+				beganMoving = append(beganMoving, e)
 			}
 		} else if mi.facing != direction {
 			turnAction := TurnAction{
@@ -385,15 +397,43 @@ func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 		}
 	}
 
-	unsolvables := make([]movableEntity, 0, len(pathRequests))
-	// Solve Collisions
-	for _, pr := range pathRequests {
-		pa := pr.pathAction
-		e := pr.entity
+	unsolvables := make([]movableEntity, 0, len(beganMoving))
 
-		if !q.aabb.Contains(pa.Dest) {
-			unsolvables = append(unsolvables, e)
+	collisions := make([]entityCollision, 0, len(q.collidable))
+	// Filters out collisions that are the same
+	addCollision := func(c entityCollision) {
+		for _, other := range collisions {
+			if c.SameAs(other) {
+				return
+			}
 		}
+
+		collisions = append(collisions, c)
+	}
+
+	// Find and collect collisions and unsolvables
+	for _, me := range beganMoving {
+		pa := me.motionInfo().pathActions[0]
+
+		// Find unsolvables
+		if !q.aabb.Contains(pa.Dest) {
+			unsolvables = append(unsolvables, me)
+
+		} else {
+			// Find and collect collisions
+			if ce, canCollide := me.(collidableEntity); canCollide {
+				for _, other := range q.collidable {
+					if ce != other && other.AABB().Contains(pa.Dest) {
+						addCollision(entityCollision{t, ce, other})
+					}
+				}
+			}
+		}
+	}
+
+	// Run collisions
+	for _, c := range collisions {
+		c.collide()
 	}
 
 	unsolvable <- unsolvables
@@ -484,6 +524,16 @@ func (q *quadTree) QueryAll(aabb AABB) []entity {
 	return matches
 }
 
+func (q *quadTree) QueryCollidables(c WorldCoord) []collidableEntity {
+	matches := make([]collidableEntity, 0, 10)
+	for _, quad := range q.quads {
+		if quad.AABB().Expand(1).Contains(c) {
+			matches = append(matches, quad.QueryCollidables(c)...)
+		}
+	}
+	return matches
+}
+
 func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
 	changedQuad := make([]movableEntity, 0, 4)
 	for _, quad := range q.quads {
@@ -527,6 +577,44 @@ func (q *quadTree) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 		entities = append(entities, unsolved...)
 	}
 
-	//TODO Solve the Unsolvables
-	unsolvable <- entities
+	unsolvables := make([]movableEntity, 0, len(entities))
+
+	collisions := make([]entityCollision, 0, len(entities))
+	// Filters out collisions that are the same
+	addCollision := func(c entityCollision) {
+		for _, other := range collisions {
+			if c.SameAs(other) {
+				return
+			}
+		}
+
+		collisions = append(collisions, c)
+	}
+
+	// Find and collect collisions and unsolvables
+	for _, me := range entities {
+		pa := me.motionInfo().pathActions[0]
+
+		// Find and collect collisions and unsolvables
+		if !q.aabb.Contains(pa.Dest) {
+			unsolvables = append(unsolvables, me)
+
+		} else {
+			// Find and collect collisions
+			if ce, isCollidable := me.(collidableEntity); isCollidable {
+				for _, other := range q.QueryCollidables(pa.Dest) {
+					if ce != other {
+						addCollision(entityCollision{t, ce, other})
+					}
+				}
+			}
+		}
+	}
+
+	// Run collisions
+	for _, c := range collisions {
+		c.collide()
+	}
+
+	unsolvable <- unsolvables
 }

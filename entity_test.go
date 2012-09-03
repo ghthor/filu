@@ -78,3 +78,20 @@ func DescribeMovableEntity(c gospec.Context) {
 
 	})
 }
+
+func DescribeEntityCollision(c gospec.Context) {
+	c.Specify("collisions between the 2 entities", func() {
+		entityA := &MockCollidableEntity{id: 0}
+		entityB := &MockCollidableEntity{id: 1}
+
+		c.Specify("are the same if they happen at the at the same time", func() {
+			c.Expect(entityCollision{0, entityA, entityB}.SameAs(entityCollision{0, entityA, entityB}), IsTrue)
+			c.Expect(entityCollision{0, entityA, entityB}.SameAs(entityCollision{0, entityB, entityA}), IsTrue)
+		})
+
+		c.Specify("are not the same if they happen at different times", func() {
+			c.Expect(entityCollision{0, entityA, entityB}.SameAs(entityCollision{1, entityA, entityB}), IsFalse)
+			c.Expect(entityCollision{0, entityA, entityB}.SameAs(entityCollision{1, entityB, entityA}), IsFalse)
+		})
+	})
+}

@@ -207,6 +207,23 @@ func DescribeAABB(c gospec.Context) {
 		c.Expect(aabb.IsInverted(), IsTrue)
 		c.Expect(aabb.Invert().IsInverted(), IsFalse)
 	})
+
+	c.Specify("expand AABB by a magnitude", func() {
+		c.Expect(aabb.Expand(1), Equals, AABB{
+			WorldCoord{-1, 1},
+			WorldCoord{1, -1},
+		})
+
+		aabb = AABB{
+			WorldCoord{5, 6},
+			WorldCoord{5, -6},
+		}
+
+		c.Expect(aabb.Expand(2), Equals, AABB{
+			WorldCoord{3, 8},
+			WorldCoord{7, -8},
+		})
+	})
 }
 
 func DescribeQuad(c gospec.Context) {
@@ -324,6 +341,51 @@ func DescribeQuad(c gospec.Context) {
 
 		entities = qt.QueryAll(qt.AABB())
 		c.Expect(len(entities), Equals, 4)
+	})
+
+	c.Specify("quad can be queried with a coord for any collidable entities", func() {
+		world, err := newQuadTree(AABB{
+			WorldCoord{-20, 20},
+			WorldCoord{20, -20},
+		}, nil, 20)
+		c.Assume(err, IsNil)
+
+		entity := &MockAliveEntity{mi: newMotionInfo(WorldCoord{0, 0}, North, 20)}
+		path := &PathAction{
+			NewTimeSpan(0, 20),
+			WorldCoord{0, 0},
+			WorldCoord{0, 1},
+		}
+		entity.mi.pathActions = append(entity.mi.pathActions, path)
+
+		world = world.Insert(entity)
+
+		divideLeafIntoTree := func() *quadTree {
+			world = world.(*quadLeaf).divide()
+			quadTree, isAQuadTree := world.(*quadTree)
+			c.Assume(isAQuadTree, IsTrue)
+			return quadTree
+		}
+
+		c.Specify("if the quad is a leaf", func() {
+			matches := world.QueryCollidables(path.Orig)
+			c.Expect(len(matches), Equals, 1)
+
+			matches = world.QueryCollidables(path.Dest)
+			c.Expect(len(matches), Equals, 1)
+		})
+
+		c.Specify("if the quad is a tree", func() {
+			tree := divideLeafIntoTree()
+			c.Assume(tree.quads[QUAD_SE].AABB().Contains(path.Orig), IsTrue)
+			c.Assume(tree.quads[QUAD_SE].AABB().Contains(path.Dest), IsFalse)
+
+			matches := world.QueryCollidables(path.Orig)
+			c.Expect(len(matches), Equals, 1)
+
+			matches = world.QueryCollidables(path.Dest)
+			c.Expect(len(matches), Equals, 1)
+		})
 	})
 
 	c.Specify("entity is inserted into quadtree", func() {
@@ -639,6 +701,50 @@ func DescribeQuad(c gospec.Context) {
 					})
 				}
 			}
+		})
+
+		c.Specify("identifies a collision", func() {
+			c.Specify("when 2 collidable entities contest a coordinate", func() {
+				contestedPoint := WorldCoord{0, 0}
+
+				entityA := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(South), North, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityA.mi.moveRequest = &moveRequest{worldTime, North}
+
+				entityB := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(North), South, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityB.mi.moveRequest = &moveRequest{worldTime, South}
+
+				world = world.Insert(entityA)
+				world = world.Insert(entityB)
+
+				c.Specify("within the same leaf", func() {
+					_, isALeaf := world.(*quadLeaf)
+					c.Assume(isALeaf, IsTrue)
+
+					step()
+
+					c.Expect(entityA, CollidedWith, entityB)
+					c.Expect(len(entityA.collisions), Equals, 1)
+					c.Expect(len(entityB.collisions), Equals, 1)
+				})
+
+				c.Specify("across seperate leaves", func() {
+					divideLeafIntoTree()
+
+					step()
+
+					c.Expect(entityA, CollidedWith, entityB)
+					c.Expect(len(entityA.collisions), Equals, 1)
+					c.Expect(len(entityB.collisions), Equals, 1)
+				})
+			})
 		})
 	})
 }

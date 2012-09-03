@@ -239,12 +239,12 @@ func DescribeMockEntities(c gospec.Context) {
 		c.Expect(entities[0], Not(CollidedWith), entities[1])
 		c.Expect(entities[1], Not(CollidedWith), entities[0])
 
-		collide(entities[0], entities[1], 0)
+		entityCollision{0, entities[0], entities[1]}.collide()
 
 		c.Expect(entities[0], CollidedWith, entities[1])
 		c.Expect(entities[1], CollidedWith, entities[0])
 
-		collide(entities[0], entities[1], 0)
+		entityCollision{0, entities[0], entities[1]}.collide()
 
 		c.Expect(entities[0], CollidedWith, entities[1])
 		c.Expect(entities[1], CollidedWith, entities[0])

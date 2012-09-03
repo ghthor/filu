@@ -39,6 +39,11 @@ type (
 		collides(collidableEntity) bool
 		collideWith(collidableEntity, WorldTime)
 	}
+
+	entityCollision struct {
+		time WorldTime
+		A, B collidableEntity
+	}
 )
 
 func newMotionInfo(coord WorldCoord, facing Direction, speed uint) *motionInfo {
@@ -105,9 +110,23 @@ func (mi *motionInfo) Apply(moveAction MoveAction) {
 	mi.moveRequest = nil
 }
 
-func collide(ce1, ce2 collidableEntity, t WorldTime) {
-	ce1.collideWith(ce2, t)
-	ce2.collideWith(ce1, t)
+func (c entityCollision) SameAs(other entityCollision) (same bool) {
+	if c.time != other.time {
+		return false
+	}
+
+	switch {
+	case c.A == other.A && c.B == other.B:
+		fallthrough
+	case c.A == other.B && c.B == other.A:
+		same = true
+	}
+	return
+}
+
+func (c entityCollision) collide() {
+	c.A.collideWith(c.B, c.time)
+	c.B.collideWith(c.A, c.time)
 }
 
 type InputCmd struct {
