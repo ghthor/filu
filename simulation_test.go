@@ -13,6 +13,23 @@ func (c noopConn) SendJson(msg string, obj interface{}) error {
 	return nil
 }
 
+func DescribeWorldState(c gospec.Context) {
+	c.Specify("generates json compatitable state object", func() {
+		worldState := newWorldState(Clock(0))
+
+		entity := MockEntity{id: 0}
+		worldState.quadTree.Insert(entity)
+
+		jsonState := worldState.Json()
+
+		c.Assume(jsonState.Time, Equals, WorldTime(0))
+		c.Assume(len(jsonState.Entities), Equals, 1)
+
+		jsonBytes, err := json.Marshal(jsonState)
+		c.Expect(err, IsNil)
+		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0"}]}`)
+	})
+}
 
 func DescribeSimulation(c gospec.Context) {
 	sim := newSimulation(40)
@@ -121,22 +138,4 @@ func DescribeSimulation(c gospec.Context) {
 	})
 
 	c.Specify("simulation loop runs at the intended fps", nil)
-}
-
-func DescribeWorldState(c gospec.Context) {
-	c.Specify("generates json compatitable state object", func() {
-		worldState := newWorldState(Clock(0))
-
-		entity := MockEntity{id: 0}
-		worldState.quadTree.Insert(entity)
-
-		jsonState := worldState.Json()
-
-		c.Assume(jsonState.Time, Equals, WorldTime(0))
-		c.Assume(len(jsonState.Entities), Equals, 1)
-
-		jsonBytes, err := json.Marshal(jsonState)
-		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0"}]}`)
-	})
 }
