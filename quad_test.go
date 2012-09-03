@@ -449,15 +449,8 @@ func DescribeQuad(c gospec.Context) {
 		world, err := newQuadTree(AABB{
 			WorldCoord{-20, 20},
 			WorldCoord{20, -20},
-		}, nil, 2)
+		}, nil, 20)
 		c.Assume(err, IsNil)
-
-		world = world.Insert(MockEntity{0, WorldCoord{-10, 10}})
-		world = world.Insert(MockEntity{1, WorldCoord{10, 10}})
-		world = world.Insert(MockEntity{2, WorldCoord{10, -10}})
-
-		quadTree, isAQuadTree := world.(*quadTree)
-		c.Assume(isAQuadTree, IsTrue)
 
 		worldTime := WorldTime(0)
 		step := func() {
@@ -466,12 +459,24 @@ func DescribeQuad(c gospec.Context) {
 			world.StepTo(worldTime)
 		}
 
+		entityCounter := EntityId(0)
+		nextId := func() EntityId {
+			defer func() { entityCounter += 1 }()
+			return entityCounter
+		}
+
+		divideLeafIntoTree := func() *quadTree {
+			world = world.(*quadLeaf).divide()
+			quadTree, isAQuadTree := world.(*quadTree)
+			c.Assume(isAQuadTree, IsTrue)
+			return quadTree
+		}
+
 		c.Specify("consume movement requests and apply appropiate path actions", func() {
 			entitySpeed := uint(20)
-			entity := &MockMobileEntity{2, newMotionInfo(WorldCoord{0, 0}, North, entitySpeed)}
+			entity := &MockMobileEntity{nextId(), newMotionInfo(WorldCoord{0, 0}, North, entitySpeed)}
 
 			world = world.Insert(entity)
-			c.Assume(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
 
 			entity.mi.moveRequest = &moveRequest{0, North}
 
@@ -491,10 +496,9 @@ func DescribeQuad(c gospec.Context) {
 		})
 
 		c.Specify("consume movement requests and apply appropiate turn facing actions", func() {
-			entity := &MockMobileEntity{2, newMotionInfo(WorldCoord{0, 0}, North, 20)}
+			entity := &MockMobileEntity{nextId(), newMotionInfo(WorldCoord{0, 0}, North, 20)}
 
 			world = world.Insert(entity)
-			c.Assume(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
 
 			entity.mi.moveRequest = &moveRequest{0, South}
 
@@ -529,7 +533,7 @@ func DescribeQuad(c gospec.Context) {
 				WorldCoord{-1, 0},
 			}
 			entity := &MockMobileEntity{
-				2,
+				nextId(),
 				&motionInfo{
 					path.Orig,
 					path.Direction(),
@@ -541,54 +545,58 @@ func DescribeQuad(c gospec.Context) {
 				},
 			}
 
-			world = world.Insert(entity)
-			c.Assume(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
+			c.Specify("within the same leaf", func() {
+				world = world.Insert(entity)
 
-			world.AdjustPositions(path.End() - 1)
-			c.Expect(len(entity.mi.pathActions), Equals, 1)
-			c.Expect(entity.Coord(), Equals, path.Orig)
-			c.Expect(quadTree.quads[QUAD_SE].Contains(entity), IsTrue)
+				world.AdjustPositions(path.End() - 1)
+				c.Expect(len(entity.mi.pathActions), Equals, 1)
+				c.Expect(entity.Coord(), Equals, path.Orig)
 
-			world.AdjustPositions(path.End())
-			c.Expect(len(entity.mi.pathActions), Equals, 0)
-			c.Expect(entity.Coord(), Equals, path.Dest)
+				world.AdjustPositions(path.End())
+				c.Expect(len(entity.mi.pathActions), Equals, 0)
+				c.Expect(entity.Coord(), Equals, path.Dest)
+			})
 
-			c.Specify("and moves entity into the proper quad", func() {
-				c.Expect(quadTree.quads[QUAD_SW].Contains(entity), IsTrue)
+			c.Specify("and entity is transfered to another leaf", func() {
+				tree := divideLeafIntoTree()
+
+				world = world.Insert(entity)
+				c.Assume(tree.quads[QUAD_SE].Contains(entity), IsTrue)
+
+				world.AdjustPositions(path.End() - 1)
+				c.Expect(len(entity.mi.pathActions), Equals, 1)
+				c.Expect(entity.Coord(), Equals, path.Orig)
+				c.Expect(tree.quads[QUAD_SE].Contains(entity), IsTrue)
+
+				world.AdjustPositions(path.End())
+				c.Expect(len(entity.mi.pathActions), Equals, 0)
+				c.Expect(entity.Coord(), Equals, path.Dest)
+				c.Expect(tree.quads[QUAD_SW].Contains(entity), IsTrue)
 			})
 		})
 
 		c.Specify("bound movement inside the world's bounds", func() {
-			entity := &MockMobileEntity{2, newMotionInfo(world.AABB().TopL, North, 20)}
+			entity := &MockMobileEntity{nextId(), newMotionInfo(world.AABB().TopL, North, 20)}
 			entity.mi.moveRequest = &moveRequest{0, North}
 
-			world = world.Insert(entity)
+			c.Specify("as a quadLeaf", func() {
+				world = world.Insert(entity)
 
-			step()
+				step()
 
-			c.Expect(entity.mi.moveRequest, Not(IsNil))
-			c.Expect(len(entity.mi.pathActions), Equals, 0)
+				c.Expect(entity.mi.moveRequest, Not(IsNil))
+				c.Expect(len(entity.mi.pathActions), Equals, 0)
+			})
 
-			// Check that quadLeaf performs the exact same way as quadTree
-			worldTime = WorldTime(0)
-			world, err = newQuadTree(AABB{
-				WorldCoord{-20, 20},
-				WorldCoord{20, -20},
-			}, nil, 2)
-			c.Assume(err, IsNil)
+			c.Specify("as a quadTree", func() {
+				world = world.Insert(entity)
+				divideLeafIntoTree()
 
-			entity = &MockMobileEntity{0, newMotionInfo(world.AABB().TopL, North, 20)}
-			entity.mi.moveRequest = &moveRequest{0, North}
+				step()
 
-			world = world.Insert(entity)
-
-			_, isQuadLeaf := world.(*quadLeaf)
-			c.Assume(isQuadLeaf, IsTrue)
-
-			step()
-
-			c.Expect(entity.mi.moveRequest, Not(IsNil))
-			c.Expect(len(entity.mi.pathActions), Equals, 0)
+				c.Expect(entity.mi.moveRequest, Not(IsNil))
+				c.Expect(len(entity.mi.pathActions), Equals, 0)
+			})
 		})
 	})
 }
