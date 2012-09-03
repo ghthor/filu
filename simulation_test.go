@@ -13,7 +13,6 @@ func (c noopConn) SendJson(msg string, obj interface{}) error {
 	return nil
 }
 
-var conn noopConn
 
 func DescribeSimulation(c gospec.Context) {
 	sim := newSimulation(40)

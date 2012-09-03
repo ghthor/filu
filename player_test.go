@@ -151,7 +151,7 @@ func DescribeInputCommands(c gospec.Context) {
 			Name:         "thundercleese",
 			entityId:     0,
 			mi:           newMotionInfo(WorldCoord{0, 0}, North, 40),
-			conn:         conn,
+			conn:         noopConn(0),
 			collectInput: make(chan InputCmd, 1),
 		}
 
