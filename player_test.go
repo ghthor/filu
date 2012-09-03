@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
 	"strconv"
@@ -226,6 +227,93 @@ func DescribePlayerCollisions(c gospec.Context) {
 				}
 			})
 		})
+	})
+
+	c.Specify("when a location is occupied", func() {
+		playerNotMoving := &Player{mi: newMotionInfo(WorldCoord{0, 0}, North, 20)}
+		// TODO this reads badly
+		c.Assume(playerNotMoving.mi.isMoving(), IsFalse)
+
+		directions := [...]Direction{North, South, East, West}
+
+		for _, direction := range directions {
+			c.Specify(fmt.Sprintf("and a player is attempting to move there from the %v", direction), func() {
+				player := &Player{mi: newMotionInfo(playerNotMoving.Coord().Neighbor(direction), direction.Reverse(), 20)}
+				path := &PathAction{
+					NewTimeSpan(0, 20),
+					player.Coord(),
+					playerNotMoving.Coord(),
+				}
+				player.mi.Apply(path)
+
+				c.Assume(player.mi.isMoving(), IsTrue)
+
+				c.Specify("they are unable to [AB]", func() {
+					entityCollision{0, player, playerNotMoving}.collide()
+					c.Expect(player.mi.isMoving(), IsFalse)
+				})
+
+				c.Specify("they are unable to [BA]", func() {
+					entityCollision{0, playerNotMoving, player}.collide()
+					c.Expect(player.mi.isMoving(), IsFalse)
+				})
+			})
+		}
+
+		directionPairs := [...]struct {
+			A, B Direction
+		}{{
+			North, South,
+		}, {
+			North, East,
+		}, {
+			North, West,
+		}, {
+			South, East,
+		}, {
+			South, West,
+		}, {
+			East, West,
+		}}
+
+		for _, direction := range directionPairs {
+			c.Specify(fmt.Sprintf("and 2 players are attempting to move there from the %v and the %v", direction.A, direction.B), func() {
+				players := [...]*Player{
+					{mi: newMotionInfo(playerNotMoving.Coord().Neighbor(direction.A), direction.A.Reverse(), 20)},
+					{mi: newMotionInfo(playerNotMoving.Coord().Neighbor(direction.B), direction.B.Reverse(), 20)},
+				}
+
+				for _, player := range players {
+					player.mi.Apply(&PathAction{
+						NewTimeSpan(0, 0+WorldTime(player.mi.speed)),
+						player.Coord(),
+						playerNotMoving.Coord(),
+					})
+					c.Assume(player.mi.isMoving(), IsTrue)
+				}
+
+				collisions := [...]entityCollision{
+					entityCollision{0, players[0], players[1]},
+					entityCollision{0, players[0], playerNotMoving},
+					entityCollision{0, players[1], playerNotMoving},
+				}
+
+				// TODO figure out an algorithm to check all orderings
+				// 123
+				// 132
+				// 213
+				// 231
+				// 312
+				// 321
+				for _, c := range collisions {
+					c.collide()
+				}
+
+				for _, player := range players {
+					c.Expect(player.mi.isMoving(), IsFalse)
+				}
+			})
+		}
 	})
 }
 

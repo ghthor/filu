@@ -187,6 +187,13 @@ func (p *Player) collideWith(other collidableEntity, t WorldTime) {
 					p.mi.UndoLastApply()
 				}
 			}
+
+		} else if p.mi.isMoving() && !ce.mi.isMoving() {
+			pa := p.mi.pathActions[0]
+			// Attempting to move onto an occupied location
+			if pa.Dest == ce.Coord() {
+				p.mi.UndoLastApply()
+			}
 		}
 	}
 }
