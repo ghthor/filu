@@ -209,28 +209,6 @@ func DescribeAABB(c gospec.Context) {
 	})
 }
 
-type MockMobileEntity struct {
-	id EntityId
-	mi *motionInfo
-}
-
-func (e *MockMobileEntity) Id() EntityId      { return e.id }
-func (e *MockMobileEntity) Coord() WorldCoord { return e.mi.coord }
-func (e *MockMobileEntity) AABB() AABB        { return e.mi.AABB() }
-func (e *MockMobileEntity) Json() interface{} {
-	return struct {
-		Id   EntityId `json:"id"`
-		Name string   `json:"name"`
-	}{
-		e.Id(),
-		e.String(),
-	}
-}
-func (e *MockMobileEntity) motionInfo() *motionInfo { return e.mi }
-func (e *MockMobileEntity) String() string {
-	return fmt.Sprintf("MockMobileEntity%v", e.Id())
-}
-
 func DescribeQuad(c gospec.Context) {
 	c.Specify("AABB can be split into 4 quads", func() {
 		aabb := AABB{

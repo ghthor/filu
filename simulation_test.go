@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ghthor/gospec/src/gospec"
 	. "github.com/ghthor/gospec/src/gospec"
 	"strconv"
@@ -138,27 +137,6 @@ func DescribeSimulation(c gospec.Context) {
 	})
 
 	c.Specify("simulation loop runs at the intended fps", nil)
-}
-
-type MockEntity struct {
-	id    EntityId
-	coord WorldCoord
-}
-
-func (e MockEntity) Id() EntityId      { return e.id }
-func (e MockEntity) Coord() WorldCoord { return e.coord }
-func (e MockEntity) AABB() AABB        { return AABB{e.coord, e.coord} }
-func (e MockEntity) Json() interface{} {
-	return struct {
-		Id   EntityId `json:"id"`
-		Name string   `json:"name"`
-	}{
-		e.Id(),
-		e.String(),
-	}
-}
-func (e MockEntity) String() string {
-	return fmt.Sprintf("MockEntity%v", e.Id())
 }
 
 func DescribeMovableEntity(c gospec.Context) {
