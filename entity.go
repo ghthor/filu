@@ -39,6 +39,12 @@ type (
 		entity
 		motionInfo() *motionInfo
 	}
+
+	collidableEntity interface {
+		entity
+		collides(collidableEntity) bool
+		collideWith(collidableEntity, WorldTime)
+	}
 )
 
 func newMotionInfo(coord WorldCoord, facing Direction, speed uint) *motionInfo {
@@ -103,6 +109,11 @@ func (mi *motionInfo) Apply(moveAction MoveAction) {
 	}
 
 	mi.moveRequest = nil
+}
+
+func collide(ce1, ce2 collidableEntity, t WorldTime) {
+	ce1.collideWith(ce2, t)
+	ce2.collideWith(ce1, t)
 }
 
 type InputCmd struct {
