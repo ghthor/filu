@@ -107,11 +107,11 @@ type (
 	}
 
 	quadLeaf struct {
-		parent          quad
-		aabb            AABB
-		entities        []entity
-		movableEntities []movableEntity
-		maxEntities     int
+		parent      quad
+		aabb        AABB
+		entities    []entity
+		movable     []movableEntity
+		maxEntities int
 	}
 
 	quadTree struct {
@@ -206,7 +206,7 @@ func (q *quadLeaf) Insert(e entity) quad {
 
 	// Collect Movable Entities
 	if me, ok := e.(movableEntity); ok {
-		q.movableEntities = append(q.movableEntities, me)
+		q.movable = append(q.movable, me)
 	}
 	return q
 }
@@ -219,9 +219,9 @@ func (q *quadLeaf) Remove(e entity) {
 	}
 
 	if _, ok := e.(movableEntity); ok {
-		for i, entity := range q.movableEntities {
+		for i, entity := range q.movable {
 			if entity.Id() == e.Id() {
-				q.movableEntities = append(q.movableEntities[:i], q.movableEntities[i+1:]...)
+				q.movable = append(q.movable[:i], q.movable[i+1:]...)
 			}
 		}
 	}
@@ -238,7 +238,7 @@ func (q *quadLeaf) InsertAll(entities []entity) quad {
 	// Collect Movable Entities
 	for _, e := range entities {
 		if me, ok := e.(movableEntity); ok {
-			q.movableEntities = append(q.movableEntities, me)
+			q.movable = append(q.movable, me)
 		}
 	}
 	return q
@@ -265,8 +265,8 @@ func (q *quadLeaf) QueryAll(aabb AABB) []entity {
 
 func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
 	// Worst Case sizing
-	movedOutside := make([]movableEntity, 0, len(q.movableEntities))
-	for _, e := range q.movableEntities {
+	movedOutside := make([]movableEntity, 0, len(q.movable))
+	for _, e := range q.movable {
 		mi := e.motionInfo()
 
 		// Removed finished pathActions
@@ -319,8 +319,8 @@ type pathRequest struct {
 func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 
 	// This loop filters out Actions that can't happen yet because of TurnAction Delays
-	pathRequests := make([]pathRequest, 0, len(q.movableEntities))
-	for _, e := range q.movableEntities {
+	pathRequests := make([]pathRequest, 0, len(q.movable))
+	for _, e := range q.movable {
 		mi := e.motionInfo()
 
 		// No movement Request

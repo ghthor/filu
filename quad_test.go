@@ -362,7 +362,7 @@ func DescribeQuad(c gospec.Context) {
 			c.Assume(isAQuadLeaf, IsTrue)
 
 			c.Expect(len(leaf.entities), Equals, 1)
-			c.Expect(len(leaf.movableEntities), Equals, 0)
+			c.Expect(len(leaf.movable), Equals, 0)
 
 			c.Specify("and removed", func() {
 				qt.Remove(MockEntity{})
@@ -377,12 +377,12 @@ func DescribeQuad(c gospec.Context) {
 			c.Assume(isAQuadLeaf, IsTrue)
 
 			c.Expect(len(leaf.entities), Equals, 1)
-			c.Expect(len(leaf.movableEntities), Equals, 1)
+			c.Expect(len(leaf.movable), Equals, 1)
 
 			c.Specify("and removed", func() {
 				qt.Remove(&MockMobileEntity{})
 				c.Expect(len(leaf.entities), Equals, 0)
-				c.Expect(len(leaf.movableEntities), Equals, 0)
+				c.Expect(len(leaf.movable), Equals, 0)
 			})
 		})
 	})
