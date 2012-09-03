@@ -704,7 +704,7 @@ func DescribeQuad(c gospec.Context) {
 		})
 
 		c.Specify("identifies a collision", func() {
-			c.Specify("when 2 collidable entities contest a coordinate", func() {
+			c.Specify("when 2 alive entities contest a coordinate", func() {
 				contestedPoint := WorldCoord{0, 0}
 
 				entityA := &MockAliveEntity{
@@ -743,6 +743,138 @@ func DescribeQuad(c gospec.Context) {
 					c.Expect(entityA, CollidedWith, entityB)
 					c.Expect(len(entityA.collisions), Equals, 1)
 					c.Expect(len(entityB.collisions), Equals, 1)
+				})
+			})
+
+			c.Specify("when 3 alive entities contest a coordinate", func() {
+				contestedPoint := WorldCoord{0, 0}
+
+				entityA := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(South), North, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityA.mi.moveRequest = &moveRequest{worldTime, North}
+
+				entityB := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(North), South, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityB.mi.moveRequest = &moveRequest{worldTime, South}
+
+				entityC := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(West), East, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityC.mi.moveRequest = &moveRequest{worldTime, East}
+
+				world = world.Insert(entityA)
+				world = world.Insert(entityB)
+				world = world.Insert(entityC)
+
+				c.Specify("within the same leaf", func() {
+					_, isALeaf := world.(*quadLeaf)
+					c.Assume(isALeaf, IsTrue)
+
+					step()
+
+					c.Expect(entityA, CollidedWith, entityB)
+					c.Expect(entityA, CollidedWith, entityC)
+					c.Expect(entityB, CollidedWith, entityC)
+
+					c.Expect(len(entityA.collisions), Equals, 2)
+					c.Expect(len(entityB.collisions), Equals, 2)
+					c.Expect(len(entityC.collisions), Equals, 2)
+				})
+
+				c.Specify("across seperate leaves", func() {
+					divideLeafIntoTree()
+
+					step()
+
+					c.Expect(entityA, CollidedWith, entityB)
+					c.Expect(entityA, CollidedWith, entityC)
+					c.Expect(entityB, CollidedWith, entityC)
+
+					c.Expect(len(entityA.collisions), Equals, 2)
+					c.Expect(len(entityB.collisions), Equals, 2)
+					c.Expect(len(entityC.collisions), Equals, 2)
+				})
+			})
+
+			c.Specify("when 4 alive entities contest a coordinate", func() {
+				contestedPoint := WorldCoord{0, 0}
+
+				entityA := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(South), North, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityA.mi.moveRequest = &moveRequest{worldTime, North}
+
+				entityB := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(North), South, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityB.mi.moveRequest = &moveRequest{worldTime, South}
+
+				entityC := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(West), East, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityC.mi.moveRequest = &moveRequest{worldTime, East}
+
+				entityD := &MockAliveEntity{
+					nextId(),
+					newMotionInfo(contestedPoint.Neighbor(East), West, 20),
+					make([]MockCollision, 0, 2),
+				}
+				entityD.mi.moveRequest = &moveRequest{worldTime, West}
+
+				world = world.Insert(entityA)
+				world = world.Insert(entityB)
+				world = world.Insert(entityC)
+				world = world.Insert(entityD)
+
+				c.Specify("within the same leaf", func() {
+					_, isALeaf := world.(*quadLeaf)
+					c.Assume(isALeaf, IsTrue)
+
+					step()
+
+					c.Expect(entityA, CollidedWith, entityB)
+					c.Expect(entityA, CollidedWith, entityC)
+					c.Expect(entityA, CollidedWith, entityD)
+					c.Expect(entityB, CollidedWith, entityC)
+					c.Expect(entityB, CollidedWith, entityD)
+					c.Expect(entityC, CollidedWith, entityD)
+
+					c.Expect(len(entityA.collisions), Equals, 3)
+					c.Expect(len(entityB.collisions), Equals, 3)
+					c.Expect(len(entityC.collisions), Equals, 3)
+					c.Expect(len(entityD.collisions), Equals, 3)
+				})
+
+				c.Specify("across seperate leaves", func() {
+					divideLeafIntoTree()
+
+					step()
+
+					c.Expect(entityA, CollidedWith, entityB)
+					c.Expect(entityA, CollidedWith, entityC)
+					c.Expect(entityA, CollidedWith, entityD)
+					c.Expect(entityB, CollidedWith, entityC)
+					c.Expect(entityB, CollidedWith, entityD)
+					c.Expect(entityC, CollidedWith, entityD)
+
+					c.Expect(len(entityA.collisions), Equals, 3)
+					c.Expect(len(entityB.collisions), Equals, 3)
+					c.Expect(len(entityC.collisions), Equals, 3)
+					c.Expect(len(entityD.collisions), Equals, 3)
 				})
 			})
 		})
