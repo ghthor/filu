@@ -576,27 +576,50 @@ func DescribeQuad(c gospec.Context) {
 		})
 
 		c.Specify("bound movement inside the world's bounds", func() {
-			entity := &MockMobileEntity{nextId(), newMotionInfo(world.AABB().TopL, North, 20)}
-			entity.mi.moveRequest = &moveRequest{0, North}
+			cases := []struct {
+				position    WorldCoord
+				directions  []Direction
+				description string
+			}{{
+				world.AABB().TopL,
+				[]Direction{West, North},
+				"top left",
+			}, {
+				world.AABB().TopR(),
+				[]Direction{North, East},
+				"top right",
+			}, {
+				world.AABB().BotR,
+				[]Direction{East, South},
+				"bot right",
+			}, {
+				world.AABB().BotL(),
+				[]Direction{South, West},
+				"bot left",
+			}}
 
-			c.Specify("as a quadLeaf", func() {
-				world = world.Insert(entity)
+			for _, specCase := range cases {
+				for _, direction := range specCase.directions {
+					c.Specify(fmt.Sprintf("from %v moving %v", specCase.description, direction), func() {
+						entity := &MockMobileEntity{nextId(), newMotionInfo(specCase.position, direction, 20)}
+						entity.mi.moveRequest = &moveRequest{0, direction}
 
-				step()
+						world = world.Insert(entity)
+						c.Specify("as a quadLeaf", func() {
+							step()
+							c.Expect(entity.mi.moveRequest, Not(IsNil))
+							c.Expect(len(entity.mi.pathActions), Equals, 0)
+						})
 
-				c.Expect(entity.mi.moveRequest, Not(IsNil))
-				c.Expect(len(entity.mi.pathActions), Equals, 0)
-			})
-
-			c.Specify("as a quadTree", func() {
-				world = world.Insert(entity)
-				divideLeafIntoTree()
-
-				step()
-
-				c.Expect(entity.mi.moveRequest, Not(IsNil))
-				c.Expect(len(entity.mi.pathActions), Equals, 0)
-			})
+						c.Specify("as a quadTree", func() {
+							divideLeafIntoTree()
+							step()
+							c.Expect(entity.mi.moveRequest, Not(IsNil))
+							c.Expect(len(entity.mi.pathActions), Equals, 0)
+						})
+					})
+				}
+			}
 		})
 	})
 }
