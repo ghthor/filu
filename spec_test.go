@@ -11,17 +11,21 @@ func TestAllSpecs(t *testing.T) {
 
 	r.AddSpec(engine.DescribeClock)
 	r.AddSpec(engine.DescribeTimeSpan)
+
 	r.AddSpec(engine.DescribeDirection)
 	r.AddSpec(engine.DescribeWorldCoord)
+	r.AddSpec(engine.DescribeCollision)
 	r.AddSpec(engine.DescribeAABB)
-	r.AddSpec(engine.DescribeMockEntities)
+
 	r.AddSpec(engine.DescribePathAction)
 	r.AddSpec(engine.DescribeMoveAction)
 	r.AddSpec(engine.DescribeMovableEntity)
-	r.AddSpec(engine.DescribeCollision)
+	r.AddSpec(engine.DescribeMockEntities)
+
 	r.AddSpec(engine.DescribeQuad)
-	r.AddSpec(engine.DescribeSimulation)
 	r.AddSpec(engine.DescribeWorldState)
+	r.AddSpec(engine.DescribeSimulation)
+
 	r.AddSpec(engine.DescribePlayer)
 	r.AddSpec(engine.DescribeInputCommands)
 
