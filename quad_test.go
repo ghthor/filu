@@ -334,33 +334,74 @@ func DescribeQuad(c gospec.Context) {
 		c.Assume(err, IsNil)
 
 		c.Specify("as an entity", func() {
-			qt = qt.Insert(MockEntity{})
+			entity := MockEntity{}
+			qt = qt.Insert(entity)
 
 			leaf, isAQuadLeaf := qt.(*quadLeaf)
 			c.Assume(isAQuadLeaf, IsTrue)
 
 			c.Expect(len(leaf.entities), Equals, 1)
 			c.Expect(len(leaf.movable), Equals, 0)
+			c.Expect(len(leaf.collidable), Equals, 0)
 
 			c.Specify("and removed", func() {
-				qt.Remove(MockEntity{})
+				qt.Remove(entity)
 				c.Expect(len(leaf.entities), Equals, 0)
 			})
 		})
 
 		c.Specify("as an movableEntity", func() {
-			qt = qt.Insert(&MockMobileEntity{mi: newMotionInfo(WorldCoord{0, 0}, North, 20)})
+			entity := &MockMobileEntity{}
+			qt = qt.Insert(entity)
 
 			leaf, isAQuadLeaf := qt.(*quadLeaf)
 			c.Assume(isAQuadLeaf, IsTrue)
 
 			c.Expect(len(leaf.entities), Equals, 1)
 			c.Expect(len(leaf.movable), Equals, 1)
+			c.Expect(len(leaf.collidable), Equals, 0)
 
 			c.Specify("and removed", func() {
-				qt.Remove(&MockMobileEntity{})
+				qt.Remove(entity)
 				c.Expect(len(leaf.entities), Equals, 0)
 				c.Expect(len(leaf.movable), Equals, 0)
+			})
+		})
+
+		c.Specify("as an collidable entity", func() {
+			entity := &MockCollidableEntity{}
+			qt = qt.Insert(entity)
+
+			leaf, isAQuadLeaf := qt.(*quadLeaf)
+			c.Assume(isAQuadLeaf, IsTrue)
+
+			c.Expect(len(leaf.entities), Equals, 1)
+			c.Expect(len(leaf.movable), Equals, 0)
+			c.Expect(len(leaf.collidable), Equals, 1)
+
+			c.Specify("and removed", func() {
+				qt.Remove(entity)
+				c.Expect(len(leaf.entities), Equals, 0)
+				c.Expect(len(leaf.collidable), Equals, 0)
+			})
+		})
+
+		c.Specify("as an alive entity", func() {
+			entity := &MockAliveEntity{}
+			qt = qt.Insert(entity)
+
+			leaf, isAQuadLeaf := qt.(*quadLeaf)
+			c.Assume(isAQuadLeaf, IsTrue)
+
+			c.Expect(len(leaf.entities), Equals, 1)
+			c.Expect(len(leaf.movable), Equals, 1)
+			c.Expect(len(leaf.collidable), Equals, 1)
+
+			c.Specify("and removed", func() {
+				qt.Remove(entity)
+				c.Expect(len(leaf.entities), Equals, 0)
+				c.Expect(len(leaf.movable), Equals, 0)
+				c.Expect(len(leaf.collidable), Equals, 0)
 			})
 		})
 	})

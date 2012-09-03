@@ -111,6 +111,7 @@ type (
 		aabb        AABB
 		entities    []entity
 		movable     []movableEntity
+		collidable  []collidableEntity
 		maxEntities int
 	}
 
@@ -189,6 +190,7 @@ func newQuadTree(aabb AABB, entities []entity, maxPerQuad int) (quad, error) {
 		aabb,
 		make([]entity, 0, maxPerQuad),
 		make([]movableEntity, 0, maxPerQuad),
+		make([]collidableEntity, 0, maxPerQuad),
 		maxPerQuad,
 	}, nil
 }
@@ -204,24 +206,40 @@ func (q *quadLeaf) Insert(e entity) quad {
 
 	q.entities = append(q.entities, e)
 
-	// Collect Movable Entities
+	// Index Movable Entities
 	if me, ok := e.(movableEntity); ok {
 		q.movable = append(q.movable, me)
+	}
+
+	// Index collidable Entities
+	if ce, ok := e.(collidableEntity); ok {
+		q.collidable = append(q.collidable, ce)
 	}
 	return q
 }
 
 func (q *quadLeaf) Remove(e entity) {
+	// Remove entity
 	for i, entity := range q.entities {
 		if entity.Id() == e.Id() {
 			q.entities = append(q.entities[:i], q.entities[i+1:]...)
 		}
 	}
 
+	// Remove Movable Entity
 	if _, ok := e.(movableEntity); ok {
-		for i, entity := range q.movable {
-			if entity.Id() == e.Id() {
+		for i, me := range q.movable {
+			if me.Id() == e.Id() {
 				q.movable = append(q.movable[:i], q.movable[i+1:]...)
+			}
+		}
+	}
+
+	// Remove Collidable Entity
+	if _, ok := e.(collidableEntity); ok {
+		for i, ce := range q.collidable {
+			if ce.Id() == e.Id() {
+				q.collidable = append(q.collidable[:i], q.collidable[i+1:]...)
 			}
 		}
 	}
@@ -235,12 +253,18 @@ func (q *quadLeaf) InsertAll(entities []entity) quad {
 
 	q.entities = append(q.entities, entities...)
 
-	// Collect Movable Entities
 	for _, e := range entities {
+		// Index Movable Entities
 		if me, ok := e.(movableEntity); ok {
 			q.movable = append(q.movable, me)
 		}
+
+		// Index Collidable Entities
+		if ce, ok := e.(collidableEntity); ok {
+			q.collidable = append(q.collidable, ce)
+		}
 	}
+
 	return q
 }
 
@@ -401,6 +425,7 @@ func (q *quadLeaf) divide() (qt *quadTree) {
 			aabbs[i],
 			make([]entity, 0, cap(q.entities)),
 			make([]movableEntity, 0, cap(q.entities)),
+			make([]collidableEntity, 0, cap(q.entities)),
 			q.maxEntities,
 		}
 	}
