@@ -99,6 +99,136 @@ func DescribePlayer(c gospec.Context) {
 	})
 }
 
+func DescribePlayerCollisions(c gospec.Context) {
+	c.Specify("when a location is contested", func() {
+		contested := WorldCoord{0, 0}
+
+		c.Specify("by 2 players", func() {
+			playerA := &Player{mi: newMotionInfo(contested.Neighbor(South), North, 20)}
+			startA := WorldTime(0)
+			pathA := &PathAction{
+				NewTimeSpan(startA, startA+WorldTime(playerA.mi.speed)),
+				playerA.mi.coord,
+				contested,
+			}
+			playerA.mi.Apply(pathA)
+			c.Assume(playerA.mi.isMoving(), IsTrue)
+
+			specs := []struct {
+				Direction
+				description string
+			}{{
+				South,
+				"Head to Head",
+			}, {
+				East,
+				"From the side [East]",
+			}, {
+				West,
+				"From the side [West]",
+			}}
+
+			c.Specify("at the same time", func() {
+				startB := startA
+
+				for _, spec := range specs {
+					c.Specify(spec.description, func() {
+						c.Specify("if the speeds are different the faster player wins", func() {
+							playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 21)}
+							pathB := &PathAction{
+								NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
+								playerB.mi.coord,
+								contested,
+							}
+							playerB.mi.Apply(pathB)
+
+							c.Assume(playerB.mi.isMoving(), IsTrue)
+							// Assume PlayerA is faster
+							c.Assume(playerA.mi.speed, Satisfies, playerA.mi.speed < playerB.mi.speed)
+
+							entityCollision{startA, playerA, playerB}.collide()
+
+							c.Specify("player A wins", func() {
+								entityCollision{startA, playerA, playerB}.collide()
+								c.Expect(playerA.mi.isMoving(), IsTrue)
+								c.Expect(playerB.mi.isMoving(), IsFalse)
+							})
+
+							c.Specify("player A wins", func() {
+								entityCollision{startA, playerB, playerA}.collide()
+								c.Expect(playerA.mi.isMoving(), IsTrue)
+								c.Expect(playerB.mi.isMoving(), IsFalse)
+							})
+						})
+
+						c.Specify("if the speeds are the same", func() {
+							playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()),
+								spec.Direction,
+								playerA.mi.speed)}
+
+							pathB := &PathAction{
+								NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
+								playerB.mi.coord,
+								contested,
+							}
+							playerB.mi.Apply(pathB)
+
+							c.Assume(playerB.mi.isMoving(), IsTrue)
+							c.Assume(playerA.mi.speed, Equals, playerB.mi.speed)
+
+							c.Specify("player A wins", func() {
+								entityCollision{startA, playerB, playerA}.collide()
+
+								c.Expect(playerA.mi.isMoving(), IsTrue)
+								c.Expect(playerB.mi.isMoving(), IsFalse)
+							})
+
+							c.Specify("player B wins", func() {
+								entityCollision{startA, playerA, playerB}.collide()
+
+								c.Expect(playerA.mi.isMoving(), IsFalse)
+								c.Expect(playerB.mi.isMoving(), IsTrue)
+							})
+						})
+					})
+				}
+
+			})
+
+			c.Specify("the player that was already moving wins", func() {
+				for _, spec := range specs {
+					c.Specify(spec.description, func() {
+						playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 20)}
+						startB := startA + 1
+						pathB := &PathAction{
+							NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
+							playerB.mi.coord,
+							contested,
+						}
+						playerB.mi.Apply(pathB)
+
+						c.Assume(playerB.mi.isMoving(), IsTrue)
+
+						c.Specify("player A wins", func() {
+							entityCollision{startB, playerA, playerB}.collide()
+
+							c.Expect(playerA.mi.isMoving(), IsTrue)
+							c.Expect(playerB.mi.isMoving(), IsFalse)
+						})
+
+						c.Specify("player A wins", func() {
+							entityCollision{startB, playerB, playerA}.collide()
+
+							c.Expect(playerA.mi.isMoving(), IsTrue)
+							c.Expect(playerB.mi.isMoving(), IsFalse)
+						})
+					})
+				}
+			})
+		})
+	})
+}
+
 func DescribeInputCommands(c gospec.Context) {
 	c.Specify("creating movement requests from InputCmds", func() {
 		c.Specify("north", func() {

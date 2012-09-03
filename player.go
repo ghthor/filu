@@ -154,6 +154,43 @@ func (p *Player) stopMux() {
 func (p *Player) motionInfo() *motionInfo             { return <-p.serveMotionInfo }
 func (p *Player) SendWorldState(state WorldStateJson) { p.routeWorldState <- state }
 
+// Collision Handlers
+func (p *Player) collides(other collidableEntity) (collides bool) {
+	switch other.(type) {
+	case *Player:
+		collides = true
+	}
+	return
+}
+
+func (p *Player) collideWith(other collidableEntity, t WorldTime) {
+	switch ce := other.(type) {
+	case *Player:
+		if p.mi.isMoving() && ce.mi.isMoving() {
+			pa, paOther := p.mi.pathActions[0], ce.mi.pathActions[0]
+
+			collision := pa.Collides(*paOther)
+
+			switch collision.Type {
+			case CT_FROM_SIDE, CT_HEAD_TO_HEAD:
+				// Both started at the same time
+				if pa.Start() == t && paOther.Start() == t && collision.T == t {
+
+					// Higher speed means moving  slower
+					// Whoever is faster wins
+					if p.mi.speed >= ce.mi.speed {
+						p.mi.UndoLastApply()
+					}
+
+				} else if pa.Start() == collision.T {
+					// I started after
+					p.mi.UndoLastApply()
+				}
+			}
+		}
+	}
+}
+
 // External interface of the muxer presented to the Node
 func (p *Player) SubmitInput(cmd, params string) error {
 	parts := strings.Split(cmd, "=")

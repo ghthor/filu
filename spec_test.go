@@ -28,6 +28,7 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribeSimulation)
 
 	r.AddSpec(engine.DescribePlayer)
+	r.AddSpec(engine.DescribePlayerCollisions)
 	r.AddSpec(engine.DescribeInputCommands)
 
 	gospec.MainGoTest(r, t)
