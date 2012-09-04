@@ -752,5 +752,47 @@ func DescribeCollision(c gospec.Context) {
 				})
 			})
 		})
+
+		c.Specify("when A and B swapping positions", func() {
+			a, b := WorldCoord{0, 0}, WorldCoord{1, 0}
+
+			pathA := PathAction{Orig: a, Dest: b}
+			pathB := PathAction{Orig: b, Dest: a}
+
+			c.Specify("the collision type is set to swap", func() {
+				pathA.TimeSpan = NewTimeSpan(0, 20)
+				pathB.TimeSpan = NewTimeSpan(1, 21)
+
+				collision := pathA.Collides(pathB)
+				c.Expect(collision.Type, Equals, CT_SWAP)
+
+				collision = pathB.Collides(pathA)
+				c.Expect(collision.Type, Equals, CT_SWAP)
+			})
+
+			c.Specify("the collision begins when", func() {
+				c.Specify("A starts", func() {
+					pathA.TimeSpan = NewTimeSpan(0, 20)
+					pathB.TimeSpan = NewTimeSpan(1, 21)
+
+					collision := pathA.Collides(pathB)
+					c.Expect(collision.T, Equals, pathA.Start())
+
+					collision = pathB.Collides(pathA)
+					c.Expect(collision.T, Equals, pathA.Start())
+				})
+
+				c.Specify("B starts", func() {
+					pathA.TimeSpan = NewTimeSpan(1, 21)
+					pathB.TimeSpan = NewTimeSpan(0, 20)
+
+					collision := pathA.Collides(pathB)
+					c.Expect(collision.T, Equals, pathB.Start())
+
+					collision = pathB.Collides(pathA)
+					c.Expect(collision.T, Equals, pathB.Start())
+				})
+			})
+		})
 	})
 }

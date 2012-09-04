@@ -298,6 +298,7 @@ const (
 	CT_FROM_SIDE          CollisionType = iota
 	CT_A_INTO_B           CollisionType = iota
 	CT_A_INTO_B_FROM_SIDE CollisionType = iota
+	CT_SWAP               CollisionType = iota
 	CT_SAME_ORIG          CollisionType = iota
 	CT_SAME_ORIG_DEST     CollisionType = iota
 )
