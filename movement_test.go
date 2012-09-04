@@ -772,8 +772,8 @@ func DescribeCollision(c gospec.Context) {
 
 			c.Specify("the collision begins when", func() {
 				c.Specify("A starts", func() {
-					pathA.TimeSpan = NewTimeSpan(0, 20)
-					pathB.TimeSpan = NewTimeSpan(1, 21)
+					pathA.TimeSpan = NewTimeSpan(5, 20)
+					pathB.TimeSpan = NewTimeSpan(6, 21)
 
 					collision := pathA.Collides(pathB)
 					c.Expect(collision.T, Equals, pathA.Start())
@@ -783,8 +783,8 @@ func DescribeCollision(c gospec.Context) {
 				})
 
 				c.Specify("B starts", func() {
-					pathA.TimeSpan = NewTimeSpan(1, 21)
-					pathB.TimeSpan = NewTimeSpan(0, 20)
+					pathA.TimeSpan = NewTimeSpan(6, 21)
+					pathB.TimeSpan = NewTimeSpan(5, 20)
 
 					collision := pathA.Collides(pathB)
 					c.Expect(collision.T, Equals, pathB.Start())

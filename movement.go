@@ -331,6 +331,10 @@ func (A PathAction) Collides(B PathAction) (c Collision) {
 			c.Type = CT_FROM_SIDE
 		}
 
+	case A.Dest == B.Orig && B.Dest == A.Orig:
+		// A and B are swapping positions
+		c.Type = CT_SWAP
+
 	case B.Dest == A.Orig:
 		// Need to flip A and B
 		c.A, c.B = B, A
@@ -343,6 +347,7 @@ func (A PathAction) Collides(B PathAction) (c Collision) {
 				return
 			}
 			c.Type = CT_A_INTO_B
+
 		} else {
 			c.Type = CT_A_INTO_B_FROM_SIDE
 		}
@@ -370,6 +375,13 @@ func (c *Collision) findStart() {
 
 	case CT_A_INTO_B, CT_A_INTO_B_FROM_SIDE:
 		c.T = c.A.start
+
+	case CT_SWAP:
+		if c.A.start <= c.B.start {
+			c.T = c.A.start
+		} else {
+			c.T = c.B.start
+		}
 
 	default:
 	}
