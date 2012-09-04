@@ -315,6 +315,34 @@ func DescribePlayerCollisions(c gospec.Context) {
 			})
 		}
 	})
+
+	c.Specify("when players are attempting to swap positions", func() {
+		a, b := WorldCoord{0, 0}, WorldCoord{1, 0}
+		playerA := &Player{mi: newMotionInfo(a, a.DirectionTo(b), 20)}
+		playerB := &Player{mi: newMotionInfo(b, b.DirectionTo(a), 20)}
+
+		playerA.mi.Apply(&PathAction{
+			NewTimeSpan(0, 20),
+			a, b,
+		})
+
+		playerB.mi.Apply(&PathAction{
+			NewTimeSpan(0, 20),
+			b, a,
+		})
+
+		c.Specify("AB", func() {
+			entityCollision{0, playerA, playerB}.collide()
+			c.Expect(playerA.mi.isMoving(), IsFalse)
+			c.Expect(playerB.mi.isMoving(), IsFalse)
+		})
+
+		c.Specify("BA", func() {
+			entityCollision{0, playerB, playerA}.collide()
+			c.Expect(playerA.mi.isMoving(), IsFalse)
+			c.Expect(playerB.mi.isMoving(), IsFalse)
+		})
+	})
 }
 
 func DescribeInputCommands(c gospec.Context) {

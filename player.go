@@ -186,6 +186,8 @@ func (p *Player) collideWith(other collidableEntity, t WorldTime) {
 					// I started after
 					p.mi.UndoLastApply()
 				}
+			case CT_SWAP:
+				p.mi.UndoLastApply()
 			}
 
 		} else if p.mi.isMoving() && !ce.mi.isMoving() {
