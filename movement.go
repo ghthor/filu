@@ -238,8 +238,6 @@ func (pa PathAction) Crosses(path PathAction) bool {
 }
 
 type (
-	CollisionType int
-
 	Collision struct {
 		Type CollisionType
 		T    WorldTime
@@ -290,18 +288,6 @@ func (c Collision) Overlap() (overlap float64) {
 	}
 	return
 }
-
-// TODO Implement this as bitflags
-const (
-	CT_NONE               CollisionType = iota
-	CT_HEAD_TO_HEAD       CollisionType = iota
-	CT_FROM_SIDE          CollisionType = iota
-	CT_A_INTO_B           CollisionType = iota
-	CT_A_INTO_B_FROM_SIDE CollisionType = iota
-	CT_SWAP               CollisionType = iota
-	CT_SAME_ORIG          CollisionType = iota
-	CT_SAME_ORIG_DEST     CollisionType = iota
-)
 
 func (A PathAction) Collides(B PathAction) (c Collision) {
 

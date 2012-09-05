@@ -15,6 +15,8 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribeDirection)
 	r.AddSpec(engine.DescribeWorldCoord)
 	r.AddSpec(engine.DescribeCollision)
+	r.AddSpec(engine.DescribePathCollision)
+	r.AddSpec(engine.DescribeCoordCollision)
 	r.AddSpec(engine.DescribeAABB)
 
 	r.AddSpec(engine.DescribePathAction)
