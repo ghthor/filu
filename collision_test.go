@@ -5,7 +5,7 @@ import (
 	. "github.com/ghthor/gospec/src/gospec"
 )
 
-func overlapPeakAndDecrease(c gospec.Context, collision PathCollision) {
+func overlapPeakAndDecrease(c gospec.Context, collision PathCollision) float64 {
 	start, end := collision.Start(), collision.End()
 
 	// Going to fix this requirement when I implement floating point time
@@ -43,6 +43,7 @@ func overlapPeakAndDecrease(c gospec.Context, collision PathCollision) {
 
 	overlap = collision.OverlapAt(end)
 	c.Expect(overlap, Equals, 0.0)
+	return peak
 }
 
 func overlapPeakLevelThenDecrease(c gospec.Context, collision PathCollision) {
@@ -96,7 +97,7 @@ func DescribePathCollision(c gospec.Context) {
 	var collision PathCollision
 
 	c.Specify("when path A is following into path B's position from the side", func() {
-		pathA.TimeSpan = NewTimeSpan(10, 30)
+		pathA.TimeSpan = NewTimeSpan(15, 35)
 		pathB.TimeSpan = NewTimeSpan(10, 30)
 
 		pathA.Orig = WorldCoord{0, 1}
@@ -114,6 +115,101 @@ func DescribePathCollision(c gospec.Context) {
 		c.Assume(collision.Type(), Equals, CT_A_INTO_B_FROM_SIDE)
 		c.Assume(collision.A, Equals, pathA)
 		c.Assume(collision.B, Equals, pathB)
+
+		c.Specify("the collision will begin when", func() {
+			specs := [...]struct {
+				A, B        TimeSpan
+				description string
+			}{{
+				NewTimeSpan(15, 35),
+				NewTimeSpan(10, 30),
+				"when path A starts if path A starts after path B",
+			}, {
+				NewTimeSpan(10, 30),
+				NewTimeSpan(15, 35),
+				"when path A starts if path A starts before path B",
+			}, {
+				NewTimeSpan(10, 30),
+				NewTimeSpan(10, 30),
+				"when path A and path B start at the same time",
+			}}
+
+			for _, spec := range specs {
+				c.Specify(spec.description, func() {
+					pathA.TimeSpan = spec.A
+					pathB.TimeSpan = spec.B
+
+					c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
+					c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+				})
+			}
+		})
+
+		c.Specify("the collision will end when", func() {
+			specs := [...]struct {
+				A, B        TimeSpan
+				description string
+			}{{
+				NewTimeSpan(15, 35),
+				NewTimeSpan(10, 30),
+				"when path B ends if path B ends before path A",
+			}, {
+				NewTimeSpan(10, 30),
+				NewTimeSpan(15, 35),
+				"when path B ends if path B ends after path A",
+			}, {
+				NewTimeSpan(10, 30),
+				NewTimeSpan(10, 30),
+				"when path A and path B end at the same time",
+			}}
+
+			for _, spec := range specs {
+				c.Specify(spec.description, func() {
+					pathA.TimeSpan = spec.A
+					pathB.TimeSpan = spec.B
+
+					c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
+					c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+				})
+			}
+		})
+		specs := [...]struct {
+			A, B        TimeSpan
+			description string
+		}{{
+			NewTimeSpan(15, 35),
+			NewTimeSpan(10, 30),
+			"when path B ends before path A",
+		}, {
+			NewTimeSpan(10, 30),
+			NewTimeSpan(15, 35),
+			"when path B ends after path A",
+		}, {
+			NewTimeSpan(10, 30),
+			NewTimeSpan(10, 30),
+			"when path A and path B end at the same time",
+		}}
+
+		for _, spec := range specs {
+			c.Specify(spec.description+" the overlap will grow to a peak and decrease till path B ends", func() {
+				pathA.TimeSpan = spec.A
+				pathB.TimeSpan = spec.B
+
+				overlapPeakAndDecrease(c, pathCollision(pathA, pathB))
+				overlapPeakAndDecrease(c, pathCollision(pathB, pathA))
+			})
+		}
+
+		c.Specify("when B starts as A ends the peak will be 1.0", func() {
+			pathA.TimeSpan = NewTimeSpan(10, 30)
+			pathB.TimeSpan = NewTimeSpan(30, 40)
+
+			peak := overlapPeakAndDecrease(c, pathCollision(pathA, pathB))
+			c.Expect(peak, Equals, 1.0)
+
+			peak = overlapPeakAndDecrease(c, pathCollision(pathB, pathA))
+			c.Expect(peak, Equals, 1.0)
+		})
 	})
 
 	c.Specify("when path A is following into path B's position in the same direction", func() {

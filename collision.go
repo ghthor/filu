@@ -107,7 +107,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 
 		} else {
 			c.CollisionType = CT_A_INTO_B_FROM_SIDE
-			goto EXIT
+			goto CT_A_INTO_B_FROM_SIDE_TIMESPAN
 		}
 	default:
 		goto EXIT
@@ -146,6 +146,12 @@ CT_A_INTO_B_TIMESPAN:
 		}
 	}
 	c.TimeSpan = NewTimeSpan(start, b.end)
+	goto EXIT
+
+CT_A_INTO_B_FROM_SIDE_TIMESPAN:
+	start = a.start
+	end = b.end
+	c.TimeSpan = NewTimeSpan(start, end)
 
 EXIT:
 	return
@@ -201,6 +207,14 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 		if sum > 1.0 {
 			overlap = sum - 1.0
 		}
+
+	case CT_A_INTO_B_FROM_SIDE:
+		p := [...]PartialWorldCoord{
+			c.A.DestPartial(t),
+			c.B.OrigPartial(t),
+		}
+
+		overlap = p[0].Percentage * p[1].Percentage
 	}
 	return
 }
