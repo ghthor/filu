@@ -1,5 +1,9 @@
 package engine
 
+import (
+	"math"
+)
+
 type (
 	CollisionType int
 
@@ -77,16 +81,39 @@ func (A PathAction) CollidesWith(B interface{}) (c CollisionTemp) {
 }
 
 func pathCollision(a, b PathAction) (c PathCollision) {
+	var start, end WorldTime
 	c.A, c.B = a, b
+
 	switch {
 	case a.Dest == b.Orig && b.Dest == a.Orig:
 		// A and B are swapping positions
 		c.CollisionType = CT_SWAP
 		goto CT_SWAP_TIMESPAN
+
+	case b.Dest == a.Orig:
+		// Need to flip A and B
+		a, b = b, a
+		c.A, c.B = a, b
+		fallthrough
+
+	case a.Dest == b.Orig:
+		// A is moving into the WorldCoord B is leaving
+		if a.Direction() == b.Direction() {
+			if a.start >= b.start && a.end >= b.end {
+				goto EXIT
+			}
+			c.CollisionType = CT_A_INTO_B
+			goto CT_A_INTO_B_TIMESPAN
+
+		} else {
+			c.CollisionType = CT_A_INTO_B_FROM_SIDE
+			goto EXIT
+		}
+	default:
+		goto EXIT
 	}
 
 CT_SWAP_TIMESPAN:
-	var start, end WorldTime
 	// TODO this is a.TimeSpan.Add(b.TimeSpan)
 	if a.start <= b.start {
 		start = a.start
@@ -102,6 +129,23 @@ CT_SWAP_TIMESPAN:
 
 	c.TimeSpan = NewTimeSpan(start, end)
 	goto EXIT
+
+CT_A_INTO_B_TIMESPAN:
+	if a.start <= b.start {
+		start = a.start
+	} else {
+		var as, ae, bs, be float64
+		as, ae = float64(a.start), float64(a.end)
+		bs, be = float64(b.start), float64(b.end)
+
+		start = WorldTime(math.Floor(((as / (ae - as)) - (bs / (be - bs))) / ((1 / (ae - as)) - (1 / (be - bs)))))
+
+		// TODO Check if this floating point work around hack can be avoided or done differently
+		if c.OverlapAt(start+1) == 0.0 {
+			start += 1
+		}
+	}
+	c.TimeSpan = NewTimeSpan(start, b.end)
 
 EXIT:
 	return
@@ -145,6 +189,17 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 				}
 				overlap = p[0].Percentage + p[1].Percentage
 			}
+		}
+
+	case CT_A_INTO_B:
+		p := [...]PartialWorldCoord{
+			c.A.DestPartial(t),
+			c.B.OrigPartial(t),
+		}
+
+		sum := p[0].Percentage + p[1].Percentage
+		if sum > 1.0 {
+			overlap = sum - 1.0
 		}
 	}
 	return
