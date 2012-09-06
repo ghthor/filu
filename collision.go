@@ -88,7 +88,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	case a.Orig == b.Orig && a.Dest == b.Dest:
 		// A & B are moving out of the same Cell in the same direction
 		c.CollisionType = CT_SAME_ORIG_DEST
-		goto EXIT
+		goto CT_SAME_ORIG_DEST_TIMESPAN
 
 	case a.Orig == b.Orig:
 		// A & B are moving out of the same Cell in different directions
@@ -133,6 +133,22 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	default:
 		goto EXIT
 	}
+
+CT_SAME_ORIG_DEST_TIMESPAN:
+	if a.start < b.start {
+		start = a.start
+	} else {
+		start = b.start
+	}
+
+	if a.end > b.end {
+		end = a.end
+	} else {
+		end = b.end
+	}
+
+	c.TimeSpan = NewTimeSpan(start, end)
+	goto EXIT
 
 CT_SAME_ORIG_TIMESPAN:
 	if a.start < b.start {
