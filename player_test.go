@@ -341,6 +341,29 @@ func DescribePlayerCollisions(c gospec.Context) {
 			c.Expect(playerB.mi.isMoving(), IsFalse)
 		})
 	})
+
+	c.Specify("when a player is following into another players position", func() {
+		c.Specify("from directly behind", func() {
+			m, n, o := WorldCoord{-1, 0}, WorldCoord{0, 0}, WorldCoord{1, 0}
+			playerA := &Player{mi: newMotionInfo(m, m.DirectionTo(n), 15)}
+			playerB := &Player{mi: newMotionInfo(n, n.DirectionTo(o), 20)}
+
+			playerA.mi.Apply(&PathAction{NewTimeSpan(20, 35), m, n})
+			playerB.mi.Apply(&PathAction{NewTimeSpan(20, 40), n, o})
+
+			c.Specify("player A doesn't move", func() {
+				entityCollision{20, playerA, playerB}.collide()
+				c.Expect(playerA.mi.isMoving(), IsFalse)
+				c.Expect(playerB.mi.isMoving(), IsTrue)
+			})
+
+			c.Specify("player A doesn't move", func() {
+				entityCollision{20, playerB, playerA}.collide()
+				c.Expect(playerA.mi.isMoving(), IsFalse)
+				c.Expect(playerB.mi.isMoving(), IsTrue)
+			})
+		})
+	})
 }
 
 func DescribeInputCommands(c gospec.Context) {

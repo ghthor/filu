@@ -202,6 +202,12 @@ func (p *Player) collideWith(other collidableEntity, t WorldTime) {
 
 			case CT_SWAP:
 				p.mi.UndoLastApply()
+
+			case CT_A_INTO_B:
+				// If I'm A then I don't move
+				if collision.A == *pa {
+					p.mi.UndoLastApply()
+				}
 			}
 
 		} else if p.mi.isMoving() && !ce.mi.isMoving() {
