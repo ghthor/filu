@@ -393,44 +393,6 @@ func DescribeMoveAction(c gospec.Context) {
 func DescribeCollision(c gospec.Context) {
 	c.Specify("overlap for a collision that is", func() {
 		c.Specify("A contesting B for position", func() {
-			c.Specify("head to head", func() {
-				pa1 := PathAction{
-					NewTimeSpan(10, 20),
-					WorldCoord{0, 0},
-					WorldCoord{1, 0},
-				}
-
-				pa2 := PathAction{
-					NewTimeSpan(12, 22),
-					WorldCoord{2, 0},
-					WorldCoord{1, 0},
-				}
-
-				c.Assume(pa1.Overlaps(pa2.TimeSpan), IsTrue)
-
-				collision := pa1.Collides(pa2)
-				c.Assume(collision.Type, Equals, CT_HEAD_TO_HEAD)
-
-				c.Specify("should always be >= 0.0", func() {
-					overlap := collision.Overlap()
-					c.Expect(overlap, Satisfies, overlap >= 0.0)
-				})
-
-				c.Specify("shouldn't be > 0.0 until sum of pertcentages is > 1.0", func() {
-					// 2 moving objects meet exactly
-					collision.T = 16
-					overlap := collision.Overlap()
-
-					c.Expect(overlap, Equals, 0.0)
-
-					// Next step they begin to overlap
-					collision.T += 1
-					overlap = collision.Overlap()
-
-					c.Expect(overlap, Satisfies, overlap > 0.0)
-				})
-			})
-
 			c.Specify("from the side", func() {
 				pa1 := PathAction{
 					NewTimeSpan(10, 25),

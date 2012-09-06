@@ -85,6 +85,18 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	c.A, c.B = a, b
 
 	switch {
+	case a.Dest == b.Dest:
+		// A & B are moving into the same WorldCoord
+		if a.Direction() == b.Direction().Reverse() {
+			// Head to Head
+			c.CollisionType = CT_HEAD_TO_HEAD
+			goto CT_HEAD_TO_HEAD_TIMESPAN
+		} else {
+			// From the Side
+			c.CollisionType = CT_FROM_SIDE
+		}
+		goto EXIT
+
 	case a.Dest == b.Orig && b.Dest == a.Orig:
 		// A and B are swapping positions
 		c.CollisionType = CT_SWAP
@@ -112,6 +124,37 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	default:
 		goto EXIT
 	}
+
+CT_HEAD_TO_HEAD_TIMESPAN:
+	// Start of collision
+	if a.start == b.end {
+		start = a.start
+	} else if b.start == a.end {
+		start = b.start
+	} else {
+		var at, as, bt, bs float64
+		// Starts
+		at, bt = float64(a.start), float64(b.start)
+		// Speeds
+		as, bs = float64(a.end-a.start), float64(b.end-b.start)
+
+		start = WorldTime(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
+
+		// TODO Check if this floating point work around hack can be avoided or done differently
+		if c.OverlapAt(start+1) == 0.0 {
+			start += 1
+		}
+	}
+
+	// End of Collision
+	if a.end >= b.end {
+		end = a.end
+	} else {
+		end = b.end
+	}
+
+	c.TimeSpan = NewTimeSpan(start, end)
+	goto EXIT
 
 CT_SWAP_TIMESPAN:
 	// TODO this is a.TimeSpan.Add(b.TimeSpan)
@@ -176,6 +219,22 @@ func (c PathCollision) End() WorldTime      { return c.TimeSpan.end }
 func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
+	case CT_HEAD_TO_HEAD:
+		if t == c.end {
+			overlap = 1.0
+			return
+		}
+
+		p := [...]PartialWorldCoord{
+			c.A.DestPartial(t),
+			c.B.DestPartial(t),
+		}
+
+		sum := p[0].Percentage + p[1].Percentage
+		if sum > 1.0 {
+			overlap = sum - 1.0
+		}
+
 	case CT_SWAP:
 		switch {
 		case t <= c.start || t >= c.end:
