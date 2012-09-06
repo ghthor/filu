@@ -97,7 +97,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 		// A & B are moving out of the same Cell in different directions
 		if a.Direction() == b.Direction().Reverse() {
 			c.CollisionType = CT_SAME_ORIG
-			goto EXIT
+			goto CT_SAME_ORIG_TIMESPAN
 		}
 		// A & B are moving perpendicular to each other
 		c.CollisionType = CT_SAME_ORIG_PERP
@@ -153,6 +153,35 @@ CT_SAME_ORIG_DEST_TIMESPAN:
 		end = a.end
 	} else {
 		end = b.end
+	}
+
+	c.TimeSpan = NewTimeSpan(start, end)
+	goto EXIT
+
+CT_SAME_ORIG_TIMESPAN:
+	if a.start < b.start {
+		start = a.start
+	} else {
+		start = b.start
+	}
+
+	if a.end == b.start {
+		end = a.end
+	} else if b.end == a.start {
+		end = b.end
+	} else {
+		var at, as, bt, bs float64
+		// Starts
+		at, bt = float64(a.start), float64(b.start)
+		// Speeds
+		as, bs = float64(a.end-a.start), float64(b.end-b.start)
+
+		end = WorldTime(math.Ceil((at*bs + bt*as + as*bs) / (bs + as)))
+
+		// TODO Check if this floating point work around hack can be avoided or done differently
+		if c.OverlapAt(end-1) == 0.0 {
+			end -= 1
+		}
 	}
 
 	c.TimeSpan = NewTimeSpan(start, end)
@@ -283,6 +312,17 @@ func (c PathCollision) End() WorldTime      { return c.TimeSpan.end }
 func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
+	case CT_SAME_ORIG:
+		p := [...]PartialCell{
+			c.A.OrigPartial(t),
+			c.B.OrigPartial(t),
+		}
+
+		overlap = p[0].Percentage + p[1].Percentage - 1.0
+		if overlap < 0.0 {
+			overlap = 0.0
+		}
+
 	case CT_SAME_ORIG_PERP:
 		p := [...]PartialCell{
 			c.A.OrigPartial(t),
