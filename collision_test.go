@@ -717,18 +717,18 @@ func DescribePathCollision(c gospec.Context) {
 		}
 	})
 
-	c.Specify("when path A and path B share the same origin", func() {
+	c.Specify("when path A and path B share the same origin and are perpendicular", func() {
 		o := Cell{0, 0}
 		pathA = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(North)}
 		pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(East)}
 
 		c.Specify("a same origin collision is identified", func() {
-			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG)
-			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG)
+			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG_PERP)
+			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG_PERP)
 
 			pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(West)}
-			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG)
-			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG)
+			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG_PERP)
+			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG_PERP)
 		})
 
 		c.Specify("the collision begins when either path starts first", func() {

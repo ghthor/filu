@@ -38,6 +38,7 @@ const (
 	CT_A_INTO_B_FROM_SIDE CollisionType = iota
 	CT_SWAP               CollisionType = iota
 	CT_SAME_ORIG          CollisionType = iota
+	CT_SAME_ORIG_PERP     CollisionType = iota
 	CT_SAME_ORIG_DEST     CollisionType = iota
 	CT_CELL_DEST          CollisionType = iota
 	CT_CELL_ORIG          CollisionType = iota
@@ -92,8 +93,13 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 
 	case a.Orig == b.Orig:
 		// A & B are moving out of the same Cell in different directions
-		c.CollisionType = CT_SAME_ORIG
-		goto CT_SAME_ORIG_TIMESPAN
+		if a.Direction() == b.Direction().Reverse() {
+			c.CollisionType = CT_SAME_ORIG
+			goto EXIT
+		}
+		// A & B are moving perpendicular to each other
+		c.CollisionType = CT_SAME_ORIG_PERP
+		goto CT_SAME_ORIG_PERP_TIMESPAN
 
 	case a.Dest == b.Dest:
 		// A & B are moving into the same Cell
@@ -150,7 +156,7 @@ CT_SAME_ORIG_DEST_TIMESPAN:
 	c.TimeSpan = NewTimeSpan(start, end)
 	goto EXIT
 
-CT_SAME_ORIG_TIMESPAN:
+CT_SAME_ORIG_PERP_TIMESPAN:
 	if a.start < b.start {
 		start = a.start
 	} else {
@@ -275,7 +281,7 @@ func (c PathCollision) End() WorldTime      { return c.TimeSpan.end }
 func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
-	case CT_SAME_ORIG:
+	case CT_SAME_ORIG_PERP:
 		if t == c.end {
 			overlap = 0.0
 			return
