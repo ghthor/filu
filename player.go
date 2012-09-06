@@ -169,23 +169,37 @@ func (p *Player) collideWith(other collidableEntity, t WorldTime) {
 		if p.mi.isMoving() && ce.mi.isMoving() {
 			pa, paOther := p.mi.pathActions[0], ce.mi.pathActions[0]
 
-			collision := pa.Collides(*paOther)
+			collision := pathCollision(*pa, *paOther)
 
-			switch collision.Type {
-			case CT_FROM_SIDE, CT_HEAD_TO_HEAD:
-				// Both started at the same time
-				if pa.Start() == t && paOther.Start() == t && collision.T == t {
+			switch collision.CollisionType {
+			case CT_FROM_SIDE:
+				// If my movement starts the collision
+				if pa.Start() == collision.Start() {
+					if paOther.Start() < collision.Start() {
+						// and the other is already moving, they've claimed the destination already
+						p.mi.UndoLastApply()
 
-					// Higher speed means moving  slower
-					// Whoever is faster wins
-					if p.mi.speed >= ce.mi.speed {
+					} else if paOther.Start() == collision.Start() && paOther.End() < collision.End() {
+						// and the other moves faster then us
+						p.mi.UndoLastApply()
+					} else if pa.Start() == paOther.Start() && pa.End() == paOther.End() {
+						// Same Speed, Same Start, I lose due to order of collision execution
 						p.mi.UndoLastApply()
 					}
-
-				} else if pa.Start() == collision.T {
-					// I started after
-					p.mi.UndoLastApply()
 				}
+
+			case CT_HEAD_TO_HEAD:
+				// other started before us and therefore has claimed the position
+				if pa.Start() == t && paOther.Start() < t {
+					p.mi.UndoLastApply()
+				} else if pa.Start() == t && paOther.Start() == t {
+					// we've started at the same time, whoever finishs first wins the destination
+					if pa.End() == collision.End() {
+						// Side effect of pa.End() == paOther.End() is paOther wins the random faceoff
+						p.mi.UndoLastApply()
+					}
+				}
+
 			case CT_SWAP:
 				p.mi.UndoLastApply()
 			}

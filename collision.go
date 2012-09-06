@@ -8,7 +8,7 @@ type (
 	CollisionType int
 
 	// This will be renamed to Collision
-	CollisionTemp interface {
+	Collision interface {
 		Type() CollisionType
 		Start() WorldTime
 		End() WorldTime
@@ -69,7 +69,7 @@ func (c CollisionType) String() string {
 	return "unknown collision type"
 }
 
-func (A PathAction) CollidesWith(B interface{}) (c CollisionTemp) {
+func (A PathAction) CollidesWith(B interface{}) (c Collision) {
 	switch b := B.(type) {
 	case PathAction:
 		return pathCollision(A, b)
@@ -85,6 +85,16 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	c.A, c.B = a, b
 
 	switch {
+	case a.Orig == b.Orig && a.Dest == b.Dest:
+		// A & B are moving out of the same WorldCoord in the same direction
+		c.CollisionType = CT_SAME_ORIG_DEST
+		goto EXIT
+
+	case a.Orig == b.Orig:
+		// A &	B are moving out of the same WorldCoord in different directions
+		c.CollisionType = CT_SAME_ORIG
+		goto EXIT
+
 	case a.Dest == b.Dest:
 		// A & B are moving into the same WorldCoord
 		if a.Direction() == b.Direction().Reverse() {
