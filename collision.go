@@ -91,11 +91,10 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 			// Head to Head
 			c.CollisionType = CT_HEAD_TO_HEAD
 			goto CT_HEAD_TO_HEAD_TIMESPAN
-		} else {
-			// From the Side
-			c.CollisionType = CT_FROM_SIDE
 		}
-		goto EXIT
+		// From the Side
+		c.CollisionType = CT_FROM_SIDE
+		goto CT_FROM_SIDE_TIMESPAN
 
 	case a.Dest == b.Orig && b.Dest == a.Orig:
 		// A and B are swapping positions
@@ -148,6 +147,22 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 
 	// End of Collision
 	if a.end >= b.end {
+		end = a.end
+	} else {
+		end = b.end
+	}
+
+	c.TimeSpan = NewTimeSpan(start, end)
+	goto EXIT
+
+CT_FROM_SIDE_TIMESPAN:
+	if a.start > b.start {
+		start = a.start
+	} else {
+		start = b.start
+	}
+
+	if a.end > b.end {
 		end = a.end
 	} else {
 		end = b.end
@@ -234,6 +249,19 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 		if sum > 1.0 {
 			overlap = sum - 1.0
 		}
+
+	case CT_FROM_SIDE:
+		if t == c.end {
+			overlap = 1.0
+			return
+		}
+
+		p := [...]PartialWorldCoord{
+			c.A.DestPartial(t),
+			c.B.DestPartial(t),
+		}
+
+		overlap = p[0].Percentage * p[1].Percentage
 
 	case CT_SWAP:
 		switch {
