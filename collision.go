@@ -59,9 +59,11 @@ func (c CollisionType) String() string {
 	case CT_SWAP:
 		return "swap"
 	case CT_SAME_ORIG:
-		return "same origin"
+		return "same origin inverse facing"
+	case CT_SAME_ORIG_PERP:
+		return "same origin perpendicular facing"
 	case CT_SAME_ORIG_DEST:
-		return "same orign and destination"
+		return "same origin and destination"
 	case CT_CELL_DEST:
 		return "cell destination"
 	case CT_CELL_ORIG:
