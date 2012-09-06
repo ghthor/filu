@@ -284,66 +284,41 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
 	case CT_SAME_ORIG_PERP:
-		if t == c.end {
-			overlap = 0.0
-			return
-		}
-
 		p := [...]PartialCell{
 			c.A.OrigPartial(t),
 			c.B.OrigPartial(t),
 		}
-
 		overlap = p[0].Percentage * p[1].Percentage
 
 	case CT_HEAD_TO_HEAD:
-		if t == c.end {
-			overlap = 1.0
-			return
-		}
-
 		p := [...]PartialCell{
 			c.A.DestPartial(t),
 			c.B.DestPartial(t),
 		}
-
 		sum := p[0].Percentage + p[1].Percentage
 		if sum > 1.0 {
 			overlap = sum - 1.0
 		}
 
 	case CT_FROM_SIDE:
-		if t == c.end {
-			overlap = 1.0
-			return
-		}
-
 		p := [...]PartialCell{
 			c.A.DestPartial(t),
 			c.B.DestPartial(t),
 		}
-
 		overlap = p[0].Percentage * p[1].Percentage
 
 	case CT_SWAP:
-		switch {
-		case t <= c.start || t >= c.end:
-			overlap = 0.0
-		default:
-			p := [...]PartialCell{
-				c.A.DestPartial(t),
-				c.B.DestPartial(t),
+		p := [...]PartialCell{
+			c.A.DestPartial(t),
+			c.B.DestPartial(t),
+		}
+		overlap = p[0].Percentage + p[1].Percentage
+		if overlap > 1.0 {
+			p = [...]PartialCell{
+				c.A.OrigPartial(t),
+				c.B.OrigPartial(t),
 			}
-
 			overlap = p[0].Percentage + p[1].Percentage
-
-			if overlap > 1.0 {
-				p = [...]PartialCell{
-					c.A.OrigPartial(t),
-					c.B.OrigPartial(t),
-				}
-				overlap = p[0].Percentage + p[1].Percentage
-			}
 		}
 
 	case CT_A_INTO_B:
@@ -351,7 +326,6 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 			c.A.DestPartial(t),
 			c.B.OrigPartial(t),
 		}
-
 		sum := p[0].Percentage + p[1].Percentage
 		if sum > 1.0 {
 			overlap = sum - 1.0
@@ -362,7 +336,6 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 			c.A.DestPartial(t),
 			c.B.OrigPartial(t),
 		}
-
 		overlap = p[0].Percentage * p[1].Percentage
 	}
 	return
