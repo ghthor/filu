@@ -147,8 +147,6 @@ func DescribePlayerCollisions(c gospec.Context) {
 							// Assume PlayerA is faster
 							c.Assume(playerA.mi.speed, Satisfies, playerA.mi.speed < playerB.mi.speed)
 
-							entityCollision{startA, playerA, playerB}.collide()
-
 							c.Specify("player A wins", func() {
 								entityCollision{startA, playerA, playerB}.collide()
 								c.Expect(playerA.mi.isMoving(), IsTrue)
