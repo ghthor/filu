@@ -111,6 +111,25 @@ func overlapGrowsTo1(c gospec.Context, collision PathCollision) {
 	c.Expect(overlap, Equals, 1.0)
 }
 
+func overlapShrinksTo0(c gospec.Context, collision PathCollision) {
+	start, end := collision.Start(), collision.End()
+
+	overlap := collision.OverlapAt(start)
+	c.Expect(overlap, Equals, 1.0)
+
+	prevOverlap := overlap
+
+	t := start + 1
+	for ; t < end; t++ {
+		overlap = collision.OverlapAt(t)
+		c.Expect(overlap, Satisfies, overlap < prevOverlap)
+		prevOverlap = overlap
+	}
+
+	overlap = collision.OverlapAt(end)
+	c.Expect(overlap, Equals, 0.0)
+}
+
 func DescribePathCollision(c gospec.Context) {
 	var pathA, pathB PathAction
 	var collision PathCollision
@@ -696,6 +715,58 @@ func DescribePathCollision(c gospec.Context) {
 				overlapPeakAndDecrease(c, pathCollision(pathB, pathA))
 			})
 		}
+	})
+
+	c.Specify("when path A and path B share the same origin", func() {
+		o := Cell{0, 0}
+		pathA = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(North)}
+		pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(East)}
+
+		c.Specify("a same origin collision is identified", func() {
+			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG)
+			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG)
+
+			pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(West)}
+			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG)
+			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG)
+		})
+
+		c.Specify("the collision begins when either path starts first", func() {
+			c.Specify("path A starts first", func() {
+				pathA.TimeSpan = NewTimeSpan(5, 25)
+
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+			})
+
+			c.Specify("path B starts first", func() {
+				pathB.TimeSpan = NewTimeSpan(5, 25)
+
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.start)
+			})
+		})
+
+		c.Specify("the collision ends when the first one finishes", func() {
+			c.Specify("path A finishes first", func() {
+				pathA.TimeSpan = NewTimeSpan(5, 25)
+
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.end)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.end)
+			})
+
+			c.Specify("path B finishes first", func() {
+				pathB.TimeSpan = NewTimeSpan(5, 25)
+
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+			})
+		})
+
+		c.Specify("the overlap will start at 1.0 and decrease to 0.0", func() {
+			overlapShrinksTo0(c, pathCollision(pathA, pathB))
+			overlapShrinksTo0(c, pathCollision(pathB, pathA))
+		})
 	})
 }
 

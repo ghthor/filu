@@ -93,7 +93,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	case a.Orig == b.Orig:
 		// A & B are moving out of the same Cell in different directions
 		c.CollisionType = CT_SAME_ORIG
-		goto EXIT
+		goto CT_SAME_ORIG_TIMESPAN
 
 	case a.Dest == b.Dest:
 		// A & B are moving into the same Cell
@@ -133,6 +133,21 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	default:
 		goto EXIT
 	}
+
+CT_SAME_ORIG_TIMESPAN:
+	if a.start < b.start {
+		start = a.start
+	} else {
+		start = b.start
+	}
+
+	if a.end < b.end {
+		end = a.end
+	} else {
+		end = b.end
+	}
+	c.TimeSpan = NewTimeSpan(start, end)
+	goto EXIT
 
 CT_HEAD_TO_HEAD_TIMESPAN:
 	// Start of collision
@@ -244,6 +259,19 @@ func (c PathCollision) End() WorldTime      { return c.TimeSpan.end }
 func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
+	case CT_SAME_ORIG:
+		if t == c.end {
+			overlap = 0.0
+			return
+		}
+
+		p := [...]PartialCell{
+			c.A.OrigPartial(t),
+			c.B.OrigPartial(t),
+		}
+
+		overlap = p[0].Percentage * p[1].Percentage
+
 	case CT_HEAD_TO_HEAD:
 		if t == c.end {
 			overlap = 1.0
