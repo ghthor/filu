@@ -21,7 +21,7 @@ type PlayerDef struct {
 	Name string
 
 	// Where the Player is locationed
-	Coord WorldCoord
+	Cell Cell
 	// Which Direction the Player is Facing
 	Facing Direction
 	// Movement speed in Frames per PathAction
@@ -59,15 +59,15 @@ type PlayerJson struct {
 	Name        string           `json:"name"`
 	Facing      string           `json:"facing"`
 	PathActions []PathActionJson `json:"pathActions"`
-	Coord       WorldCoord       `json:"coord"`
+	Cell        Cell             `json:"cell"`
 }
 
 func (p *Player) Id() EntityId {
 	return p.entityId
 }
 
-func (p *Player) Coord() WorldCoord {
-	return p.mi.coord
+func (p *Player) Cell() Cell {
+	return p.mi.cell
 }
 
 func (p *Player) AABB() (aabb AABB) {
@@ -79,7 +79,7 @@ func (p *Player) Json() interface{} {
 		Id:     p.entityId,
 		Name:   p.Name,
 		Facing: p.mi.facing.String(),
-		Coord:  p.mi.coord,
+		Cell:   p.mi.cell,
 	}
 
 	if len(p.mi.pathActions) > 0 {
@@ -213,7 +213,7 @@ func (p *Player) collideWith(other collidableEntity, t WorldTime) {
 		} else if p.mi.isMoving() && !ce.mi.isMoving() {
 			pa := p.mi.pathActions[0]
 			// Attempting to move onto an occupied location
-			if pa.Dest == ce.Coord() {
+			if pa.Dest == ce.Cell() {
 				p.mi.UndoLastApply()
 			}
 		}

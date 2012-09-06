@@ -13,9 +13,9 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribeTimeSpan)
 
 	r.AddSpec(engine.DescribeDirection)
-	r.AddSpec(engine.DescribeWorldCoord)
+	r.AddSpec(engine.DescribeCell)
 	r.AddSpec(engine.DescribePathCollision)
-	r.AddSpec(engine.DescribeCoordCollision)
+	r.AddSpec(engine.DescribeCellCollision)
 	r.AddSpec(engine.DescribeAABB)
 
 	r.AddSpec(engine.DescribePathAction)

@@ -28,7 +28,7 @@ func DescribePlayer(c gospec.Context) {
 	player := &Player{
 		Name:     "thundercleese",
 		entityId: 0,
-		mi:       newMotionInfo(WorldCoord{0, 0}, North, 40),
+		mi:       newMotionInfo(Cell{0, 0}, North, 40),
 		conn:     conn,
 	}
 
@@ -86,30 +86,30 @@ func DescribePlayer(c gospec.Context) {
 	c.Specify("generates json compatitable state object", func() {
 		jsonBytes, err := json.Marshal(player.Json())
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":null,"coord":{"x":0,"y":0}}`)
+		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":null,"cell":{"x":0,"y":0}}`)
 
 		player.mi.pathActions = append(player.mi.pathActions, &PathAction{
 			NewTimeSpan(0, 10),
-			WorldCoord{0, 0},
-			WorldCoord{0, 1},
+			Cell{0, 0},
+			Cell{0, 1},
 		})
 
 		jsonBytes, err = json.Marshal(player.Json())
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":[{"start":0,"end":10,"orig":{"x":0,"y":0},"dest":{"x":0,"y":1}}],"coord":{"x":0,"y":0}}`)
+		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":[{"start":0,"end":10,"orig":{"x":0,"y":0},"dest":{"x":0,"y":1}}],"cell":{"x":0,"y":0}}`)
 	})
 }
 
 func DescribePlayerCollisions(c gospec.Context) {
 	c.Specify("when a location is contested", func() {
-		contested := WorldCoord{0, 0}
+		contested := Cell{0, 0}
 
 		c.Specify("by 2 players", func() {
 			playerA := &Player{mi: newMotionInfo(contested.Neighbor(South), North, 20)}
 			startA := WorldTime(0)
 			pathA := &PathAction{
 				NewTimeSpan(startA, startA+WorldTime(playerA.mi.speed)),
-				playerA.mi.coord,
+				playerA.mi.cell,
 				contested,
 			}
 			playerA.mi.Apply(pathA)
@@ -138,7 +138,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 							playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 21)}
 							pathB := &PathAction{
 								NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
-								playerB.mi.coord,
+								playerB.mi.cell,
 								contested,
 							}
 							playerB.mi.Apply(pathB)
@@ -167,7 +167,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 
 							pathB := &PathAction{
 								NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
-								playerB.mi.coord,
+								playerB.mi.cell,
 								contested,
 							}
 							playerB.mi.Apply(pathB)
@@ -201,7 +201,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 						startB := startA + 1
 						pathB := &PathAction{
 							NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
-							playerB.mi.coord,
+							playerB.mi.cell,
 							contested,
 						}
 						playerB.mi.Apply(pathB)
@@ -228,7 +228,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 	})
 
 	c.Specify("when a location is occupied", func() {
-		playerNotMoving := &Player{mi: newMotionInfo(WorldCoord{0, 0}, North, 20)}
+		playerNotMoving := &Player{mi: newMotionInfo(Cell{0, 0}, North, 20)}
 		// TODO this reads badly
 		c.Assume(playerNotMoving.mi.isMoving(), IsFalse)
 
@@ -236,11 +236,11 @@ func DescribePlayerCollisions(c gospec.Context) {
 
 		for _, direction := range directions {
 			c.Specify(fmt.Sprintf("and a player is attempting to move there from the %v", direction), func() {
-				player := &Player{mi: newMotionInfo(playerNotMoving.Coord().Neighbor(direction), direction.Reverse(), 20)}
+				player := &Player{mi: newMotionInfo(playerNotMoving.Cell().Neighbor(direction), direction.Reverse(), 20)}
 				path := &PathAction{
 					NewTimeSpan(0, 20),
-					player.Coord(),
-					playerNotMoving.Coord(),
+					player.Cell(),
+					playerNotMoving.Cell(),
 				}
 				player.mi.Apply(path)
 
@@ -277,15 +277,15 @@ func DescribePlayerCollisions(c gospec.Context) {
 		for _, direction := range directionPairs {
 			c.Specify(fmt.Sprintf("and 2 players are attempting to move there from the %v and the %v", direction.A, direction.B), func() {
 				players := [...]*Player{
-					{mi: newMotionInfo(playerNotMoving.Coord().Neighbor(direction.A), direction.A.Reverse(), 20)},
-					{mi: newMotionInfo(playerNotMoving.Coord().Neighbor(direction.B), direction.B.Reverse(), 20)},
+					{mi: newMotionInfo(playerNotMoving.Cell().Neighbor(direction.A), direction.A.Reverse(), 20)},
+					{mi: newMotionInfo(playerNotMoving.Cell().Neighbor(direction.B), direction.B.Reverse(), 20)},
 				}
 
 				for _, player := range players {
 					player.mi.Apply(&PathAction{
 						NewTimeSpan(0, 0+WorldTime(player.mi.speed)),
-						player.Coord(),
-						playerNotMoving.Coord(),
+						player.Cell(),
+						playerNotMoving.Cell(),
 					})
 					c.Assume(player.mi.isMoving(), IsTrue)
 				}
@@ -315,7 +315,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 	})
 
 	c.Specify("when players are attempting to swap positions", func() {
-		a, b := WorldCoord{0, 0}, WorldCoord{1, 0}
+		a, b := Cell{0, 0}, Cell{1, 0}
 		playerA := &Player{mi: newMotionInfo(a, a.DirectionTo(b), 20)}
 		playerB := &Player{mi: newMotionInfo(b, b.DirectionTo(a), 20)}
 
@@ -344,7 +344,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 
 	c.Specify("when a player is following into another players position", func() {
 		c.Specify("from directly behind", func() {
-			m, n, o := WorldCoord{-1, 0}, WorldCoord{0, 0}, WorldCoord{1, 0}
+			m, n, o := Cell{-1, 0}, Cell{0, 0}, Cell{1, 0}
 			playerA := &Player{mi: newMotionInfo(m, m.DirectionTo(n), 15)}
 			playerB := &Player{mi: newMotionInfo(n, n.DirectionTo(o), 20)}
 
@@ -417,7 +417,7 @@ func DescribeInputCommands(c gospec.Context) {
 		player := &Player{
 			Name:         "thundercleese",
 			entityId:     0,
-			mi:           newMotionInfo(WorldCoord{0, 0}, North, 40),
+			mi:           newMotionInfo(Cell{0, 0}, North, 40),
 			conn:         noopConn(0),
 			collectInput: make(chan InputCmd, 1),
 		}

@@ -8,8 +8,8 @@ import (
 
 type (
 	MockEntity struct {
-		id    EntityId
-		coord WorldCoord
+		id   EntityId
+		cell Cell
 	}
 
 	MockMobileEntity struct {
@@ -24,7 +24,7 @@ type (
 
 	MockCollidableEntity struct {
 		id         EntityId
-		coord      WorldCoord
+		cell       Cell
 		collisions []MockCollision
 	}
 
@@ -35,9 +35,9 @@ type (
 	}
 )
 
-func (e MockEntity) Id() EntityId      { return e.id }
-func (e MockEntity) Coord() WorldCoord { return e.coord }
-func (e MockEntity) AABB() AABB        { return AABB{e.coord, e.coord} }
+func (e MockEntity) Id() EntityId { return e.id }
+func (e MockEntity) Cell() Cell   { return e.cell }
+func (e MockEntity) AABB() AABB   { return AABB{e.cell, e.cell} }
 func (e MockEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`
@@ -52,9 +52,9 @@ func (e MockEntity) String() string {
 	return fmt.Sprintf("MockEntity%v", e.Id())
 }
 
-func (e *MockMobileEntity) Id() EntityId      { return e.id }
-func (e *MockMobileEntity) Coord() WorldCoord { return e.mi.coord }
-func (e *MockMobileEntity) AABB() AABB        { return e.mi.AABB() }
+func (e *MockMobileEntity) Id() EntityId { return e.id }
+func (e *MockMobileEntity) Cell() Cell   { return e.mi.cell }
+func (e *MockMobileEntity) AABB() AABB   { return e.mi.AABB() }
 func (e *MockMobileEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`
@@ -71,9 +71,9 @@ func (e *MockMobileEntity) String() string {
 	return fmt.Sprintf("MockMobileEntity%v", e.Id())
 }
 
-func (e *MockCollidableEntity) Id() EntityId      { return e.id }
-func (e *MockCollidableEntity) Coord() WorldCoord { return e.coord }
-func (e *MockCollidableEntity) AABB() AABB        { return AABB{e.coord, e.coord} }
+func (e *MockCollidableEntity) Id() EntityId { return e.id }
+func (e *MockCollidableEntity) Cell() Cell   { return e.cell }
+func (e *MockCollidableEntity) AABB() AABB   { return AABB{e.cell, e.cell} }
 func (e *MockCollidableEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`
@@ -93,9 +93,9 @@ func (e *MockCollidableEntity) String() string {
 	return fmt.Sprintf("MockCollidableEntity%v", e.Id())
 }
 
-func (e *MockAliveEntity) Id() EntityId      { return e.id }
-func (e *MockAliveEntity) Coord() WorldCoord { return e.mi.coord }
-func (e *MockAliveEntity) AABB() AABB        { return e.mi.AABB() }
+func (e *MockAliveEntity) Id() EntityId { return e.id }
+func (e *MockAliveEntity) Cell() Cell   { return e.mi.cell }
+func (e *MockAliveEntity) AABB() AABB   { return e.mi.AABB() }
 func (e *MockAliveEntity) Json() interface{} {
 	return struct {
 		Id   EntityId `json:"id"`

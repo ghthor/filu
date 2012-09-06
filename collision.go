@@ -21,11 +21,11 @@ type (
 		A, B PathAction
 	}
 
-	CoordCollision struct {
+	CellCollision struct {
 		CollisionType
 		TimeSpan
-		Coord WorldCoord
-		Path  PathAction
+		Cell Cell
+		Path PathAction
 	}
 )
 
@@ -39,8 +39,8 @@ const (
 	CT_SWAP               CollisionType = iota
 	CT_SAME_ORIG          CollisionType = iota
 	CT_SAME_ORIG_DEST     CollisionType = iota
-	CT_COORD_DEST         CollisionType = iota
-	CT_COORD_ORIG         CollisionType = iota
+	CT_CELL_DEST          CollisionType = iota
+	CT_CELL_ORIG          CollisionType = iota
 )
 
 func (c CollisionType) String() string {
@@ -61,10 +61,10 @@ func (c CollisionType) String() string {
 		return "same origin"
 	case CT_SAME_ORIG_DEST:
 		return "same orign and destination"
-	case CT_COORD_DEST:
-		return "coord destination"
-	case CT_COORD_ORIG:
-		return "coord origin"
+	case CT_CELL_DEST:
+		return "cell destination"
+	case CT_CELL_ORIG:
+		return "cell origin"
 	}
 	return "unknown collision type"
 }
@@ -73,8 +73,8 @@ func (A PathAction) CollidesWith(B interface{}) (c Collision) {
 	switch b := B.(type) {
 	case PathAction:
 		return pathCollision(A, b)
-	case WorldCoord:
-		return coordCollision(A, b)
+	case Cell:
+		return cellCollision(A, b)
 	default:
 	}
 	panic("unknown collision attempt")
@@ -86,17 +86,17 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 
 	switch {
 	case a.Orig == b.Orig && a.Dest == b.Dest:
-		// A & B are moving out of the same WorldCoord in the same direction
+		// A & B are moving out of the same Cell in the same direction
 		c.CollisionType = CT_SAME_ORIG_DEST
 		goto EXIT
 
 	case a.Orig == b.Orig:
-		// A &	B are moving out of the same WorldCoord in different directions
+		// A & B are moving out of the same Cell in different directions
 		c.CollisionType = CT_SAME_ORIG
 		goto EXIT
 
 	case a.Dest == b.Dest:
-		// A & B are moving into the same WorldCoord
+		// A & B are moving into the same Cell
 		if a.Direction() == b.Direction().Reverse() {
 			// Head to Head
 			c.CollisionType = CT_HEAD_TO_HEAD
@@ -118,7 +118,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 		fallthrough
 
 	case a.Dest == b.Orig:
-		// A is moving into the WorldCoord B is leaving
+		// A is moving into the Cell B is leaving
 		if a.Direction() == b.Direction() {
 			if a.start >= b.start && a.end >= b.end {
 				goto EXIT
@@ -225,15 +225,15 @@ EXIT:
 	return
 }
 
-func coordCollision(p PathAction, wc WorldCoord) (c CoordCollision) {
-	c.Path, c.Coord = p, wc
-	switch wc {
+func cellCollision(p PathAction, c Cell) (cc CellCollision) {
+	cc.Path, cc.Cell = p, c
+	switch c {
 	case p.Dest:
-		c.CollisionType = CT_COORD_DEST
-		c.TimeSpan = p.TimeSpan
+		cc.CollisionType = CT_CELL_DEST
+		cc.TimeSpan = p.TimeSpan
 	case p.Orig:
-		c.CollisionType = CT_COORD_ORIG
-		c.TimeSpan = p.TimeSpan
+		cc.CollisionType = CT_CELL_ORIG
+		cc.TimeSpan = p.TimeSpan
 	}
 	return
 }
@@ -250,7 +250,7 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 			return
 		}
 
-		p := [...]PartialWorldCoord{
+		p := [...]PartialCell{
 			c.A.DestPartial(t),
 			c.B.DestPartial(t),
 		}
@@ -266,7 +266,7 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 			return
 		}
 
-		p := [...]PartialWorldCoord{
+		p := [...]PartialCell{
 			c.A.DestPartial(t),
 			c.B.DestPartial(t),
 		}
@@ -278,7 +278,7 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 		case t <= c.start || t >= c.end:
 			overlap = 0.0
 		default:
-			p := [...]PartialWorldCoord{
+			p := [...]PartialCell{
 				c.A.DestPartial(t),
 				c.B.DestPartial(t),
 			}
@@ -286,7 +286,7 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 			overlap = p[0].Percentage + p[1].Percentage
 
 			if overlap > 1.0 {
-				p = [...]PartialWorldCoord{
+				p = [...]PartialCell{
 					c.A.OrigPartial(t),
 					c.B.OrigPartial(t),
 				}
@@ -295,7 +295,7 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 		}
 
 	case CT_A_INTO_B:
-		p := [...]PartialWorldCoord{
+		p := [...]PartialCell{
 			c.A.DestPartial(t),
 			c.B.OrigPartial(t),
 		}
@@ -306,7 +306,7 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 		}
 
 	case CT_A_INTO_B_FROM_SIDE:
-		p := [...]PartialWorldCoord{
+		p := [...]PartialCell{
 			c.A.DestPartial(t),
 			c.B.OrigPartial(t),
 		}
@@ -316,14 +316,14 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 	return
 }
 
-func (c CoordCollision) Type() CollisionType { return c.CollisionType }
-func (c CoordCollision) Start() WorldTime    { return c.TimeSpan.start }
-func (c CoordCollision) End() WorldTime      { return c.TimeSpan.end }
-func (c CoordCollision) OverlapAt(t WorldTime) (overlap float64) {
+func (c CellCollision) Type() CollisionType { return c.CollisionType }
+func (c CellCollision) Start() WorldTime    { return c.TimeSpan.start }
+func (c CellCollision) End() WorldTime      { return c.TimeSpan.end }
+func (c CellCollision) OverlapAt(t WorldTime) (overlap float64) {
 	switch c.CollisionType {
-	case CT_COORD_DEST:
+	case CT_CELL_DEST:
 		overlap = c.Path.DestPartial(t).Percentage
-	case CT_COORD_ORIG:
+	case CT_CELL_ORIG:
 		overlap = c.Path.OrigPartial(t).Percentage
 	}
 	return

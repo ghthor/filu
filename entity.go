@@ -5,7 +5,7 @@ type (
 
 	entity interface {
 		Id() EntityId
-		Coord() WorldCoord
+		Cell() Cell
 		AABB() AABB
 		Json() interface{}
 	}
@@ -16,7 +16,7 @@ type (
 	}
 
 	motionInfo struct {
-		coord  WorldCoord
+		cell   Cell
 		facing Direction
 		speed  uint
 
@@ -46,9 +46,9 @@ type (
 	}
 )
 
-func newMotionInfo(coord WorldCoord, facing Direction, speed uint) *motionInfo {
+func newMotionInfo(cell Cell, facing Direction, speed uint) *motionInfo {
 	return &motionInfo{
-		coord,
+		cell,
 		facing,
 		speed,
 		nil,
@@ -78,7 +78,7 @@ func (mi motionInfo) AABB() (aabb AABB) {
 			aabb.BotR = pa.Dest
 		}
 	} else {
-		aabb = AABB{mi.coord, mi.coord}
+		aabb = AABB{mi.cell, mi.cell}
 	}
 	return
 }

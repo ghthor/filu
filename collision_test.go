@@ -119,11 +119,11 @@ func DescribePathCollision(c gospec.Context) {
 		pathA.TimeSpan = NewTimeSpan(15, 35)
 		pathB.TimeSpan = NewTimeSpan(10, 30)
 
-		pathA.Orig = WorldCoord{0, 1}
-		pathA.Dest = WorldCoord{0, 0}
+		pathA.Orig = Cell{0, 1}
+		pathA.Dest = Cell{0, 0}
 
 		pathB.Orig = pathA.Dest
-		pathB.Dest = WorldCoord{1, 0}
+		pathB.Dest = Cell{1, 0}
 
 		collision = pathCollision(pathA, pathB)
 		c.Assume(collision.Type(), Equals, CT_A_INTO_B_FROM_SIDE)
@@ -235,11 +235,11 @@ func DescribePathCollision(c gospec.Context) {
 		pathA.TimeSpan = NewTimeSpan(5, 25)
 		pathB.TimeSpan = NewTimeSpan(10, 30)
 
-		pathA.Orig = WorldCoord{-1, 0}
-		pathA.Dest = WorldCoord{0, 0}
+		pathA.Orig = Cell{-1, 0}
+		pathA.Dest = Cell{0, 0}
 
 		pathB.Orig = pathA.Dest
-		pathB.Dest = WorldCoord{1, 0}
+		pathB.Dest = Cell{1, 0}
 
 		collision = pathCollision(pathA, pathB)
 		c.Assume(collision.Type(), Equals, CT_A_INTO_B)
@@ -354,7 +354,7 @@ func DescribePathCollision(c gospec.Context) {
 	})
 
 	c.Specify("when path A has the same destination as path B and the paths are opposing", func() {
-		m, n, o := WorldCoord{-1, 0}, WorldCoord{0, 0}, WorldCoord{1, 0}
+		m, n, o := Cell{-1, 0}, Cell{0, 0}, Cell{1, 0}
 		pathA = PathAction{NewTimeSpan(10, 30), m, n}
 		pathB = PathAction{NewTimeSpan(10, 30), o, n}
 
@@ -491,7 +491,7 @@ func DescribePathCollision(c gospec.Context) {
 
 	c.Specify("when path A has the same destination as path B and the paths are perpendicular", func() {
 		// Side 1
-		m, n, o := WorldCoord{-1, 0}, WorldCoord{0, 0}, WorldCoord{0, 1}
+		m, n, o := Cell{-1, 0}, Cell{0, 0}, Cell{0, 1}
 		pathA = PathAction{NewTimeSpan(10, 30), m, n}
 		pathB = PathAction{NewTimeSpan(10, 30), o, n}
 
@@ -506,7 +506,7 @@ func DescribePathCollision(c gospec.Context) {
 		c.Assume(collision.B, Equals, pathA)
 
 		// Side 2
-		m, n, o = WorldCoord{-1, 0}, WorldCoord{0, 0}, WorldCoord{0, -1}
+		m, n, o = Cell{-1, 0}, Cell{0, 0}, Cell{0, -1}
 		pathA = PathAction{NewTimeSpan(10, 30), m, n}
 		pathB = PathAction{NewTimeSpan(10, 30), o, n}
 
@@ -605,7 +605,7 @@ func DescribePathCollision(c gospec.Context) {
 	})
 
 	c.Specify("when path A and path B are inverses of each other", func() {
-		a, b := WorldCoord{0, 0}, WorldCoord{1, 0}
+		a, b := Cell{0, 0}, Cell{1, 0}
 		pathA = PathAction{Orig: a, Dest: b}
 		pathB = PathAction{Orig: b, Dest: a}
 
@@ -699,30 +699,30 @@ func DescribePathCollision(c gospec.Context) {
 	})
 }
 
-func DescribeCoordCollision(c gospec.Context) {
-	c.Specify("a coord-path collision can be calculated", func() {
+func DescribeCellCollision(c gospec.Context) {
+	c.Specify("a cell-path collision can be calculated", func() {
 		c.Specify("as not happening", func() {
-			coord := WorldCoord{0, 0}
+			cell := Cell{0, 0}
 			path := PathAction{
 				TimeSpan: NewTimeSpan(10, 20),
-				Orig:     WorldCoord{1, 1},
-				Dest:     WorldCoord{1, 0},
+				Orig:     Cell{1, 1},
+				Dest:     Cell{1, 0},
 			}
-			collision := path.CollidesWith(coord)
+			collision := path.CollidesWith(cell)
 			c.Expect(collision.Type(), Equals, CT_NONE)
 		})
 
-		c.Specify("if the path's origin is the coord", func() {
-			coord := WorldCoord{0, 0}
+		c.Specify("if the path's origin is the cell", func() {
+			cell := Cell{0, 0}
 			path := PathAction{
 				TimeSpan: NewTimeSpan(10, 20),
-				Orig:     coord,
-				Dest:     WorldCoord{1, 0},
+				Orig:     cell,
+				Dest:     Cell{1, 0},
 			}
-			collision := path.CollidesWith(coord)
-			c.Assume(collision.Type(), Equals, CT_COORD_ORIG)
-			c.Assume(collision.(CoordCollision).Coord, Equals, coord)
-			c.Assume(collision.(CoordCollision).Path, Equals, path)
+			collision := path.CollidesWith(cell)
+			c.Assume(collision.Type(), Equals, CT_CELL_ORIG)
+			c.Assume(collision.(CellCollision).Cell, Equals, cell)
+			c.Assume(collision.(CellCollision).Path, Equals, path)
 
 			c.Specify("the overlap will begin at 1.0 and decrease to 0.0", func() {
 				start, end := collision.Start(), collision.End()
@@ -741,17 +741,17 @@ func DescribeCoordCollision(c gospec.Context) {
 			})
 		})
 
-		c.Specify("if the path's destination is the coord", func() {
-			coord := WorldCoord{0, 0}
+		c.Specify("if the path's destination is the cell", func() {
+			cell := Cell{0, 0}
 			path := PathAction{
 				TimeSpan: NewTimeSpan(10, 30),
-				Orig:     WorldCoord{1, 0},
-				Dest:     coord,
+				Orig:     Cell{1, 0},
+				Dest:     cell,
 			}
-			collision := path.CollidesWith(coord)
-			c.Assume(collision.Type(), Equals, CT_COORD_DEST)
-			c.Assume(collision.(CoordCollision).Coord, Equals, coord)
-			c.Assume(collision.(CoordCollision).Path, Equals, path)
+			collision := path.CollidesWith(cell)
+			c.Assume(collision.Type(), Equals, CT_CELL_DEST)
+			c.Assume(collision.(CellCollision).Cell, Equals, cell)
+			c.Assume(collision.(CellCollision).Path, Equals, path)
 
 			c.Specify("the overlap will begin at 0.0 and grow to 1.0", func() {
 				start, end := collision.Start(), collision.End()

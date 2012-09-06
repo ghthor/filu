@@ -5,15 +5,15 @@ import (
 )
 
 type AABB struct {
-	TopL, BotR WorldCoord
+	TopL, BotR Cell
 }
 
-func (aabb AABB) Contains(c WorldCoord) bool {
+func (aabb AABB) Contains(c Cell) bool {
 	return (aabb.TopL.X <= c.X && aabb.BotR.X >= c.X &&
 		aabb.TopL.Y >= c.Y && aabb.BotR.Y <= c.Y)
 }
 
-func (aabb AABB) HasOnEdge(c WorldCoord) (onEdge bool) {
+func (aabb AABB) HasOnEdge(c Cell) (onEdge bool) {
 	x, y := c.X, c.Y
 	switch {
 	case (x == aabb.TopL.X || x == aabb.BotR.X) && (y <= aabb.TopL.Y && y >= aabb.BotR.Y):
@@ -33,8 +33,8 @@ func (aabb AABB) Height() int {
 	return aabb.TopL.Y - aabb.BotR.Y + 1
 }
 
-func (aabb AABB) TopR() WorldCoord { return WorldCoord{aabb.BotR.X, aabb.TopL.Y} }
-func (aabb AABB) BotL() WorldCoord { return WorldCoord{aabb.TopL.X, aabb.BotR.Y} }
+func (aabb AABB) TopR() Cell { return Cell{aabb.BotR.X, aabb.TopL.Y} }
+func (aabb AABB) BotL() Cell { return Cell{aabb.TopL.X, aabb.BotR.Y} }
 
 func (aabb AABB) Area() int {
 	return (aabb.BotR.X - aabb.TopL.X + 1) * (aabb.TopL.Y - aabb.BotR.Y + 1)
@@ -70,8 +70,8 @@ func (aabb AABB) Intersection(other AABB) (AABB, error) {
 	}
 
 	return AABB{
-		WorldCoord{max(aabb.TopL.X, other.TopL.X), min(aabb.TopL.Y, other.TopL.Y)},
-		WorldCoord{min(aabb.BotR.X, other.BotR.X), max(aabb.BotR.Y, other.BotR.Y)},
+		Cell{max(aabb.TopL.X, other.TopL.X), min(aabb.TopL.Y, other.TopL.Y)},
+		Cell{min(aabb.BotR.X, other.BotR.X), max(aabb.BotR.Y, other.BotR.Y)},
 	}, nil
 }
 
@@ -102,7 +102,7 @@ type (
 		Remove(entity)
 		Contains(entity) bool
 		QueryAll(AABB) []entity
-		QueryCollidables(WorldCoord) []collidableEntity
+		QueryCollidables(Cell) []collidableEntity
 
 		// Step 1 - Serial
 		// TODO Rename to UpdatePositions
@@ -152,23 +152,23 @@ func splitAABBToQuads(aabb AABB) ([4]AABB, error) {
 	// NorthWest
 	nw := AABB{
 		aabb.TopL,
-		WorldCoord{aabb.TopL.X + (w/2 - 1), aabb.TopL.Y - (h/2 - 1)},
+		Cell{aabb.TopL.X + (w/2 - 1), aabb.TopL.Y - (h/2 - 1)},
 	}
 
 	// NorthEast
 	ne := AABB{
-		WorldCoord{nw.BotR.X + 1, aabb.TopL.Y},
-		WorldCoord{aabb.BotR.X, nw.BotR.Y},
+		Cell{nw.BotR.X + 1, aabb.TopL.Y},
+		Cell{aabb.BotR.X, nw.BotR.Y},
 	}
 
 	se := AABB{
-		WorldCoord{ne.TopL.X, ne.BotR.Y - 1},
+		Cell{ne.TopL.X, ne.BotR.Y - 1},
 		aabb.BotR,
 	}
 
 	sw := AABB{
-		WorldCoord{aabb.TopL.X, se.TopL.Y},
-		WorldCoord{nw.BotR.X, aabb.BotR.Y},
+		Cell{aabb.TopL.X, se.TopL.Y},
+		Cell{nw.BotR.X, aabb.BotR.Y},
 	}
 
 	aabbs[QUAD_NW] = nw
@@ -294,7 +294,7 @@ func (q *quadLeaf) QueryAll(aabb AABB) []entity {
 	return matches
 }
 
-func (q *quadLeaf) QueryCollidables(c WorldCoord) []collidableEntity {
+func (q *quadLeaf) QueryCollidables(c Cell) []collidableEntity {
 	matches := make([]collidableEntity, 0, len(q.collidable))
 	for _, ce := range q.collidable {
 		if ce.AABB().Contains(c) {
@@ -315,9 +315,9 @@ func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
 			if pa.end <= t {
 				mi.lastMoveAction = pa
 				mi.pathActions = mi.pathActions[:0]
-				mi.coord = pa.Dest
+				mi.cell = pa.Dest
 
-				if !q.aabb.Contains(mi.coord) {
+				if !q.aabb.Contains(mi.cell) {
 					movedOutside = append(movedOutside, e)
 				}
 			}
@@ -369,14 +369,14 @@ func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 			continue
 		}
 
-		dest := mi.coord.Neighbor(mi.moveRequest.Direction)
-		direction := mi.coord.DirectionTo(dest)
+		dest := mi.cell.Neighbor(mi.moveRequest.Direction)
+		direction := mi.cell.DirectionTo(dest)
 
 		// If the last MoveAction was a PathAction that ended on this Step
 		if pathAction, ok := mi.lastMoveAction.(*PathAction); (ok && pathAction.End() == t) || (mi.facing == direction) {
 			pathAction = &PathAction{
 				NewTimeSpan(t, t+WorldTime(mi.speed)),
-				mi.coord,
+				mi.cell,
 				dest,
 			}
 
@@ -480,7 +480,7 @@ func (q *quadTree) AABB() AABB   { return q.aabb }
 
 func (q *quadTree) Insert(e entity) quad {
 	for i, quad := range q.quads {
-		if quad.AABB().Contains(e.Coord()) {
+		if quad.AABB().Contains(e.Cell()) {
 			quad = quad.Insert(e)
 			q.quads[i] = quad
 			return q
@@ -491,7 +491,7 @@ func (q *quadTree) Insert(e entity) quad {
 
 func (q *quadTree) Remove(e entity) {
 	for _, quad := range q.quads {
-		if quad.AABB().Contains(e.Coord()) {
+		if quad.AABB().Contains(e.Cell()) {
 			quad.Remove(e)
 			return
 		}
@@ -524,7 +524,7 @@ func (q *quadTree) QueryAll(aabb AABB) []entity {
 	return matches
 }
 
-func (q *quadTree) QueryCollidables(c WorldCoord) []collidableEntity {
+func (q *quadTree) QueryCollidables(c Cell) []collidableEntity {
 	matches := make([]collidableEntity, 0, 10)
 	for _, quad := range q.quads {
 		if quad.AABB().Expand(1).Contains(c) {
@@ -542,7 +542,7 @@ func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
 
 	movedOutside := make([]movableEntity, 0, len(changedQuad))
 	for _, e := range changedQuad {
-		if q.aabb.Contains(e.Coord()) {
+		if q.aabb.Contains(e.Cell()) {
 			// Safe to call Insert w/o assignment because quadTree never divides
 			q.Insert(e)
 		} else {

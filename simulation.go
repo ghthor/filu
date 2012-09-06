@@ -72,8 +72,8 @@ func NewSimulation(fps int) Simulation {
 
 func newWorldState(clock Clock) *WorldState {
 	quadTree, err := newQuadTree(AABB{
-		WorldCoord{-1000, 1000},
-		WorldCoord{1000, -1000},
+		Cell{-1000, 1000},
+		Cell{1000, -1000},
 	}, nil, 20)
 
 	if err != nil {
@@ -180,7 +180,7 @@ func (s *simulation) addPlayer(pd PlayerDef) *Player {
 		Name: pd.Name,
 
 		entityId: s.nextEntityId,
-		mi:       newMotionInfo(pd.Coord, pd.Facing, pd.MovementSpeed),
+		mi:       newMotionInfo(pd.Cell, pd.Facing, pd.MovementSpeed),
 		sim:      s,
 		conn:     pd.Conn,
 	}

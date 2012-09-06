@@ -60,7 +60,7 @@ func DescribeSimulation(c gospec.Context) {
 		pd := PlayerDef{
 			Name:          "thundercleese",
 			Facing:        North,
-			Coord:         WorldCoord{0, 0},
+			Cell:          Cell{0, 0},
 			MovementSpeed: 40,
 			Conn:          conn,
 		}

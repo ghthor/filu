@@ -38,21 +38,21 @@ func DescribeDirection(c gospec.Context) {
 	})
 }
 
-func DescribeWorldCoord(c gospec.Context) {
-	worldCoord := WorldCoord{0, 0}
+func DescribeCell(c gospec.Context) {
+	cell := Cell{0, 0}
 
 	c.Specify("neighbors", func() {
-		c.Expect(worldCoord.Neighbor(North), Equals, WorldCoord{0, 1})
-		c.Expect(worldCoord.Neighbor(East), Equals, WorldCoord{1, 0})
-		c.Expect(worldCoord.Neighbor(South), Equals, WorldCoord{0, -1})
-		c.Expect(worldCoord.Neighbor(West), Equals, WorldCoord{-1, 0})
+		c.Expect(cell.Neighbor(North), Equals, Cell{0, 1})
+		c.Expect(cell.Neighbor(East), Equals, Cell{1, 0})
+		c.Expect(cell.Neighbor(South), Equals, Cell{0, -1})
+		c.Expect(cell.Neighbor(West), Equals, Cell{-1, 0})
 	})
 
 	c.Specify("determining directions between points", func() {
-		c.Expect(worldCoord.DirectionTo(WorldCoord{0, 1}), Equals, North)
-		c.Expect(worldCoord.DirectionTo(WorldCoord{1, 0}), Equals, East)
-		c.Expect(worldCoord.DirectionTo(WorldCoord{0, -1}), Equals, South)
-		c.Expect(worldCoord.DirectionTo(WorldCoord{-1, 0}), Equals, West)
+		c.Expect(cell.DirectionTo(Cell{0, 1}), Equals, North)
+		c.Expect(cell.DirectionTo(Cell{1, 0}), Equals, East)
+		c.Expect(cell.DirectionTo(Cell{0, -1}), Equals, South)
+		c.Expect(cell.DirectionTo(Cell{-1, 0}), Equals, West)
 
 		defer func() {
 			x := recover()
@@ -60,24 +60,24 @@ func DescribeWorldCoord(c gospec.Context) {
 			c.Expect(x, Equals, "unable to calculate Direction")
 		}()
 
-		worldCoord.DirectionTo(WorldCoord{1, 1})
+		cell.DirectionTo(Cell{1, 1})
 	})
 }
 
 func DescribePathAction(c gospec.Context) {
 
 	// TODO This test might not cover really short durations
-	c.Specify("should calculate PartialWorldCoord percentages", func() {
+	c.Specify("should calculate partial cell percentages", func() {
 
 		pa := PathAction{
 			NewTimeSpan(10, 20),
-			WorldCoord{0, 0},
-			WorldCoord{0, 1},
+			Cell{0, 0},
+			Cell{0, 1},
 		}
 
 		c.Specify("where the sum of the origin% and destination% equals 1.0", func() {
 			for t := pa.start; t <= pa.end; t++ {
-				p := [...]PartialWorldCoord{
+				p := [...]PartialCell{
 					pa.OrigPartial(t),
 					pa.DestPartial(t),
 				}
@@ -127,21 +127,21 @@ func DescribePathAction(c gospec.Context) {
 		})
 	})
 
-	c.Specify("must know which WorldCoord's that it traverses through", func() {
+	c.Specify("must know which cell's that it traverses through", func() {
 		pa := PathAction{
-			Dest: WorldCoord{0, 0},
-			Orig: WorldCoord{0, 1},
+			Dest: Cell{0, 0},
+			Orig: Cell{0, 1},
 		}
 
-		c.Expect(pa.Traverses(WorldCoord{0, 0}), IsTrue)
-		c.Expect(pa.Traverses(WorldCoord{0, 1}), IsTrue)
+		c.Expect(pa.Traverses(Cell{0, 0}), IsTrue)
+		c.Expect(pa.Traverses(Cell{0, 1}), IsTrue)
 	})
 
-	c.Specify("must know if it is traversing a coordinate at an instant in time", func() {
+	c.Specify("must know if it is traversing a cell at an instant in time", func() {
 		clk, duration := Clock(0), int64(25)
 
-		Orig := WorldCoord{0, 0}
-		Dest := WorldCoord{0, 1}
+		Orig := Cell{0, 0}
+		Dest := Cell{0, 1}
 
 		pa := PathAction{
 			NewTimeSpan(clk.Now(), clk.Future(duration)),
@@ -149,22 +149,22 @@ func DescribePathAction(c gospec.Context) {
 			Dest,
 		}
 
-		_, err := pa.TraversesAt(WorldCoord{-1, 0}, clk.Now())
+		_, err := pa.TraversesAt(Cell{-1, 0}, clk.Now())
 		c.Expect(err, Not(IsNil))
 		c.Expect(err.Error(), Equals, "wcOutOfRange")
 
-		c.Specify("must traverse through the starting and ending coordinates", func() {
+		c.Specify("must traverse through the origin and destination cells", func() {
 			clk = clk.Tick()
 
-			pwc, err := pa.TraversesAt(Orig, clk.Now())
+			pc, err := pa.TraversesAt(Orig, clk.Now())
 
 			c.Expect(err, IsNil)
-			c.Expect(pwc.WorldCoord, Equals, Orig)
+			c.Expect(pc.Cell, Equals, Orig)
 
-			pwc, err = pa.TraversesAt(Dest, clk.Now())
+			pc, err = pa.TraversesAt(Dest, clk.Now())
 
 			c.Expect(err, IsNil)
-			c.Expect(pwc.WorldCoord, Equals, Dest)
+			c.Expect(pc.Cell, Equals, Dest)
 		})
 
 		c.Specify("but not if the time is out of the scope of this action", func() {
@@ -177,13 +177,13 @@ func DescribePathAction(c gospec.Context) {
 			c.Expect(err.Error(), Equals, "timeOutOfRange")
 		})
 
-		c.Specify("shouldn't traverse end coord at the begining of the action", func() {
+		c.Specify("shouldn't traverse destination cell at the begining of the action", func() {
 			_, err := pa.TraversesAt(Dest, pa.start)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "miss")
 		})
 
-		c.Specify("shouldn't traverse start coord at the end of the action", func() {
+		c.Specify("shouldn't traverse origin cell at the end of the action", func() {
 			_, err := pa.TraversesAt(Orig, pa.end)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "miss")
@@ -191,20 +191,20 @@ func DescribePathAction(c gospec.Context) {
 	})
 
 	pa1 := PathAction{
-		Orig: WorldCoord{0, 0},
-		Dest: WorldCoord{0, 1},
+		Orig: Cell{0, 0},
+		Dest: Cell{0, 1},
 	}
 
 	pa2 := PathAction{
-		Orig: WorldCoord{0, 0},
-		Dest: WorldCoord{0, -1},
+		Orig: Cell{0, 0},
+		Dest: Cell{0, -1},
 	}
 
 	c.Specify("must know it's orientation to other PathActions", func() {
 		c.Expect(pa1.IsParallelTo(pa2), IsTrue)
 		c.Expect(pa2.IsParallelTo(pa1), IsTrue)
 
-		pa2.Orig = WorldCoord{1, -1}
+		pa2.Orig = Cell{1, -1}
 
 		c.Expect(pa1.IsParallelTo(pa2), IsFalse)
 		c.Expect(pa2.IsParallelTo(pa1), IsFalse)
@@ -215,15 +215,15 @@ func DescribePathAction(c gospec.Context) {
 		c.Expect(pa2.Crosses(pa1), IsTrue)
 
 		pa2 = PathAction{
-			Orig: WorldCoord{1, 1},
-			Dest: WorldCoord{0, 1},
+			Orig: Cell{1, 1},
+			Dest: Cell{0, 1},
 		}
 		c.Expect(pa1.Crosses(pa2), IsTrue)
 		c.Expect(pa2.Crosses(pa1), IsTrue)
 
 		pa2 = PathAction{
-			Orig: WorldCoord{1, 1},
-			Dest: WorldCoord{1, 2},
+			Orig: Cell{1, 1},
+			Dest: Cell{1, 2},
 		}
 		c.Expect(pa1.Crosses(pa2), IsFalse)
 		c.Expect(pa2.Crosses(pa1), IsFalse)
@@ -234,14 +234,14 @@ func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can move in any direction immediately after moving", func() {
 		pathAction1 := &PathAction{
 			NewTimeSpan(WorldTime(0), WorldTime(20)),
-			WorldCoord{0, 0},
-			WorldCoord{0, 1},
+			Cell{0, 0},
+			Cell{0, 1},
 		}
 
 		pathAction2 := &PathAction{
 			NewTimeSpan(WorldTime(20), WorldTime(40)),
-			WorldCoord{0, 1},
-			WorldCoord{1, 1},
+			Cell{0, 1},
+			Cell{1, 1},
 		}
 
 		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsTrue)
@@ -253,8 +253,8 @@ func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can't move before turning", func() {
 		pathAction := &PathAction{
 			NewTimeSpan(WorldTime(21), WorldTime(41)),
-			WorldCoord{0, 1},
-			WorldCoord{1, 1},
+			Cell{0, 1},
+			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
@@ -268,8 +268,8 @@ func DescribeMoveAction(c gospec.Context) {
 	c.Specify("An entity can't move immediatly after turning", func() {
 		pathAction := &PathAction{
 			NewTimeSpan(WorldTime(21), WorldTime(41)),
-			WorldCoord{0, 1},
-			WorldCoord{1, 1},
+			Cell{0, 1},
+			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{

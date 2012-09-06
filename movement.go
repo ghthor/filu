@@ -6,18 +6,18 @@ import (
 )
 
 type (
-	WorldCoord struct {
+	Cell struct {
 		X int `json:"x"`
 		Y int `json:"y"`
 	}
 
-	PartialWorldCoord struct {
-		WorldCoord
+	PartialCell struct {
+		Cell
 		Percentage float64
 	}
 )
 
-func (c WorldCoord) Neighbor(d Direction) WorldCoord {
+func (c Cell) Neighbor(d Direction) Cell {
 	switch d {
 	case North:
 		c.Y++
@@ -31,13 +31,13 @@ func (c WorldCoord) Neighbor(d Direction) WorldCoord {
 	return c
 }
 
-func (c WorldCoord) Add(x, y int) WorldCoord {
+func (c Cell) Add(x, y int) Cell {
 	c.X += x
 	c.Y += y
 	return c
 }
 
-func (c WorldCoord) DirectionTo(other WorldCoord) Direction {
+func (c Cell) DirectionTo(other Cell) Direction {
 	x := other.X - c.X
 	y := other.Y - c.Y
 
@@ -60,8 +60,8 @@ func (c WorldCoord) DirectionTo(other WorldCoord) Direction {
 	panic("unable to calculate Direction")
 }
 
-func (p PartialWorldCoord) String() string {
-	return fmt.Sprintf("PL{%v %v}", p.WorldCoord, p.Percentage)
+func (p PartialCell) String() string {
+	return fmt.Sprintf("PL{%v %v}", p.Cell, p.Percentage)
 }
 
 type (
@@ -78,14 +78,14 @@ type (
 
 	PathAction struct {
 		TimeSpan
-		Orig, Dest WorldCoord
+		Orig, Dest Cell
 	}
 
 	PathActionJson struct {
-		Start WorldTime  `json:"start"`
-		End   WorldTime  `json:"end"`
-		Orig  WorldCoord `json:"orig"`
-		Dest  WorldCoord `json:"dest"`
+		Start WorldTime `json:"start"`
+		End   WorldTime `json:"end"`
+		Orig  Cell      `json:"orig"`
+		Dest  Cell      `json:"dest"`
 	}
 )
 
@@ -155,26 +155,26 @@ func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 	panic("unknown MoveAction type")
 }
 
-func (pa PathAction) OrigPartial(now WorldTime) (pwc PartialWorldCoord) {
-	pwc.WorldCoord = pa.Orig
+func (pa PathAction) OrigPartial(now WorldTime) (pc PartialCell) {
+	pc.Cell = pa.Orig
 	if now <= pa.start {
-		pwc.Percentage = 1.0
+		pc.Percentage = 1.0
 	} else if now >= pa.end {
-		pwc.Percentage = 0.0
+		pc.Percentage = 0.0
 	} else {
-		pwc.Percentage = float64(pa.Remaining(now)) / float64(pa.duration)
+		pc.Percentage = float64(pa.Remaining(now)) / float64(pa.duration)
 	}
 	return
 }
 
-func (pa PathAction) DestPartial(now WorldTime) (pwc PartialWorldCoord) {
-	pwc.WorldCoord = pa.Dest
+func (pa PathAction) DestPartial(now WorldTime) (pc PartialCell) {
+	pc.Cell = pa.Dest
 	if now <= pa.start {
-		pwc.Percentage = 0.0
+		pc.Percentage = 0.0
 	} else if now >= pa.end {
-		pwc.Percentage = 1.0
+		pc.Percentage = 1.0
 	} else {
-		pwc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.duration))
+		pc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.duration))
 	}
 	return
 }
@@ -206,29 +206,29 @@ func (pa PathAction) IsParallelTo(pa2 PathAction) bool {
 	return pa.Direction().IsParallelTo(pa2.Direction())
 }
 
-func (pa PathAction) Traverses(wc WorldCoord) bool {
-	return pa.Orig == wc || pa.Dest == wc
+func (pa PathAction) Traverses(c Cell) bool {
+	return pa.Orig == c || pa.Dest == c
 }
 
-func (pa PathAction) TraversesAt(wc WorldCoord, t WorldTime) (pwc PartialWorldCoord, err error) {
+func (pa PathAction) TraversesAt(c Cell, t WorldTime) (pc PartialCell, err error) {
 	if t < pa.start || t > pa.end {
-		return pwc, errors.New("timeOutOfRange")
+		return pc, errors.New("timeOutOfRange")
 	}
 
-	if wc == pa.Orig {
+	if c == pa.Orig {
 		if t == pa.end {
-			return pwc, errors.New("miss")
+			return pc, errors.New("miss")
 		}
-		pwc = pa.OrigPartial(t)
+		pc = pa.OrigPartial(t)
 
-	} else if pa.Dest == wc {
+	} else if pa.Dest == c {
 		if t == pa.start {
-			return pwc, errors.New("miss")
+			return pc, errors.New("miss")
 		}
-		pwc = pa.DestPartial(t)
+		pc = pa.DestPartial(t)
 
 	} else {
-		return pwc, errors.New("wcOutOfRange")
+		return pc, errors.New("wcOutOfRange")
 	}
 	return
 }
