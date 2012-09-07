@@ -241,9 +241,9 @@ type Direction byte
 
 const (
 	N, North Direction = iota, iota
-	E, East  Direction = iota, iota
-	S, South Direction = iota, iota
-	W, West  Direction = iota, iota
+	E, East
+	S, South
+	W, West
 )
 
 func (d Direction) IsParallelTo(p Direction) bool {

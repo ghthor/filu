@@ -31,17 +31,17 @@ type (
 
 // TODO Implement this as bitflags
 const (
-	CT_NONE               CollisionType = iota
-	CT_HEAD_TO_HEAD       CollisionType = iota
-	CT_FROM_SIDE          CollisionType = iota
-	CT_A_INTO_B           CollisionType = iota
-	CT_A_INTO_B_FROM_SIDE CollisionType = iota
-	CT_SWAP               CollisionType = iota
-	CT_SAME_ORIG          CollisionType = iota
-	CT_SAME_ORIG_PERP     CollisionType = iota
-	CT_SAME_ORIG_DEST     CollisionType = iota
-	CT_CELL_DEST          CollisionType = iota
-	CT_CELL_ORIG          CollisionType = iota
+	CT_NONE CollisionType = iota
+	CT_HEAD_TO_HEAD
+	CT_FROM_SIDE
+	CT_A_INTO_B
+	CT_A_INTO_B_FROM_SIDE
+	CT_SWAP
+	CT_SAME_ORIG
+	CT_SAME_ORIG_PERP
+	CT_SAME_ORIG_DEST
+	CT_CELL_DEST
+	CT_CELL_ORIG
 )
 
 func (c CollisionType) String() string {
