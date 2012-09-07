@@ -19,8 +19,8 @@ type (
 
 	// External format used to send state to the clients
 	WorldStateJson struct {
-		Time     WorldTime     `json:"time"`
-		Entities []interface{} `json:"entities"`
+		Time     WorldTime    `json:"time"`
+		Entities []EntityJson `json:"entities"`
 	}
 
 	Simulation interface {
@@ -248,7 +248,7 @@ func (ws *WorldState) Json() WorldStateJson {
 	entities := ws.quadTree.QueryAll(ws.quadTree.AABB())
 	s := WorldStateJson{
 		ws.time,
-		make([]interface{}, len(entities)),
+		make([]EntityJson, len(entities)),
 	}
 
 	i := 0

@@ -414,6 +414,84 @@ func DescribePlayerCollisions(c gospec.Context) {
 	})
 }
 
+func DescribePlayerJson(c gospec.Context) {
+	player := PlayerJson{
+		Facing: North.String(),
+		Cell:   Cell{0, 0},
+	}
+
+	c.Specify("can identify if nothing has changed", func() {
+		c.Specify("when the player is standing still", func() {
+			c.Expect(player.IsDifferentFrom(player), IsFalse)
+		})
+
+		c.Specify("when the player is moving", func() {
+			player.PathActions = []PathActionJson{
+				PathAction{
+					NewTimeSpan(10, 30),
+					player.Cell,
+					player.Cell.Neighbor(North),
+				}.Json(),
+			}
+			c.Expect(player.IsDifferentFrom(player), IsFalse)
+		})
+	})
+
+	c.Specify("can identify when something is different", func() {
+		playerChanged := player
+		c.Specify("when the player's facing has changed", func() {
+			playerChanged.Facing = South.String()
+			c.Expect(player.IsDifferentFrom(playerChanged), IsTrue)
+		})
+
+		c.Specify("when the player has started moving", func() {
+			playerChanged.PathActions = []PathActionJson{
+				PathAction{
+					NewTimeSpan(10, 30),
+					player.Cell,
+					player.Cell.Neighbor(North),
+				}.Json(),
+			}
+
+			c.Expect(player.IsDifferentFrom(playerChanged), IsTrue)
+		})
+
+		c.Specify("when the player has stopped moving", func() {
+			playerChanged.Cell = player.Cell.Neighbor(North)
+			player.PathActions = []PathActionJson{
+				PathAction{
+					NewTimeSpan(10, 30),
+					player.Cell,
+					player.Cell.Neighbor(North),
+				}.Json(),
+			}
+
+			c.Expect(player.IsDifferentFrom(playerChanged), IsTrue)
+		})
+
+		c.Specify("when the player has finished a movement and continued moving", func() {
+			player.PathActions = []PathActionJson{
+				PathAction{
+					NewTimeSpan(10, 30),
+					player.Cell,
+					player.Cell.Neighbor(North),
+				}.Json(),
+			}
+
+			playerChanged.Cell = player.Cell.Neighbor(North)
+			playerChanged.PathActions = []PathActionJson{
+				PathAction{
+					NewTimeSpan(30, 50),
+					playerChanged.Cell,
+					playerChanged.Cell.Neighbor(West),
+				}.Json(),
+			}
+
+			c.Expect(player.IsDifferentFrom(playerChanged), IsTrue)
+		})
+	})
+}
+
 func DescribeInputCommands(c gospec.Context) {
 	c.Specify("creating movement requests from InputCmds", func() {
 		c.Specify("north", func() {

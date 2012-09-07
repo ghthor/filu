@@ -7,7 +7,12 @@ type (
 		Id() EntityId
 		Cell() Cell
 		AABB() AABB
-		Json() interface{}
+		Json() EntityJson
+	}
+
+	EntityJson interface {
+		Id() EntityId
+		IsDifferentFrom(EntityJson) bool
 	}
 
 	moveRequest struct {

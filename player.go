@@ -55,7 +55,9 @@ type Player struct {
 }
 
 type PlayerJson struct {
-	Id          EntityId         `json:"id"`
+	// TODO When go updates to 1.1? this can be converted to an embedded type
+	// The current json marshaller doesn't marshall embedded types
+	EntityId    EntityId         `json:"id"`
 	Name        string           `json:"name"`
 	Facing      string           `json:"facing"`
 	PathActions []PathActionJson `json:"pathActions"`
@@ -74,12 +76,12 @@ func (p *Player) AABB() (aabb AABB) {
 	return p.mi.AABB()
 }
 
-func (p *Player) Json() interface{} {
+func (p *Player) Json() EntityJson {
 	ps := PlayerJson{
-		Id:     p.entityId,
-		Name:   p.Name,
-		Facing: p.mi.facing.String(),
-		Cell:   p.mi.cell,
+		EntityId: p.entityId,
+		Name:     p.Name,
+		Facing:   p.mi.facing.String(),
+		Cell:     p.mi.cell,
 	}
 
 	if len(p.mi.pathActions) > 0 {
@@ -247,4 +249,21 @@ func (p *Player) SubmitInput(cmd, params string) error {
 
 func (p *Player) Disconnect() {
 	p.sim.RemovePlayer(p)
+}
+
+func (p PlayerJson) Id() EntityId { return p.EntityId }
+func (p PlayerJson) IsDifferentFrom(other EntityJson) (different bool) {
+	o := other.(PlayerJson)
+
+	switch {
+	case p.Facing != o.Facing:
+		fallthrough
+	case len(p.PathActions) != len(o.PathActions):
+		different = true
+	case len(p.PathActions) == len(o.PathActions):
+		for i, _ := range o.PathActions {
+			different = different || (p.PathActions[i] != o.PathActions[i])
+		}
+	}
+	return
 }
