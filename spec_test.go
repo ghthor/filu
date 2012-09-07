@@ -26,6 +26,7 @@ func TestAllSpecs(t *testing.T) {
 
 	r.AddSpec(engine.DescribeQuad)
 	r.AddSpec(engine.DescribeWorldState)
+	r.AddSpec(engine.DescribeDiffConn)
 	r.AddSpec(engine.DescribeSimulation)
 
 	r.AddSpec(engine.DescribeInputCommands)

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"../server/protocol"
 	"fmt"
 	"sync"
 	"time"
@@ -21,8 +22,30 @@ type (
 	WorldStateJson struct {
 		Time     WorldTime    `json:"time"`
 		Entities []EntityJson `json:"entities"`
+		Removed  []EntityJson `json:"removed"`
 	}
 
+	StateConn interface {
+		SendWorldState(WorldStateJson)
+	}
+
+	DiffConn struct {
+		protocol.JsonOutputConn
+		lastState WorldStateJson
+	}
+)
+
+func (c *DiffConn) SendJson(msg string, nextState interface{}) error {
+	diff := c.lastState.Diff(nextState.(WorldStateJson))
+	c.lastState = nextState.(WorldStateJson)
+
+	if len(diff.Entities) > 0 || len(diff.Removed) > 0 {
+		c.JsonOutputConn.SendJson(msg, diff)
+	}
+	return nil
+}
+
+type (
 	Simulation interface {
 		Start()
 		IsRunning() bool
@@ -31,12 +54,6 @@ type (
 		AddPlayer(PlayerDef) PlayerEntity
 		RemovePlayer(PlayerEntity)
 		AddClient(StateConn)
-	}
-)
-
-type (
-	StateConn interface {
-		SendWorldState(WorldStateJson)
 	}
 
 	simulation struct {
@@ -182,7 +199,7 @@ func (s *simulation) addPlayer(pd PlayerDef) *Player {
 		entityId: s.nextEntityId,
 		mi:       newMotionInfo(pd.Cell, pd.Facing, pd.MovementSpeed),
 		sim:      s,
-		conn:     pd.Conn,
+		conn:     &DiffConn{JsonOutputConn: pd.Conn},
 	}
 	s.nextEntityId++
 
@@ -249,6 +266,7 @@ func (ws *WorldState) Json() WorldStateJson {
 	s := WorldStateJson{
 		ws.time,
 		make([]EntityJson, len(entities)),
+		nil,
 	}
 
 	i := 0
@@ -257,4 +275,49 @@ func (ws *WorldState) Json() WorldStateJson {
 		i++
 	}
 	return s
+}
+
+func (s WorldStateJson) Clone() WorldStateJson {
+	clone := WorldStateJson{
+		s.Time,
+		make([]EntityJson, len(s.Entities)),
+		nil,
+	}
+	copy(clone.Entities, s.Entities)
+	return clone
+}
+
+func (s WorldStateJson) Diff(ss WorldStateJson) (diff WorldStateJson) {
+	diff.Time = ss.Time
+
+	if len(s.Entities) == 0 && len(ss.Entities) > 0 {
+		return ss
+	}
+
+	// Find the entities that have changed from the old state to the new one
+nextEntity:
+	for _, entity := range ss.Entities {
+		for _, old := range s.Entities {
+			if entity.Id() == old.Id() {
+				if old.IsDifferentFrom(entity) {
+					diff.Entities = append(diff.Entities, entity)
+				}
+				continue nextEntity
+			}
+		}
+		// This is a new Entity
+		diff.Entities = append(diff.Entities, entity)
+	}
+
+	// Check if all the entities in old state exist in the new state
+entityStillExists:
+	for _, old := range s.Entities {
+		for _, entity := range ss.Entities {
+			if old.Id() == entity.Id() {
+				continue entityStillExists
+			}
+		}
+		diff.Removed = append(diff.Removed, old)
+	}
+	return
 }
