@@ -208,6 +208,14 @@ func (p *Player) collideWith(other collidableEntity, t WorldTime) {
 				if collision.A == *pa {
 					p.mi.UndoLastApply()
 				}
+
+			case CT_A_INTO_B_FROM_SIDE:
+				// If I'm A then I can't move until my movement ends with or after collision ending
+				if collision.A == *pa {
+					if pa.End() < collision.End() {
+						p.mi.UndoLastApply()
+					}
+				}
 			}
 
 		} else if p.mi.isMoving() && !ce.mi.isMoving() {
