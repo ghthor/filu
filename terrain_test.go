@@ -126,6 +126,22 @@ DGGR
 `)
 		c.Assume(err, IsNil)
 
+		c.Specify("can calculate there are no differences", func() {
+			terrainJson := fullMap.Json()
+
+			diff := terrainJson.Diff(terrainJson)
+			c.Expect(diff.IsEmpty(), IsTrue)
+		})
+
+		c.Specify("will, when unintialized calculate a full diff with a non empty map", func() {
+			terrainJson := fullMap.Json()
+			diff := TerrainMapJson{}.Diff(terrainJson)
+
+			c.Expect(diff.IsEmpty(), IsFalse)
+			c.Expect(diff.TerrainMap.Bounds, Equals, terrainJson.TerrainMap.Bounds)
+			c.Expect(len(diff.TerrainMap.TerrainTypes), Equals, len(terrainJson.TerrainMap.TerrainTypes))
+		})
+
 		c.Specify("can calculate row or col differences with another TerrainMap", func() {
 			terrainMap, err := fullMap.Slice(AABB{
 				Cell{1, -1},

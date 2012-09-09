@@ -145,7 +145,15 @@ func (m *TerrainMapJson) Prepare() {
 	m.Terrain = m.TerrainMap.String()
 }
 
+func (m TerrainMapJson) IsEmpty() bool {
+	return m.TerrainMap.TerrainTypes == nil
+}
+
 func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
+	if m.IsEmpty() {
+		return other
+	}
+
 	maabb, oaabb := m.TerrainMap.Bounds, other.TerrainMap.Bounds
 	if maabb == oaabb {
 		// No Overlaps
