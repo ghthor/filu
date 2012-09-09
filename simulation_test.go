@@ -24,13 +24,14 @@ func DescribeWorldState(c gospec.Context) {
 		worldState.quadTree.Insert(entity)
 
 		jsonState := worldState.Json()
+		jsonState.TerrainMap.Prepare()
 
 		c.Assume(jsonState.Time, Equals, WorldTime(0))
 		c.Assume(len(jsonState.Entities), Equals, 1)
 
 		jsonBytes, err := json.Marshal(jsonState)
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"removed":null}`)
+		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"removed":null,"terrainMap":{"bounds":{"tl":{"x":-3,"y":3},"br":{"x":3,"y":-3}},"terrain":"\nGGGGGGG\nGGGGGGG\nGGGGGGG\nGGGGGGG\nGGGGGGG\nGGGGGGG\nGGGGGGG\n"}}`)
 
 		c.Specify("that can be cloned and modified", func() {
 			worldState.quadTree.Insert(MockEntity{id: 1})
@@ -115,6 +116,7 @@ func DescribeDiffConn(c gospec.Context) {
 		0,
 		[]EntityJson{MockEntity{}.Json()},
 		nil,
+		nil,
 	}
 
 	c.Specify("stores the next state as the last state", func() {
@@ -128,6 +130,7 @@ func DescribeDiffConn(c gospec.Context) {
 		conn.lastState = WorldStateJson{
 			0,
 			[]EntityJson{MockEntity{}.Json()},
+			nil,
 			nil,
 		}
 

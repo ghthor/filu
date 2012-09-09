@@ -5,7 +5,8 @@ import (
 )
 
 type AABB struct {
-	TopL, BotR Cell
+	TopL Cell `json:"tl"`
+	BotR Cell `json:"br"`
 }
 
 func (aabb AABB) Contains(c Cell) bool {

@@ -16,13 +16,15 @@ type (
 		processingTime time.Duration
 		time           WorldTime
 		quadTree       quad
+		terrain        TerrainMap
 	}
 
 	// External format used to send state to the clients
 	WorldStateJson struct {
-		Time     WorldTime    `json:"time"`
-		Entities []EntityJson `json:"entities"`
-		Removed  []EntityJson `json:"removed"`
+		Time       WorldTime       `json:"time"`
+		Entities   []EntityJson    `json:"entities"`
+		Removed    []EntityJson    `json:"removed"`
+		TerrainMap *TerrainMapJson `json:"terrainMap,omitempty"`
 	}
 
 	StateConn interface {
@@ -92,9 +94,16 @@ func newWorldState(clock Clock, bounds AABB) *WorldState {
 	if err != nil {
 		panic("error creating quadTree: " + err.Error())
 	}
+
+	terrain, err := NewTerrainMap(bounds, string(TT_GRASS))
+	if err != nil {
+		panic("error creating terrain map: " + err.Error())
+	}
+
 	return &WorldState{
 		time:     clock.Now(),
 		quadTree: quadTree,
+		terrain:  terrain,
 	}
 }
 
@@ -266,6 +275,7 @@ func (ws *WorldState) Json() WorldStateJson {
 		ws.time,
 		make([]EntityJson, len(entities)),
 		nil,
+		nil,
 	}
 
 	i := 0
@@ -273,14 +283,24 @@ func (ws *WorldState) Json() WorldStateJson {
 		s.Entities[i] = e.Json()
 		i++
 	}
+
+	terrain := ws.terrain.Json()
+	if !terrain.IsEmpty() {
+		s.TerrainMap = terrain
+	}
 	return s
 }
 
 func (s WorldStateJson) Clone() WorldStateJson {
+	terrainMap, err := s.TerrainMap.Clone()
+	if err != nil {
+		panic("error cloning terrain map: " + err.Error())
+	}
 	clone := WorldStateJson{
 		s.Time,
 		make([]EntityJson, len(s.Entities)),
 		nil,
+		terrainMap,
 	}
 	copy(clone.Entities, s.Entities)
 	return clone

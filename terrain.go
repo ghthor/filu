@@ -115,6 +115,15 @@ func (m TerrainMap) Slice(bounds AABB) (TerrainMap, error) {
 	}, nil
 }
 
+func (m TerrainMap) Clone() (TerrainMap, error) {
+	if m.TerrainTypes == nil {
+		return m, nil
+	}
+
+	// LoL this is lazy, but it's ok cause this method isn't important right now
+	return NewTerrainMap(m.Bounds, m.String())
+}
+
 func (m TerrainMap) String() string {
 	w, h := len(m.TerrainTypes[0]), len(m.TerrainTypes)
 	w += 1 // For \n char
@@ -244,4 +253,17 @@ func (m *TerrainMapJson) Diff(other *TerrainMapJson) (diff *TerrainMapJson) {
 		}
 	}
 	return
+}
+
+func (m *TerrainMapJson) Clone() (*TerrainMapJson, error) {
+	if m == nil {
+		return m, nil
+	}
+
+	tm, err := m.TerrainMap.Clone()
+	if err != nil {
+		return nil, err
+	}
+
+	return &TerrainMapJson{TerrainMap: tm}, nil
 }
