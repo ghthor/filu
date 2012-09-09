@@ -113,4 +113,107 @@ GGR
 			})
 		})
 	})
+
+	c.Specify("a terrain map that is being prepared for the client", func() {
+		fullMap, err := NewTerrainMap(AABB{
+			Cell{0, 0},
+			Cell{3, -3},
+		}, `
+GRGG
+DDDD
+DRRR
+DGGR
+`)
+		c.Assume(err, IsNil)
+
+		c.Specify("can calculate row or col differences with another TerrainMap", func() {
+			terrainMap, err := fullMap.Slice(AABB{
+				Cell{1, -1},
+				Cell{2, -2},
+			})
+			c.Assume(err, IsNil)
+			oldTerrain := terrainMap.Json()
+			oldTerrain.Prepare()
+
+			c.Specify("if the width is the same and the left and right edges are the same", func() {
+				c.Specify("and it overlaps the top", func() {
+					terrainMap, err = fullMap.Slice(AABB{
+						Cell{1, 0},
+						Cell{2, -1},
+					})
+					c.Assume(err, IsNil)
+					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+
+					newTerrain := terrainMap.Json()
+					diff := oldTerrain.Diff(newTerrain)
+					diff.Prepare()
+
+					c.Expect(diff.Bounds, Equals, AABB{
+						Cell{1, 0},
+						Cell{2, 0},
+					})
+					c.Expect(diff.Terrain, Equals, "\nRG\n")
+				})
+
+				c.Specify("and it overlaps the bottom", func() {
+					terrainMap, err = fullMap.Slice(AABB{
+						Cell{1, -2},
+						Cell{2, -3},
+					})
+					c.Assume(err, IsNil)
+					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+
+					newTerrain := terrainMap.Json()
+					diff := oldTerrain.Diff(newTerrain)
+					diff.Prepare()
+
+					c.Expect(diff.Bounds, Equals, AABB{
+						Cell{1, -3},
+						Cell{2, -3},
+					})
+					c.Expect(diff.Terrain, Equals, "\nGG\n")
+				})
+			})
+
+			c.Specify("if the height is the same and the top and bottom edges are the same", func() {
+				c.Specify("and it overlaps the left", func() {
+					terrainMap, err = fullMap.Slice(AABB{
+						Cell{0, -1},
+						Cell{1, -2},
+					})
+					c.Assume(err, IsNil)
+					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+
+					newTerrain := terrainMap.Json()
+					diff := oldTerrain.Diff(newTerrain)
+					diff.Prepare()
+
+					c.Expect(diff.Bounds, Equals, AABB{
+						Cell{0, -1},
+						Cell{0, -2},
+					})
+					c.Expect(diff.Terrain, Equals, "\nD\nD\n")
+				})
+
+				c.Specify("and it overlaps the right", func() {
+					terrainMap, err = fullMap.Slice(AABB{
+						Cell{2, -1},
+						Cell{3, -2},
+					})
+					c.Assume(err, IsNil)
+					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+
+					newTerrain := terrainMap.Json()
+					diff := oldTerrain.Diff(newTerrain)
+					diff.Prepare()
+
+					c.Expect(diff.Bounds, Equals, AABB{
+						Cell{3, -1},
+						Cell{3, -2},
+					})
+					c.Expect(diff.Terrain, Equals, "\nD\nR\n")
+				})
+			})
+		})
+	})
 }

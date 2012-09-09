@@ -15,6 +15,23 @@ type (
 		// y, x
 		TerrainTypes [][]TerrainType
 	}
+
+	TerrainMapJson struct {
+		// Used to calculate diff's
+		TerrainMap `json:"-"`
+
+		// A Slice of new terrain the client doesn't have
+		Bounds  AABB   `json:"bounds,omitempty"`
+		Terrain string `json:"terrain,omitemtpy"`
+
+		// An array of type changes
+		Changes []TerrainTypeChange `json:"changes,omitempty"`
+	}
+
+	TerrainTypeChange struct {
+		Cell        Cell        `json:"cell"`
+		TerrainType TerrainType `json:"type"`
+	}
 )
 
 const (
@@ -112,4 +129,108 @@ func (m TerrainMap) String() string {
 	}
 
 	return buf.String()
+}
+
+func (m TerrainMap) Json() TerrainMapJson {
+	return TerrainMapJson{
+		TerrainMap: m,
+	}
+}
+
+// Prepare to be Marshalled
+func (m *TerrainMapJson) Prepare() {
+	// Set the bounds
+	m.Bounds = m.TerrainMap.Bounds
+	// Write out the Map as a string
+	m.Terrain = m.TerrainMap.String()
+}
+
+func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
+	maabb, oaabb := m.TerrainMap.Bounds, other.TerrainMap.Bounds
+	if maabb == oaabb {
+		// No Overlaps
+	} else {
+
+		// Find the non overlapped section and set that in the diff
+		switch {
+		// Overlap top or bottom
+		case maabb.Width() == oaabb.Width() &&
+			maabb.TopL.X == oaabb.TopL.X &&
+			maabb.BotR.X == oaabb.BotR.X:
+
+			if maabb.Height() != oaabb.Height() {
+				panic("invalid diff attempt")
+			}
+
+			// Overlaps the top
+			if oaabb.TopL.Y > maabb.TopL.Y {
+				slice, err := other.Slice(AABB{
+					oaabb.TopL,
+					Cell{oaabb.BotR.X, maabb.TopL.Y + 1},
+				})
+
+				if err != nil {
+					panic("invalid diff attempt")
+				}
+
+				diff.TerrainMap = slice
+
+			} else if oaabb.BotR.Y < maabb.BotR.Y {
+				// Overlaps the bottom
+				slice, err := other.Slice(AABB{
+					Cell{oaabb.TopL.X, maabb.BotR.Y - 1},
+					oaabb.BotR,
+				})
+
+				if err != nil {
+					panic("invalid diff attempt")
+				}
+
+				diff.TerrainMap = slice
+			} else {
+				panic("invalid diff attempt")
+			}
+
+			// Overlaps left of right
+		case maabb.Height() == oaabb.Height() &&
+			maabb.TopL.Y == oaabb.TopL.Y &&
+			maabb.BotR.Y == oaabb.BotR.Y:
+
+			if maabb.Width() != oaabb.Width() {
+				panic("invalid diff attempt")
+			}
+
+			// Overlaps the left
+			if oaabb.TopL.X < maabb.TopL.X {
+				slice, err := other.Slice(AABB{
+					oaabb.TopL,
+					Cell{maabb.TopL.X - 1, oaabb.BotR.Y},
+				})
+
+				if err != nil {
+					panic("invalid diff attempt")
+				}
+
+				diff.TerrainMap = slice
+			} else if oaabb.BotR.X > maabb.BotR.X {
+				// Overlaps the right
+				slice, err := other.Slice(AABB{
+					Cell{maabb.BotR.X + 1, oaabb.TopL.Y},
+					oaabb.BotR,
+				})
+
+				if err != nil {
+					panic("invalid diff attempt")
+				}
+
+				diff.TerrainMap = slice
+			} else {
+				panic("invalid diff attempt")
+			}
+
+		default:
+			panic("invalid diff attempt")
+		}
+	}
+	return
 }
