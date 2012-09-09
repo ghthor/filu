@@ -27,7 +27,7 @@ func DescribeWorldState(c gospec.Context) {
 
 		jsonBytes, err := json.Marshal(jsonState)
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0"}],"removed":null}`)
+		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"removed":null}`)
 
 		c.Specify("that can be cloned and modified", func() {
 			worldState.quadTree.Insert(MockEntity{id: 1})
@@ -47,6 +47,33 @@ func DescribeWorldState(c gospec.Context) {
 				c.Assume(isMockEntity, IsTrue)
 				c.Expect(e.Id(), Equals, EntityId(i))
 			}
+		})
+
+		c.Specify("that can be culled by a bounding rectangle", func() {
+			toBeCulled := []EntityJson{
+				MockEntity{cell: Cell{-11, 11}}.Json(),
+				MockEntity{cell: Cell{11, 11}}.Json(),
+				MockEntity{cell: Cell{11, -11}}.Json(),
+				MockEntity{cell: Cell{-11, -11}}.Json(),
+			}
+
+			wontBeCulled := []EntityJson{
+				MockEntity{cell: Cell{-10, 10}}.Json(),
+				MockEntity{cell: Cell{10, 10}}.Json(),
+				MockEntity{cell: Cell{10, -10}}.Json(),
+				MockEntity{cell: Cell{-10, -10}}.Json(),
+			}
+
+			jsonState.Entities = append(jsonState.Entities[:0], wontBeCulled...)
+			jsonState.Entities = append(jsonState.Entities, toBeCulled...)
+
+			jsonState = jsonState.Cull(AABB{
+				Cell{-10, 10},
+				Cell{10, -10},
+			})
+
+			c.Expect(jsonState.Entities, Not(ContainsAll), toBeCulled)
+			c.Expect(jsonState.Entities, ContainsAll, wontBeCulled)
 		})
 
 		c.Specify("that can calculate the differences with a previous worldState state", func() {

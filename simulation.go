@@ -287,6 +287,17 @@ func (s WorldStateJson) Clone() WorldStateJson {
 	return clone
 }
 
+func (s WorldStateJson) Cull(aabb AABB) (culled WorldStateJson) {
+	culled.Time = s.Time
+
+	for _, e := range s.Entities {
+		if aabb.Overlaps(e.AABB()) {
+			culled.Entities = append(culled.Entities, e)
+		}
+	}
+	return
+}
+
 func (s WorldStateJson) Diff(ss WorldStateJson) (diff WorldStateJson) {
 	diff.Time = ss.Time
 

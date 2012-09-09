@@ -252,6 +252,7 @@ func (p *Player) Disconnect() {
 }
 
 func (p PlayerJson) Id() EntityId { return p.EntityId }
+func (p PlayerJson) AABB() AABB   { return AABB{p.Cell, p.Cell} }
 func (p PlayerJson) IsDifferentFrom(other EntityJson) (different bool) {
 	o := other.(PlayerJson)
 

@@ -12,6 +12,7 @@ type (
 
 	EntityJson interface {
 		Id() EntityId
+		AABB() AABB
 		IsDifferentFrom(EntityJson) bool
 	}
 

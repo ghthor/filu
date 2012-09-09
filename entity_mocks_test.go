@@ -10,6 +10,7 @@ type (
 	MockEntityJson struct {
 		EntityId EntityId `json:"id"`
 		Name     string   `json:"name"`
+		Cell     Cell     `json:"cell"`
 	}
 
 	MockEntity struct {
@@ -41,6 +42,7 @@ type (
 )
 
 func (e MockEntityJson) Id() EntityId { return e.EntityId }
+func (e MockEntityJson) AABB() AABB   { return AABB{e.Cell, e.Cell} }
 func (e MockEntityJson) IsDifferentFrom(other EntityJson) bool {
 	o := other.(MockEntityJson)
 	if e.Name != o.Name {
@@ -56,6 +58,7 @@ func (e MockEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
 		e.String(),
+		e.cell,
 	}
 }
 
@@ -70,6 +73,7 @@ func (e *MockMobileEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
 		e.String(),
+		e.mi.cell,
 	}
 }
 
@@ -86,6 +90,7 @@ func (e *MockCollidableEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
 		e.String(),
+		e.cell,
 	}
 }
 
@@ -105,6 +110,7 @@ func (e *MockAliveEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
 		e.String(),
+		e.mi.cell,
 	}
 }
 
