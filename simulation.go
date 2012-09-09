@@ -309,10 +309,22 @@ func (s WorldStateJson) Clone() WorldStateJson {
 func (s WorldStateJson) Cull(aabb AABB) (culled WorldStateJson) {
 	culled.Time = s.Time
 
+	// Cull Entities
 	for _, e := range s.Entities {
 		if aabb.Overlaps(e.AABB()) {
 			culled.Entities = append(culled.Entities, e)
 		}
+	}
+
+	// Cull Terrain
+	// TODO Maybe remove the ability to have an empty TerrainMap
+	// Requires updating some tests to have a terrain map that don't have one
+	if !s.TerrainMap.IsEmpty() {
+		slice, err := s.TerrainMap.Slice(aabb)
+		if err != nil {
+			panic("error slicing terrain during cull: " + err.Error())
+		}
+		culled.TerrainMap = &TerrainMapJson{TerrainMap: slice}
 	}
 	return
 }

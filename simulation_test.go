@@ -78,6 +78,13 @@ func DescribeWorldState(c gospec.Context) {
 
 			c.Expect(jsonState.Entities, Not(ContainsAll), toBeCulled)
 			c.Expect(jsonState.Entities, ContainsAll, wontBeCulled)
+			c.Expect(jsonState.TerrainMap.String(), Equals, `
+GGGGG
+GGGGG
+GGGGG
+GGGGG
+GGGGG
+`)
 		})
 
 		c.Specify("that can calculate the differences with a previous worldState state", func() {
