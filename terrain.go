@@ -1,11 +1,14 @@
 package engine
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
+	"strings"
 )
 
 type (
-	TerrainType string
+	TerrainType rune
 
 	TerrainMap struct {
 		Bounds AABB
@@ -15,26 +18,56 @@ type (
 )
 
 const (
-	TT_GRASS TerrainType = "G"
-	TT_DIRT  TerrainType = "D"
-	TT_ROCK  TerrainType = "R"
+	TT_GRASS TerrainType = 'G'
+	TT_DIRT  TerrainType = 'D'
+	TT_ROCK  TerrainType = 'R'
 )
 
-func NewTerrainMap(bounds AABB) TerrainMap {
+func NewTerrainMap(bounds AABB, s string) (TerrainMap, error) {
+	if len(s) == 0 {
+		return TerrainMap{}, errors.New("invalid TerrainType")
+	}
+
 	w, h := bounds.Width(), bounds.Height()
 	tm := make([][]TerrainType, h)
 
-	for row, _ := range tm {
-		tm[row] = make([]TerrainType, w)
-	}
+	if len(s) == 1 {
+		for row, _ := range tm {
+			tm[row] = make([]TerrainType, w)
+		}
 
-	for _, row := range tm {
-		for x, _ := range row {
-			row[x] = TT_GRASS
+		for _, row := range tm {
+			for x, _ := range row {
+				row[x] = TerrainType(s[0])
+			}
+		}
+	} else {
+		s = strings.TrimLeft(s, "\n")
+		if strings.Count(s, "\n") != h {
+			return TerrainMap{}, errors.New("bounds height doesn't match num lines")
+		}
+
+		buf := bufio.NewReader(strings.NewReader(s))
+		for y, _ := range tm {
+			row := make([]TerrainType, 0, w)
+			rowStr, err := buf.ReadString("\n"[0])
+			if err != nil {
+				return TerrainMap{}, err
+			}
+
+			rowStr = strings.TrimRight(rowStr, "\n")
+
+			if len(rowStr) != w {
+				return TerrainMap{}, errors.New("bounds width doesn't match line width")
+			}
+
+			for _, c := range rowStr {
+				row = append(row, TerrainType(c))
+			}
+			tm[y] = row
 		}
 	}
-
-	return TerrainMap{bounds, tm}
+	return TerrainMap{bounds, tm}, nil
 }
 
 func (m TerrainMap) Cell(c Cell) TerrainType {
@@ -69,17 +102,16 @@ func (m TerrainMap) String() string {
 	w, h := len(m.TerrainTypes[0]), len(m.TerrainTypes)
 	w += 1 // For \n char
 
-	bytes := make([]byte, 0, w*h+1)
-
-	bytes = append(bytes, []byte("\n")...)
+	buf := bytes.NewBuffer(make([]byte, 0, w*h+1))
+	buf.WriteRune('\n')
 	for _, row := range m.TerrainTypes {
 		for _, t := range row {
-			bytes = append(bytes, []byte(t)...)
+			buf.WriteRune(rune(t))
 		}
-		bytes = append(bytes, []byte("\n")...)
+		buf.WriteRune('\n')
 	}
 
-	return string(bytes)
+	return buf.String()
 }
 
 func (terrainMap TerrainMap) SaveToFile(filename string) {

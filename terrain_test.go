@@ -7,11 +7,11 @@ import (
 
 func DescribeTerrainMap(c gospec.Context) {
 	c.Specify("a terrain map", func() {
-		terrainMap := NewTerrainMap(AABB{
+		terrainMap, err := NewTerrainMap(AABB{
 			Cell{-2, 3},
 			Cell{2, -2},
-		})
-
+		}, "G")
+		c.Expect(err, IsNil)
 		c.Expect(len(terrainMap.TerrainTypes), Equals, 6)
 		c.Expect(len(terrainMap.TerrainTypes[0]), Equals, 5)
 
@@ -20,20 +20,6 @@ func DescribeTerrainMap(c gospec.Context) {
 				c.Expect(row[x], Equals, TT_GRASS)
 			}
 		}
-
-		c.Specify("can be accessed", func() {
-			terrainMap.TerrainTypes[0][0] = TT_ROCK
-
-			c.Specify("directly", func() {
-				c.Expect(terrainMap.TerrainTypes[0][0], Equals, TT_ROCK)
-				c.Expect(terrainMap.TerrainTypes[1][1], Equals, TT_GRASS)
-			})
-			c.Specify("by cell", func() {
-				c.Expect(terrainMap.Cell(Cell{-2, 3}), Equals, TT_ROCK)
-				c.Expect(terrainMap.Cell(Cell{-1, 2}), Equals, TT_GRASS)
-			})
-		})
-
 		// TODO I wonder if I can check the memory allocations during this spec
 		// to see if my byte slice is large enough
 		c.Specify("can be converted to a string", func() {
@@ -56,6 +42,42 @@ GGRGG
 GGGGG
 GGGGG
 `)
+		})
+
+		c.Specify("can be created with a string", func() {
+			terrainMap, err = NewTerrainMap(AABB{Cell{0, 0}, Cell{5, -6}}, `
+RRRRRD
+RRRRRD
+RRRRRD
+RRRRRD
+RRRRRD
+RRRRRD
+DDDDDD
+`)
+			c.Expect(err, IsNil)
+
+			c.Expect(terrainMap.String(), Equals, `
+RRRRRD
+RRRRRD
+RRRRRD
+RRRRRD
+RRRRRD
+RRRRRD
+DDDDDD
+`)
+		})
+
+		c.Specify("can be accessed", func() {
+			terrainMap.TerrainTypes[0][0] = TT_ROCK
+
+			c.Specify("directly", func() {
+				c.Expect(terrainMap.TerrainTypes[0][0], Equals, TT_ROCK)
+				c.Expect(terrainMap.TerrainTypes[1][1], Equals, TT_GRASS)
+			})
+			c.Specify("by cell", func() {
+				c.Expect(terrainMap.Cell(Cell{-2, 3}), Equals, TT_ROCK)
+				c.Expect(terrainMap.Cell(Cell{-1, 2}), Equals, TT_GRASS)
+			})
 		})
 
 		c.Specify("can be sliced into a smaller rectangle", func() {
