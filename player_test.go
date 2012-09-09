@@ -50,8 +50,8 @@ func DescribePlayer(c gospec.Context) {
 		}()
 
 		player.SendWorldState(newWorldState(Clock(0), AABB{
-			Cell{-10, 10},
-			Cell{10, -10},
+			Cell{-100, 100},
+			Cell{100, -100},
 		}).Json())
 		c.Expect(<-locked, IsTrue)
 
