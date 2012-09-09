@@ -94,10 +94,10 @@ func (m TerrainMap) Cell(c Cell) TerrainType {
 	return m.TerrainTypes[y][x]
 }
 
-func (m TerrainMap) Slice(bounds AABB) (TerrainMap, error) {
-	// Check if the slice asked for is contained within my bounds
-	if !m.Bounds.Contains(bounds.TopL) || !m.Bounds.Contains(bounds.BotR) {
-		return m, errors.New("invalid terrain slice")
+func (m TerrainMap) Slice(bounds AABB) TerrainMap {
+	bounds, err := m.Bounds.Intersection(bounds)
+	if err != nil {
+		panic("invalid terrain map slicing operation: " + err.Error())
 	}
 
 	x := bounds.TopL.X - m.Bounds.TopL.X
@@ -112,7 +112,7 @@ func (m TerrainMap) Slice(bounds AABB) (TerrainMap, error) {
 	return TerrainMap{
 		bounds,
 		rows,
-	}, nil
+	}
 }
 
 func (m TerrainMap) Clone() (TerrainMap, error) {
@@ -184,29 +184,17 @@ func (m *TerrainMapJson) Diff(other *TerrainMapJson) (diff *TerrainMapJson) {
 
 			// Overlaps the top
 			if oaabb.TopL.Y > maabb.TopL.Y {
-				slice, err := other.Slice(AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(AABB{
 					oaabb.TopL,
 					Cell{oaabb.BotR.X, maabb.TopL.Y + 1},
-				})
-
-				if err != nil {
-					panic("invalid diff attempt")
-				}
-
-				diff = &TerrainMapJson{TerrainMap: slice}
+				})}
 
 			} else if oaabb.BotR.Y < maabb.BotR.Y {
 				// Overlaps the bottom
-				slice, err := other.Slice(AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(AABB{
 					Cell{oaabb.TopL.X, maabb.BotR.Y - 1},
 					oaabb.BotR,
-				})
-
-				if err != nil {
-					panic("invalid diff attempt")
-				}
-
-				diff = &TerrainMapJson{TerrainMap: slice}
+				})}
 			} else {
 				panic("invalid diff attempt")
 			}
@@ -222,28 +210,16 @@ func (m *TerrainMapJson) Diff(other *TerrainMapJson) (diff *TerrainMapJson) {
 
 			// Overlaps the left
 			if oaabb.TopL.X < maabb.TopL.X {
-				slice, err := other.Slice(AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(AABB{
 					oaabb.TopL,
 					Cell{maabb.TopL.X - 1, oaabb.BotR.Y},
-				})
-
-				if err != nil {
-					panic("invalid diff attempt")
-				}
-
-				diff = &TerrainMapJson{TerrainMap: slice}
+				})}
 			} else if oaabb.BotR.X > maabb.BotR.X {
 				// Overlaps the right
-				slice, err := other.Slice(AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(AABB{
 					Cell{maabb.BotR.X + 1, oaabb.TopL.Y},
 					oaabb.BotR,
-				})
-
-				if err != nil {
-					panic("invalid diff attempt")
-				}
-
-				diff = &TerrainMapJson{TerrainMap: slice}
+				})}
 			} else {
 				panic("invalid diff attempt")
 			}
