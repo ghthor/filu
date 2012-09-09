@@ -34,5 +34,7 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribePlayerCollisions)
 	r.AddSpec(engine.DescribePlayerJson)
 
+	r.AddSpec(engine.DescribeViewPortCulling)
+
 	gospec.MainGoTest(r, t)
 }

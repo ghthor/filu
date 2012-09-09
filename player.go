@@ -133,8 +133,7 @@ func (p *Player) mux() {
 					// Buffer all input to be processed after WorldState is published
 					case p.serveMotionInfo <- p.mi:
 					case worldState := <-p.routeWorldState:
-						// Take the worldState and cut out anything the client shouldn't know
-						// Package up this localized WorldState and send it over the wire
+						worldState = p.CullStateToView(worldState)
 						p.conn.SendJson("update", worldState)
 						break lockedMotionInfo
 					case <-p.killMux:
@@ -155,6 +154,16 @@ func (p *Player) stopMux() {
 // External interface of the muxer presented to the simulation
 func (p *Player) motionInfo() *motionInfo             { return <-p.serveMotionInfo }
 func (p *Player) SendWorldState(state WorldStateJson) { p.routeWorldState <- state }
+
+const viewPortSize = 50
+
+func (p *Player) CullStateToView(s WorldStateJson) WorldStateJson {
+	s = s.Cull(AABB{
+		p.mi.cell.Add(-viewPortSize/2, viewPortSize/2),
+		p.mi.cell.Add(viewPortSize/2, -viewPortSize/2),
+	})
+	return s
+}
 
 // Collision Handlers
 func (p *Player) collides(other collidableEntity) (collides bool) {

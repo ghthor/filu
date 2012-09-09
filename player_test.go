@@ -100,6 +100,34 @@ func DescribePlayer(c gospec.Context) {
 	})
 }
 
+func DescribeViewPortCulling(c gospec.Context) {
+	c.Specify("will cull the world state into the viewable area of the player", func() {
+		toBeCulled := []EntityJson{
+			MockEntity{cell: Cell{-26, 26}}.Json(),
+			MockEntity{cell: Cell{26, 26}}.Json(),
+			MockEntity{cell: Cell{26, -26}}.Json(),
+			MockEntity{cell: Cell{-26, -26}}.Json(),
+		}
+
+		wontBeCulled := []EntityJson{
+			MockEntity{cell: Cell{-25, 25}}.Json(),
+			MockEntity{cell: Cell{25, 25}}.Json(),
+			MockEntity{cell: Cell{25, -25}}.Json(),
+			MockEntity{cell: Cell{-25, -25}}.Json(),
+		}
+
+		player := &Player{mi: &motionInfo{cell: Cell{0, 0}}}
+		state := WorldStateJson{}
+		state.Entities = append(state.Entities, toBeCulled...)
+		state.Entities = append(state.Entities, wontBeCulled...)
+
+		state = player.CullStateToView(state)
+
+		c.Expect(state.Entities, ContainsAll, wontBeCulled)
+		c.Expect(state.Entities, Not(ContainsAll), toBeCulled)
+	})
+}
+
 func DescribePlayerCollisions(c gospec.Context) {
 	c.Specify("when a location is contested", func() {
 		contested := Cell{0, 0}
