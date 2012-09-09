@@ -49,7 +49,10 @@ func DescribePlayer(c gospec.Context) {
 			}
 		}()
 
-		player.SendWorldState(newWorldState(Clock(0)).Json())
+		player.SendWorldState(newWorldState(Clock(0), AABB{
+			Cell{-10, 10},
+			Cell{10, -10},
+		}).Json())
 		c.Expect(<-locked, IsTrue)
 
 		c.Specify("and is unlocked afterwards", func() {

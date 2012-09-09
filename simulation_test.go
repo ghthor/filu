@@ -15,7 +15,10 @@ func (c noopConn) SendJson(msg string, obj interface{}) error {
 
 func DescribeWorldState(c gospec.Context) {
 	c.Specify("generates json compatitable state object", func() {
-		worldState := newWorldState(Clock(0))
+		worldState := newWorldState(Clock(0), AABB{
+			Cell{-3, 3},
+			Cell{3, -3},
+		})
 
 		entity := MockEntity{id: 0}
 		worldState.quadTree.Insert(entity)
@@ -51,25 +54,25 @@ func DescribeWorldState(c gospec.Context) {
 
 		c.Specify("that can be culled by a bounding rectangle", func() {
 			toBeCulled := []EntityJson{
-				MockEntity{cell: Cell{-11, 11}}.Json(),
-				MockEntity{cell: Cell{11, 11}}.Json(),
-				MockEntity{cell: Cell{11, -11}}.Json(),
-				MockEntity{cell: Cell{-11, -11}}.Json(),
+				MockEntity{cell: Cell{-3, 3}}.Json(),
+				MockEntity{cell: Cell{3, 3}}.Json(),
+				MockEntity{cell: Cell{3, -3}}.Json(),
+				MockEntity{cell: Cell{-3, -3}}.Json(),
 			}
 
 			wontBeCulled := []EntityJson{
-				MockEntity{cell: Cell{-10, 10}}.Json(),
-				MockEntity{cell: Cell{10, 10}}.Json(),
-				MockEntity{cell: Cell{10, -10}}.Json(),
-				MockEntity{cell: Cell{-10, -10}}.Json(),
+				MockEntity{cell: Cell{-2, 2}}.Json(),
+				MockEntity{cell: Cell{2, 2}}.Json(),
+				MockEntity{cell: Cell{2, -2}}.Json(),
+				MockEntity{cell: Cell{-2, -2}}.Json(),
 			}
 
 			jsonState.Entities = append(jsonState.Entities[:0], wontBeCulled...)
 			jsonState.Entities = append(jsonState.Entities, toBeCulled...)
 
 			jsonState = jsonState.Cull(AABB{
-				Cell{-10, 10},
-				Cell{10, -10},
+				Cell{-2, 2},
+				Cell{2, -2},
 			})
 
 			c.Expect(jsonState.Entities, Not(ContainsAll), toBeCulled)

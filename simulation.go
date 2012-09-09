@@ -87,12 +87,8 @@ func NewSimulation(fps int) Simulation {
 	return newSimulation(fps)
 }
 
-func newWorldState(clock Clock) *WorldState {
-	quadTree, err := newQuadTree(AABB{
-		Cell{-1000, 1000},
-		Cell{1000, -1000},
-	}, nil, 20)
-
+func newWorldState(clock Clock, bounds AABB) *WorldState {
+	quadTree, err := newQuadTree(bounds, nil, 20)
 	if err != nil {
 		panic("error creating quadTree: " + err.Error())
 	}
@@ -108,7 +104,10 @@ func newSimulation(fps int) *simulation {
 	s := &simulation{
 		clock: clk,
 
-		state: newWorldState(clk),
+		state: newWorldState(clk, AABB{
+			Cell{-1000, 1000},
+			Cell{1000, -1000},
+		}),
 
 		clients: make([]StateConn, 0, 10),
 
