@@ -113,6 +113,3 @@ func (m TerrainMap) String() string {
 
 	return buf.String()
 }
-
-func (terrainMap TerrainMap) SaveToFile(filename string) {
-}
