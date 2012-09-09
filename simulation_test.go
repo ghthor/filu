@@ -116,6 +116,12 @@ GGGGG
 }
 
 func DescribeDiffConn(c gospec.Context) {
+	terrainMap, err := NewTerrainMap(AABB{
+		Cell{-10, 10},
+		Cell{10, -10},
+	}, string(TT_GRASS))
+	c.Assume(err, IsNil)
+
 	packets := make(chan string, 1)
 
 	conn := &DiffConn{JsonOutputConn: spyConn{packets}}
@@ -123,24 +129,22 @@ func DescribeDiffConn(c gospec.Context) {
 		0,
 		[]EntityJson{MockEntity{}.Json()},
 		nil,
-		nil,
+		terrainMap.Slice(AABB{
+			Cell{-2, 2},
+			Cell{2, -2},
+		}).Json(),
 	}
 
 	c.Specify("stores the next state as the last state", func() {
 		c.Assume(conn.lastState.Time, Equals, WorldTime(0))
-		conn.SendJson("update", WorldStateJson{Time: 1})
+		conn.SendJson("update", WorldStateJson{
+			Time:       1,
+			TerrainMap: conn.lastState.TerrainMap,
+		})
 		c.Expect(conn.lastState.Time, Equals, WorldTime(1))
 	})
 
 	c.Specify("the connection sends", func() {
-		conn := &DiffConn{JsonOutputConn: spyConn{packets}}
-		conn.lastState = WorldStateJson{
-			0,
-			[]EntityJson{MockEntity{}.Json()},
-			nil,
-			nil,
-		}
-
 		c.Specify("nothing if nothing has changed", func() {
 			conn.SendJson("update", conn.lastState)
 			c.Expect(len(packets), Equals, 0)
@@ -172,6 +176,21 @@ func DescribeDiffConn(c gospec.Context) {
 				conn.SendJson("update", nextState)
 				c.Expect(len(packets), Equals, 1)
 			})
+
+			// The viewport changing is sensed by DiffConn when the AABB of the TerrainMap has changed
+			// and a Diff is run between the new terrain map and the old one
+			c.Specify("when the viewport has changed", func() {
+				nextState.TerrainMap = terrainMap.Slice(AABB{
+					Cell{-3, 2},
+					Cell{1, -2},
+				}).Json()
+
+				conn.SendJson("update", nextState)
+				c.Expect(len(packets), Equals, 1)
+			})
+
+			// TODO
+			c.Specify("when the terrain has changed", nil)
 		})
 	})
 }

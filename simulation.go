@@ -37,16 +37,6 @@ type (
 	}
 )
 
-func (c *DiffConn) SendJson(msg string, nextState interface{}) error {
-	diff := c.lastState.Diff(nextState.(WorldStateJson))
-	c.lastState = nextState.(WorldStateJson)
-
-	if len(diff.Entities) > 0 || len(diff.Removed) > 0 {
-		c.JsonOutputConn.SendJson(msg, diff)
-	}
-	return nil
-}
-
 type (
 	Simulation interface {
 		Start()
@@ -329,33 +319,46 @@ func (s WorldStateJson) Diff(ss WorldStateJson) (diff WorldStateJson) {
 	diff.Time = ss.Time
 
 	if len(s.Entities) == 0 && len(ss.Entities) > 0 {
-		return ss
-	}
-
-	// Find the entities that have changed from the old state to the new one
-nextEntity:
-	for _, entity := range ss.Entities {
-		for _, old := range s.Entities {
-			if entity.Id() == old.Id() {
-				if old.IsDifferentFrom(entity) {
-					diff.Entities = append(diff.Entities, entity)
-				}
-				continue nextEntity
-			}
-		}
-		// This is a new Entity
-		diff.Entities = append(diff.Entities, entity)
-	}
-
-	// Check if all the entities in old state exist in the new state
-entityStillExists:
-	for _, old := range s.Entities {
+		diff.Entities = ss.Entities
+	} else {
+		// Find the entities that have changed from the old state to the new one
+	nextEntity:
 		for _, entity := range ss.Entities {
-			if old.Id() == entity.Id() {
-				continue entityStillExists
+			for _, old := range s.Entities {
+				if entity.Id() == old.Id() {
+					if old.IsDifferentFrom(entity) {
+						diff.Entities = append(diff.Entities, entity)
+					}
+					continue nextEntity
+				}
 			}
+			// This is a new Entity
+			diff.Entities = append(diff.Entities, entity)
 		}
-		diff.Removed = append(diff.Removed, old)
+
+		// Check if all the entities in old state exist in the new state
+	entityStillExists:
+		for _, old := range s.Entities {
+			for _, entity := range ss.Entities {
+				if old.Id() == entity.Id() {
+					continue entityStillExists
+				}
+			}
+			diff.Removed = append(diff.Removed, old)
+		}
 	}
+
+	// Diff the TerrainMap
+	diff.TerrainMap = s.TerrainMap.Diff(ss.TerrainMap)
 	return
+}
+
+func (c *DiffConn) SendJson(msg string, nextState interface{}) error {
+	diff := c.lastState.Diff(nextState.(WorldStateJson))
+	c.lastState = nextState.(WorldStateJson)
+
+	if len(diff.Entities) > 0 || len(diff.Removed) > 0 || diff.TerrainMap != nil {
+		c.JsonOutputConn.SendJson(msg, diff)
+	}
+	return nil
 }
