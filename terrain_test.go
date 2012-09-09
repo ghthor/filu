@@ -134,8 +134,9 @@ DGGR
 		})
 
 		c.Specify("will, when unintialized calculate a full diff with a non empty map", func() {
+			old := &TerrainMapJson{}
 			terrainJson := fullMap.Json()
-			diff := TerrainMapJson{}.Diff(terrainJson)
+			diff := old.Diff(terrainJson)
 
 			c.Expect(diff.IsEmpty(), IsFalse)
 			c.Expect(diff.TerrainMap.Bounds, Equals, terrainJson.TerrainMap.Bounds)
@@ -158,13 +159,13 @@ DGGR
 						Cell{2, -1},
 					})
 					c.Assume(err, IsNil)
-					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
 
 					newTerrain := terrainMap.Json()
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, AABB{
 						Cell{1, 0},
 						Cell{2, 0},
 					})
@@ -177,13 +178,13 @@ DGGR
 						Cell{2, -3},
 					})
 					c.Assume(err, IsNil)
-					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
 
 					newTerrain := terrainMap.Json()
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, AABB{
 						Cell{1, -3},
 						Cell{2, -3},
 					})
@@ -198,13 +199,13 @@ DGGR
 						Cell{1, -2},
 					})
 					c.Assume(err, IsNil)
-					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
 
 					newTerrain := terrainMap.Json()
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, AABB{
 						Cell{0, -1},
 						Cell{0, -2},
 					})
@@ -217,13 +218,13 @@ DGGR
 						Cell{3, -2},
 					})
 					c.Assume(err, IsNil)
-					c.Assume(terrainMap.Bounds.Overlaps(oldTerrain.Bounds), IsTrue)
+					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
 
 					newTerrain := terrainMap.Json()
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, AABB{
 						Cell{3, -1},
 						Cell{3, -2},
 					})

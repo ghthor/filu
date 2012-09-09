@@ -21,8 +21,8 @@ type (
 		TerrainMap `json:"-"`
 
 		// A Slice of new terrain the client doesn't have
-		Bounds  AABB   `json:"bounds,omitempty"`
-		Terrain string `json:"terrain,omitemtpy"`
+		Bounds  *AABB  `json:"bounds,omitempty"`
+		Terrain string `json:"terrain,omitempty"`
 
 		// An array of type changes
 		Changes []TerrainTypeChange `json:"changes,omitempty"`
@@ -131,8 +131,8 @@ func (m TerrainMap) String() string {
 	return buf.String()
 }
 
-func (m TerrainMap) Json() TerrainMapJson {
-	return TerrainMapJson{
+func (m TerrainMap) Json() *TerrainMapJson {
+	return &TerrainMapJson{
 		TerrainMap: m,
 	}
 }
@@ -140,16 +140,19 @@ func (m TerrainMap) Json() TerrainMapJson {
 // Prepare to be Marshalled
 func (m *TerrainMapJson) Prepare() {
 	// Set the bounds
-	m.Bounds = m.TerrainMap.Bounds
+	m.Bounds = &m.TerrainMap.Bounds
 	// Write out the Map as a string
 	m.Terrain = m.TerrainMap.String()
 }
 
-func (m TerrainMapJson) IsEmpty() bool {
+func (m *TerrainMapJson) IsEmpty() bool {
+	if m == nil {
+		return true
+	}
 	return m.TerrainMap.TerrainTypes == nil
 }
 
-func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
+func (m *TerrainMapJson) Diff(other *TerrainMapJson) (diff *TerrainMapJson) {
 	if m.IsEmpty() {
 		return other
 	}
@@ -181,7 +184,7 @@ func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
 					panic("invalid diff attempt")
 				}
 
-				diff.TerrainMap = slice
+				diff = &TerrainMapJson{TerrainMap: slice}
 
 			} else if oaabb.BotR.Y < maabb.BotR.Y {
 				// Overlaps the bottom
@@ -194,7 +197,7 @@ func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
 					panic("invalid diff attempt")
 				}
 
-				diff.TerrainMap = slice
+				diff = &TerrainMapJson{TerrainMap: slice}
 			} else {
 				panic("invalid diff attempt")
 			}
@@ -219,7 +222,7 @@ func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
 					panic("invalid diff attempt")
 				}
 
-				diff.TerrainMap = slice
+				diff = &TerrainMapJson{TerrainMap: slice}
 			} else if oaabb.BotR.X > maabb.BotR.X {
 				// Overlaps the right
 				slice, err := other.Slice(AABB{
@@ -231,7 +234,7 @@ func (m TerrainMapJson) Diff(other TerrainMapJson) (diff TerrainMapJson) {
 					panic("invalid diff attempt")
 				}
 
-				diff.TerrainMap = slice
+				diff = &TerrainMapJson{TerrainMap: slice}
 			} else {
 				panic("invalid diff attempt")
 			}
