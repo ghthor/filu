@@ -25,6 +25,7 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribeMockEntities)
 
 	r.AddSpec(engine.DescribeQuad)
+	r.AddSpec(engine.DescribeTerrainMap)
 	r.AddSpec(engine.DescribeWorldState)
 	r.AddSpec(engine.DescribeDiffConn)
 	r.AddSpec(engine.DescribeSimulation)
