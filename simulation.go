@@ -353,11 +353,27 @@ func (s WorldStateJson) Diff(ss WorldStateJson) (diff WorldStateJson) {
 	return
 }
 
+// TerrainMap needs an extra step before sending
+// TODO remove this maybe?
+// The extra step is to avoid casting the entire terrain map to a string
+// when the world state json is created. The Diff function could run this step
+// and we could call it "Finalize"
+func (s WorldStateJson) Prepare() {
+	if !s.TerrainMap.IsEmpty() {
+		s.TerrainMap.Prepare()
+	}
+}
+
 func (c *DiffConn) SendJson(msg string, nextState interface{}) error {
 	diff := c.lastState.Diff(nextState.(WorldStateJson))
 	c.lastState = nextState.(WorldStateJson)
 
+	// Will need this when I start comparing for TerrainType changes
+	//c.lastState.Prepare()
+
 	if len(diff.Entities) > 0 || len(diff.Removed) > 0 || diff.TerrainMap != nil {
+		// Prepare the state for sending
+		diff.Prepare()
 		c.JsonOutputConn.SendJson(msg, diff)
 	}
 	return nil
