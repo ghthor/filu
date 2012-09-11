@@ -111,6 +111,25 @@ GGGGG
 				clone.Entities = clone.Entities[:0]
 				c.Expect(len(jsonState.Diff(clone).Removed), Equals, 1)
 			})
+
+			c.Specify("when the viewport has changed", func() {
+				clone := jsonState.Clone()
+				jsonState = jsonState.Cull(AABB{
+					Cell{-2, 2},
+					Cell{2, -2},
+				})
+
+				clone = clone.Cull(AABB{
+					Cell{-3, 2},
+					Cell{1, -2},
+				})
+				c.Expect(jsonState.Diff(clone).TerrainMap, Not(IsNil))
+			})
+
+			c.Specify("when the viewport hasn't changed", func() {
+				clone := jsonState.Clone()
+				c.Expect(jsonState.Diff(clone).TerrainMap, IsNil)
+			})
 		})
 	})
 }
