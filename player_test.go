@@ -106,17 +106,17 @@ func DescribePlayer(c gospec.Context) {
 func DescribeViewPortCulling(c gospec.Context) {
 	c.Specify("will cull the world state into the viewable area of the player", func() {
 		toBeCulled := []EntityJson{
+			MockEntity{cell: Cell{-27, 27}}.Json(),
+			MockEntity{cell: Cell{27, 27}}.Json(),
+			MockEntity{cell: Cell{27, -27}}.Json(),
+			MockEntity{cell: Cell{-27, -27}}.Json(),
+		}
+
+		wontBeCulled := []EntityJson{
 			MockEntity{cell: Cell{-26, 26}}.Json(),
 			MockEntity{cell: Cell{26, 26}}.Json(),
 			MockEntity{cell: Cell{26, -26}}.Json(),
 			MockEntity{cell: Cell{-26, -26}}.Json(),
-		}
-
-		wontBeCulled := []EntityJson{
-			MockEntity{cell: Cell{-25, 25}}.Json(),
-			MockEntity{cell: Cell{25, 25}}.Json(),
-			MockEntity{cell: Cell{25, -25}}.Json(),
-			MockEntity{cell: Cell{-25, -25}}.Json(),
 		}
 
 		player := &Player{mi: &motionInfo{cell: Cell{0, 0}}}

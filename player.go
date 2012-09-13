@@ -155,7 +155,7 @@ func (p *Player) stopMux() {
 func (p *Player) motionInfo() *motionInfo             { return <-p.serveMotionInfo }
 func (p *Player) SendWorldState(state WorldStateJson) { p.routeWorldState <- state }
 
-const viewPortSize = 50
+const viewPortSize = 52
 
 func (p *Player) CullStateToView(s WorldStateJson) WorldStateJson {
 	s = s.Cull(AABB{
