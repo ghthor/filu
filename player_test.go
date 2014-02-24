@@ -3,8 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ghthor/gospec/src/gospec"
-	. "github.com/ghthor/gospec/src/gospec"
+	"github.com/ghthor/gospec"
+	. "github.com/ghthor/gospec"
 	"strconv"
 )
 

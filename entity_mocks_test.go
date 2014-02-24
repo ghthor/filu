@@ -2,8 +2,8 @@ package engine
 
 import (
 	"fmt"
-	"github.com/ghthor/gospec/src/gospec"
-	. "github.com/ghthor/gospec/src/gospec"
+	"github.com/ghthor/gospec"
+	. "github.com/ghthor/gospec"
 )
 
 type (

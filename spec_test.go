@@ -2,7 +2,7 @@ package engine_test
 
 import (
 	".././engine"
-	"github.com/ghthor/gospec/src/gospec"
+	"github.com/ghthor/gospec"
 	"testing"
 )
 

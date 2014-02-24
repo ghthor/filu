@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"github.com/ghthor/gospec/src/gospec"
-	. "github.com/ghthor/gospec/src/gospec"
+	"github.com/ghthor/gospec"
+	. "github.com/ghthor/gospec"
 )
 
 func overlapPeakAndDecrease(c gospec.Context, collision PathCollision) float64 {

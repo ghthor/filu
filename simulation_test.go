@@ -2,8 +2,8 @@ package engine
 
 import (
 	"encoding/json"
-	"github.com/ghthor/gospec/src/gospec"
-	. "github.com/ghthor/gospec/src/gospec"
+	"github.com/ghthor/gospec"
+	. "github.com/ghthor/gospec"
 )
 
 type noopConn int
