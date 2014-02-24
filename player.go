@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"../server/protocol"
 	"strconv"
 	"strings"
 )
@@ -28,7 +27,7 @@ type PlayerDef struct {
 	MovementSpeed uint
 
 	// A Connection to send WorldState too
-	Conn protocol.JsonOutputConn
+	Conn JsonOutputConn
 
 	// This is Used internally by the simulation to return the new
 	// Player object after is has been created
@@ -45,7 +44,7 @@ type Player struct {
 	sim Simulation
 
 	// A Connection to send WorldState too
-	conn protocol.JsonOutputConn
+	conn JsonOutputConn
 
 	// Communication channels used inside the muxer
 	collectInput    chan InputCmd

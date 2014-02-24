@@ -1,11 +1,15 @@
 package engine
 
 import (
-	"../server/protocol"
 	"fmt"
 	"sync"
 	"time"
 )
+
+// A connection used to push viewport state
+type JsonOutputConn interface {
+	SendJson(string, interface{}) error
+}
 
 /*
 The Client generates InputEvents and sends them to the server.  The Node processes these input events and packages them up for the simulation. When the simulation runs it gathers all the Clients InputEvent's and Currently executing Actions and steps simulates a step forward in time generating the next WorldState.  This WorldState is then published to all the clients via a channel
@@ -32,7 +36,7 @@ type (
 	}
 
 	DiffConn struct {
-		protocol.JsonOutputConn
+		JsonOutputConn
 		lastState WorldStateJson
 	}
 )
