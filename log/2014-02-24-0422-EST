@@ -1,0 +1,19 @@
+Mon Feb 24 04:22:08 EST 2014
+
+#~ LOG - What I remember last
+I know there was an outstanding collision bug.
+It had something to do with moving into an occupied cell where both entities were moving in the same position.
+This may have been fixed though.
+Only way is to actually test it, and read through the collision specifications.
+
+I know I have some pictures of my whiteboarding for the "realtime" collision system.
+They should be found and placed into this repository.
+
+Other then that, I know that my immediate focus was trying to use perlin noise to generate a terrain map.
+This task seemed important at the time and was really interesting.
+But, I was having issues understanding how the perlin 2d algorithm was seeded with static.
+I was basing my port on a python implementation I found online.
+Unfortunately I believe the source for generating 2d static as slices of slices was lost.
+This isn't that important because it is straight forward to implement.
+
+Mon Feb 24 04:30:25 EST 2014
