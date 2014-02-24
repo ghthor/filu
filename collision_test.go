@@ -845,8 +845,8 @@ func DescribePathCollision(c gospec.Context) {
 			})
 		})
 
-		c.Specify("the overlap will decrease to a trough and the grow back to 1.0", nil)
-		c.Specify("the overlap will be 1.0 for the duration of the collision", nil)
+		c.Specify("the overlap will decrease to a trough and the grow back to 1.0", func() {})
+		c.Specify("the overlap will be 1.0 for the duration of the collision", func() {})
 	})
 
 	c.Specify("when path A and path B share the same origin and are perpendicular", func() {

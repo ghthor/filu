@@ -209,7 +209,7 @@ func DescribeDiffConn(c gospec.Context) {
 			})
 
 			// TODO
-			c.Specify("when the terrain has changed", nil)
+			c.Specify("when the terrain has changed", func() {})
 		})
 	})
 }
@@ -317,8 +317,8 @@ func DescribeSimulation(c gospec.Context) {
 		})
 
 		// TODO drain the newPlayer/dcedPlayer channels after the loop has broken
-		c.Specify("when the simulation is stopping shouldn't block", nil)
+		c.Specify("when the simulation is stopping shouldn't block", func() {})
 	})
 
-	c.Specify("simulation loop runs at the intended fps", nil)
+	c.Specify("simulation loop runs at the intended fps", func() {})
 }
