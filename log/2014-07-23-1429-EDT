@@ -1,0 +1,31 @@
+Wed Jul 23 14:29:03 EDT 2014
+
+#~ Discovered the movement bug I remembered from 2 years ago
+So after a little playing around I recreated the bug I remembered not fixing 2 years ago.
+To do this I lined up A walking into another B who isn't moving.
+Then B attempts to move into C who isn't moving.
+
+A -> B   C
+
+My Theory is
+When B attempts to move into C, a path action is created for B.
+Since just having a path action returns IsMoving() == true, A thinks B IS  moving and therefore there is no collison.
+If my theory is correct, it will happenn iff A.moveSpeed <= B.moveSpeed.
+I should test to see if A moves faster then B if this bug doesn't happen.
+
+First I should create the test case and make sure it fails.
+But, for now a few thoughts on how to solve this.
+The first thing that comes to mind is there is a dependence that A has towards B.
+B needs to determine if B's movement is possible.
+SOOOO, I just tested and it is based on the order of solving the collisons.
+Lets assume the A, B, and C are in that order in the array.
+If the setup was reversed, aka
+
+C -> B  A
+
+THEN this bug wouldn't happen just do the the order in which the collisons are processed.
+B would be processed before C and therefore C would never see B as moving.
+SO the way to solve this is to create a tree/chain of dependence and solve the collisons in that order.
+I don't think this will be all that difficult, but we'll see.
+
+Wed Jul 23 14:43:01 EDT 2014
