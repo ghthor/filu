@@ -451,7 +451,7 @@ func DescribePlayerJson(c gospec.Context) {
 		Cell:   Cell{0, 0},
 	}
 
-	c.Specify("can identify if nothing has changed", func() {
+	c.Specify("can identify there has been no change if", func() {
 		c.Specify("when the player is standing still", func() {
 			c.Expect(player.IsDifferentFrom(player), IsFalse)
 		})
@@ -468,8 +468,9 @@ func DescribePlayerJson(c gospec.Context) {
 		})
 	})
 
-	c.Specify("can identify when something is different", func() {
+	c.Specify("can identify a change has occurred", func() {
 		playerChanged := player
+
 		c.Specify("when the player's facing has changed", func() {
 			playerChanged.Facing = South.String()
 			c.Expect(player.IsDifferentFrom(playerChanged), IsTrue)
