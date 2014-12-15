@@ -501,7 +501,10 @@ func DescribePlayerJson(c gospec.Context) {
 			c.Expect(player.IsDifferentFrom(playerChanged), IsTrue)
 		})
 
+		// This case is concerned when movement is "chained" together.
 		c.Specify("when the player has finished a movement and continued moving", func() {
+			// TODO Specify "and continued moving in the same direction"
+			// TODO Specify "and continued moving in a different direction"
 			player.PathActions = []PathActionJson{
 				PathAction{
 					NewTimeSpan(10, 30),
