@@ -537,10 +537,13 @@ func (q *quadTree) QueryCollidables(c Cell) []collidableEntity {
 
 func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
 	changedQuad := make([]movableEntity, 0, 4)
+
+	// Adjust positions of all MovableEntities stored in every quadLeaf
 	for _, quad := range q.quads {
 		changedQuad = append(changedQuad, quad.AdjustPositions(t)...)
 	}
 
+	// Insert any Entities into the new leaf there position is within
 	movedOutside := make([]movableEntity, 0, len(changedQuad))
 	for _, e := range changedQuad {
 		if q.aabb.Contains(e.Cell()) {
