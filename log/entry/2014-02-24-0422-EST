@@ -1,6 +1,6 @@
 Mon Feb 24 04:22:08 EST 2014
 
-#~ LOG - What I remember last
+# LOG - What I remember last
 I know there was an outstanding collision bug.
 It had something to do with moving into an occupied cell where both entities were moving in the same position.
 This may have been fixed though.
