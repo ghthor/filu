@@ -1,6 +1,6 @@
 Wed Jul 23 14:29:03 EDT 2014
 
-#~ Discovered the movement bug I remembered from 2 years ago
+# Discovered the movement bug I remembered from 2 years ago
 So after a little playing around I recreated the bug I remembered not fixing 2 years ago.
 To do this I lined up A walking into another B who isn't moving.
 Then B attempts to move into C who isn't moving.
