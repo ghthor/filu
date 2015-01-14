@@ -334,9 +334,13 @@ func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
 func stepBounded(q quad, t WorldTime) {
 	unsolvable := make(chan []movableEntity)
 	go q.stepTo(t, unsolvable)
+
+	// These collisions were unsolvable in ANY of the leafs
+	// because the collision's AABB wanders outside of
+	// the AABB of the world.
 	entities := <-unsolvable
 
-	// Bounds check the world
+	// Bounds check the entities on the edge of the world
 	for _, e := range entities {
 		mi := e.motionInfo()
 		if !q.AABB().Contains(mi.pathActions[0].Dest) {
