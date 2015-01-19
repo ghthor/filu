@@ -3,9 +3,10 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
-	"strconv"
 )
 
 type spyConn struct {
