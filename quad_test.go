@@ -536,7 +536,6 @@ func DescribeQuad(c gospec.Context) {
 		worldTime := WorldTime(0)
 		step := func() {
 			worldTime++
-			world.AdjustPositions(worldTime)
 			world.StepTo(worldTime)
 		}
 
@@ -629,11 +628,11 @@ func DescribeQuad(c gospec.Context) {
 			c.Specify("within the same leaf", func() {
 				world = world.Insert(entity)
 
-				world.AdjustPositions(path.End() - 1)
+				world.updatePositions(path.End() - 1)
 				c.Expect(len(entity.mi.pathActions), Equals, 1)
 				c.Expect(entity.Cell(), Equals, path.Orig)
 
-				world.AdjustPositions(path.End())
+				world.updatePositions(path.End())
 				c.Expect(len(entity.mi.pathActions), Equals, 0)
 				c.Expect(entity.Cell(), Equals, path.Dest)
 			})
@@ -644,12 +643,12 @@ func DescribeQuad(c gospec.Context) {
 				world = world.Insert(entity)
 				c.Assume(tree.quads[QUAD_SE].Contains(entity), IsTrue)
 
-				world.AdjustPositions(path.End() - 1)
+				world.updatePositions(path.End() - 1)
 				c.Expect(len(entity.mi.pathActions), Equals, 1)
 				c.Expect(entity.Cell(), Equals, path.Orig)
 				c.Expect(tree.quads[QUAD_SE].Contains(entity), IsTrue)
 
-				world.AdjustPositions(path.End())
+				world.updatePositions(path.End())
 				c.Expect(len(entity.mi.pathActions), Equals, 0)
 				c.Expect(entity.Cell(), Equals, path.Dest)
 				c.Expect(tree.quads[QUAD_SW].Contains(entity), IsTrue)
@@ -784,8 +783,6 @@ func DescribeQuad(c gospec.Context) {
 					c.Expect(entityA, CollidedWith, entityC)
 					c.Expect(entityB, CollidedWith, entityC)
 
-					c.Expect(len(entityA.collisions), Equals, 2)
-					c.Expect(len(entityB.collisions), Equals, 2)
 					c.Expect(len(entityC.collisions), Equals, 2)
 				})
 

@@ -105,12 +105,13 @@ type (
 		QueryAll(AABB) []entity
 		QueryCollidables(Cell) []collidableEntity
 
-		// Step 1 - Serial
-		// TODO Rename to UpdatePositions
-		AdjustPositions(WorldTime) []movableEntity
-
-		// Step 2 - Concurrent
 		StepTo(WorldTime)
+
+		// Broad phase
+		// 1. updatePosistions - serial
+		updatePositions(WorldTime) []movableEntity
+
+		// 2. stepTo           - concurrent
 		stepTo(WorldTime, chan []movableEntity)
 	}
 
@@ -305,7 +306,7 @@ func (q *quadLeaf) QueryCollidables(c Cell) []collidableEntity {
 	return matches
 }
 
-func (q *quadLeaf) AdjustPositions(t WorldTime) []movableEntity {
+func (q *quadLeaf) updatePositions(t WorldTime) []movableEntity {
 	// Worst Case sizing
 	movedOutside := make([]movableEntity, 0, len(q.movable))
 	for _, e := range q.movable {
@@ -539,12 +540,12 @@ func (q *quadTree) QueryCollidables(c Cell) []collidableEntity {
 	return matches
 }
 
-func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
+func (q *quadTree) updatePositions(t WorldTime) []movableEntity {
 	changedQuad := make([]movableEntity, 0, 4)
 
 	// Adjust positions of all MovableEntities stored in every quadLeaf
 	for _, quad := range q.quads {
-		changedQuad = append(changedQuad, quad.AdjustPositions(t)...)
+		changedQuad = append(changedQuad, quad.updatePositions(t)...)
 	}
 
 	// Insert any Entities into the new leaf there position is within
@@ -564,7 +565,10 @@ func (q *quadTree) AdjustPositions(t WorldTime) []movableEntity {
 	return movedOutside
 }
 
+// Broad phase
 func (q *quadTree) StepTo(t WorldTime) {
+	q.updatePositions(t)
+
 	if q.parent != nil {
 		panic("StepTo called on child quadTree")
 	}
