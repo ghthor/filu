@@ -1,0 +1,32 @@
+## [active] [1] BUG Narrow phase collision solving order
+### Recursive descent narrow phase collision solver
+I need to build a map of collisions indexed by each entity.
+With this data I can apply this algorithm.
+
+```
+A is moving into B.
+Does B have any unique collisions it must Solve? Yes
+Are we here because of this unsolved collision? No
+
+B is moving into C.
+Does C have any unique collisions is must Solve? Yes
+Are we here because of this unsolved collision? No
+
+C is moving into D.
+Does D have any unique collisions it must Solve? Yes
+Are we here because of this unsolved collision? No
+
+D is moving into A.
+Does A have any unique collisions it must Solve? Yes
+Are we here because of this unsolved collision? Yes
+Then we must solve `D is moving into A` with the information we have.
+    - We could make blanket assumption that D cannot move.
+        This means that D will lose a movement race from E.
+        At first glance, I think this would be fine.
+```
+
+... Wait
+If D can't move than none of the entities can move.
+At second glance this is the correct behavior...
+
+This makes recursive descent exactly what I want.
