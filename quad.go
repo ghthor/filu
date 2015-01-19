@@ -430,6 +430,7 @@ func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 			if ce, canCollide := me.(collidableEntity); canCollide {
 				for _, other := range q.collidable {
 					if ce != other && other.AABB().Contains(pa.Dest) {
+						// This isn't really an entityCollison, more like a potentional collison...
 						addCollision(entityCollision{t, ce, other})
 					}
 				}
