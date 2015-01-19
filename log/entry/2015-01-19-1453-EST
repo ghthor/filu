@@ -1,0 +1,61 @@
+Mon Jan 19 14:53:37 EST 2015
+
+# journal - Attempting to make some conceptual progress
+Going to fill out a bug report idea using the theory from the last entry.
+
+Going to rubber duck right here some of the ways I see this bug can be solved.
+Can use this stream of conscience data to build a more thorough bug fix idea.
+
+One possible idea is that I should be rewrite the player collision to be LESS stateful.
+To look at the problem with more of a functional hammer.
+With this input, step forward in time and produce a new version of everything.
+
+What happens if there is a circle of dependent collisions?
+
+E    A --> B
+     ^     |
+     |     v
+     D <-- C
+
+In all other cases, the dependence of collisions could be dealt with using recursive descent.
+But in the case above how to I avoid infinite looping.
+Is this collision even solvable?
+
+What happens if I am provided both the current state and the potential future?
+Is this enough information to break the infinite loop? No, I don't think it is.
+
+### pseudo code for an algorithm to break this loop
+
+```
+A is moving into B.
+Does B have any unique collisions it must Solve? Yes
+Are we here because of this unsolved collision? No
+
+B is moving into C.
+Does C have any unique collisions is must Solve? Yes
+Are we here because of this unsolved collision? No
+
+C is moving into D.
+Does D have any unique collisions it must Solve? Yes
+Are we here because of this unsolved collision? No
+
+D is moving into A.
+Does A have any unique collisions it must Solve? Yes
+Are we here because of this unsolved collision? Yes
+Then we must solve `D is moving into A` with the information we have.
+    - We could make blanket assumption that D cannot move.
+        This means that D will lose a movement race from E.
+        At first glance, I think this would be fine.
+```
+
+If the above algorithm will work then I should use recursive descent.
+To do this I need to start storing the collisions per actor from the broad phase.
+This is necessary so the questions about dependency can be asked.
+
+What happens if the recursion starts at B instead of A?
+It is non deterministic because then A would be the one denied a potentially valid move.
+I think this would be fine for now.
+Would this cause any problems?
+Leave it up to tests to decide if this system is alright.
+
+Mon Jan 19 16:23:41 EST 2015
