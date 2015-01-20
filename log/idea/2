@@ -1,7 +1,6 @@
-## [active] [2] new pkg type renames
+## [completed] [2] new pkg type renames
 Only some from the time package.
 I'm sure I will have more to add to list after fixing the broken compile in engine.
 
-- [ ] time.WorldTime -> time.T
-- [ ] time.TimeSpan -> time.Tpan
-    - [ ] time.Span -> time.S Maybe? or time.TSpan?
+- [x] time.WorldTime -> time.Time
+- [x] time.TimeSpan -> time.Span
