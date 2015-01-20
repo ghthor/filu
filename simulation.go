@@ -86,7 +86,7 @@ func NewSimulation(fps int) Simulation {
 	return newSimulation(fps)
 }
 
-func newWorldState(clock gtime.Clock, bounds AABB) *WorldState {
+func newWorldState(clock gtime.Clock, bounds coord.AABB) *WorldState {
 	quadTree, err := newQuadTree(bounds, nil, 20)
 	if err != nil {
 		panic("error creating quadTree: " + err.Error())
@@ -110,7 +110,7 @@ func newSimulation(fps int) *simulation {
 	s := &simulation{
 		clock: clk,
 
-		state: newWorldState(clk, AABB{
+		state: newWorldState(clk, coord.AABB{
 			coord.Cell{-1000, 1000},
 			coord.Cell{1000, -1000},
 		}),
@@ -302,7 +302,7 @@ func (s WorldStateJson) Clone() WorldStateJson {
 	return clone
 }
 
-func (s WorldStateJson) Cull(aabb AABB) (culled WorldStateJson) {
+func (s WorldStateJson) Cull(aabb coord.AABB) (culled WorldStateJson) {
 	culled.Time = s.Time
 
 	// Cull Entities

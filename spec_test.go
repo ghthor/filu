@@ -10,8 +10,6 @@ import (
 func TestAllSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
-	r.AddSpec(engine.DescribeAABB)
-
 	r.AddSpec(engine.DescribeMovableEntity)
 	r.AddSpec(engine.DescribeEntityCollision)
 	r.AddSpec(engine.DescribeMockEntities)
