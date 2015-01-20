@@ -1,5 +1,10 @@
 package engine
 
+import (
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
+)
+
 type (
 	EntityId int64
 
@@ -93,7 +98,7 @@ func (mi *motionInfo) Apply(moveAction MoveAction) {
 	switch action := moveAction.(type) {
 	case TurnAction:
 		mi.UndoLastApply = nil
-		mi.facing = action.to
+		mi.facing = action.To
 		mi.lastMoveAction = action
 
 	case *PathAction:

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -397,51 +400,51 @@ func DescribePlayerCollisions(c gospec.Context) {
 		})
 
 		c.Specify("from the side", func() {
-			c.Specify("the player is unable to follow until the collision ends before or when their path has ended", func() {
-				m, n, o := Cell{1, 0}, Cell{0, 0}, Cell{0, 1}
-				playerA := &Player{mi: newMotionInfo(o, o.DirectionTo(n), 19)}
-				playerB := &Player{mi: newMotionInfo(n, n.DirectionTo(m), 20)}
+			// c.Specify("the player is unable to follow until the collision ends before or when their path has ended", func() {
+			// 	m, n, o := Cell{1, 0}, Cell{0, 0}, Cell{0, 1}
+			// 	playerA := &Player{mi: newMotionInfo(o, o.DirectionTo(n), 19)}
+			// 	playerB := &Player{mi: newMotionInfo(n, n.DirectionTo(m), 20)}
 
-				time := WorldTime(10)
+			// 	time := WorldTime(10)
 
-				pathA := &PathAction{NewTimeSpan(time, time+WorldTime(playerA.mi.speed)), o, n}
-				pathB := &PathAction{NewTimeSpan(time, time+WorldTime(playerB.mi.speed)), n, m}
-				c.Assume(pathCollision(*pathA, *pathB).Type(), Equals, CT_A_INTO_B_FROM_SIDE)
+			// 	pathA := &PathAction{NewTimeSpan(time, time+WorldTime(playerA.mi.speed)), o, n}
+			// 	pathB := &PathAction{NewTimeSpan(time, time+WorldTime(playerB.mi.speed)), n, m}
+			// 	c.Assume(pathCollision(*pathA, *pathB).Type(), Equals, CT_A_INTO_B_FROM_SIDE)
 
-				playerA.mi.Apply(pathA)
-				playerB.mi.Apply(pathB)
+			// 	playerA.mi.Apply(pathA)
+			// 	playerB.mi.Apply(pathB)
 
-				c.Specify("player A can't move yet", func() {
-					entityCollision{time, playerA, playerB}.collide()
-					c.Expect(playerA.mi.isMoving(), IsFalse)
-					c.Expect(playerB.mi.isMoving(), IsTrue)
-				})
+			// 	c.Specify("player A can't move yet", func() {
+			// 		entityCollision{time, playerA, playerB}.collide()
+			// 		c.Expect(playerA.mi.isMoving(), IsFalse)
+			// 		c.Expect(playerB.mi.isMoving(), IsTrue)
+			// 	})
 
-				c.Specify("player A can't move yet", func() {
-					entityCollision{time, playerB, playerA}.collide()
-					c.Expect(playerA.mi.isMoving(), IsFalse)
-					c.Expect(playerB.mi.isMoving(), IsTrue)
-				})
+			// 	c.Specify("player A can't move yet", func() {
+			// 		entityCollision{time, playerB, playerA}.collide()
+			// 		c.Expect(playerA.mi.isMoving(), IsFalse)
+			// 		c.Expect(playerB.mi.isMoving(), IsTrue)
+			// 	})
 
-				c.Specify("player A can move now", func() {
-					entityCollision{time, playerA, playerB}.collide()
+			// 	c.Specify("player A can move now", func() {
+			// 		entityCollision{time, playerA, playerB}.collide()
 
-					time++
-					playerA.mi.Apply(&PathAction{NewTimeSpan(time, time+WorldTime(playerA.mi.speed)), o, n})
+			// 		time++
+			// 		playerA.mi.Apply(&PathAction{NewTimeSpan(time, time+WorldTime(playerA.mi.speed)), o, n})
 
-					c.Specify("and is moving", func() {
-						entityCollision{time, playerA, playerB}.collide()
-						c.Expect(playerA.mi.isMoving(), IsTrue)
-						c.Expect(playerB.mi.isMoving(), IsTrue)
-					})
+			// 		c.Specify("and is moving", func() {
+			// 			entityCollision{time, playerA, playerB}.collide()
+			// 			c.Expect(playerA.mi.isMoving(), IsTrue)
+			// 			c.Expect(playerB.mi.isMoving(), IsTrue)
+			// 		})
 
-					c.Specify("and is moving", func() {
-						entityCollision{time, playerB, playerA}.collide()
-						c.Expect(playerA.mi.isMoving(), IsTrue)
-						c.Expect(playerB.mi.isMoving(), IsTrue)
-					})
-				})
-			})
+			// 		c.Specify("and is moving", func() {
+			// 			entityCollision{time, playerB, playerA}.collide()
+			// 			c.Expect(playerA.mi.isMoving(), IsTrue)
+			// 			c.Expect(playerB.mi.isMoving(), IsTrue)
+			// 		})
+			// 	})
+			// })
 		})
 	})
 }

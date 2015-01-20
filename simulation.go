@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/ghthor/engine/coord"
+	gtime "github.com/ghthor/engine/time"
 )
 
 // A connection used to push viewport state
@@ -18,14 +21,14 @@ type (
 	// Internal format used by the simulation
 	WorldState struct {
 		processingTime time.Duration
-		time           WorldTime
+		time           gtime.WorldTime
 		quadTree       quad
 		terrain        TerrainMap
 	}
 
 	// External format used to send state to the clients
 	WorldStateJson struct {
-		Time       WorldTime       `json:"time"`
+		Time       gtime.WorldTime `json:"time"`
 		Entities   []EntityJson    `json:"entities"`
 		Removed    []EntityJson    `json:"removed"`
 		TerrainMap *TerrainMapJson `json:"terrainMap,omitempty"`
@@ -53,7 +56,7 @@ type (
 	}
 
 	simulation struct {
-		clock        Clock
+		clock        gtime.Clock
 		nextEntityId EntityId
 		state        *WorldState
 
@@ -83,7 +86,7 @@ func NewSimulation(fps int) Simulation {
 	return newSimulation(fps)
 }
 
-func newWorldState(clock Clock, bounds AABB) *WorldState {
+func newWorldState(clock gtime.Clock, bounds AABB) *WorldState {
 	quadTree, err := newQuadTree(bounds, nil, 20)
 	if err != nil {
 		panic("error creating quadTree: " + err.Error())
@@ -102,14 +105,14 @@ func newWorldState(clock Clock, bounds AABB) *WorldState {
 }
 
 func newSimulation(fps int) *simulation {
-	clk := Clock(0)
+	clk := gtime.Clock(0)
 
 	s := &simulation{
 		clock: clk,
 
 		state: newWorldState(clk, AABB{
-			Cell{-1000, 1000},
-			Cell{1000, -1000},
+			coord.Cell{-1000, 1000},
+			coord.Cell{1000, -1000},
 		}),
 
 		clients: make([]StateConn, 0, 10),
@@ -255,7 +258,7 @@ func (s *WorldState) step() *WorldState {
 	return s.stepTo(s.time + 1)
 }
 
-func (s *WorldState) stepTo(t WorldTime) *WorldState {
+func (s *WorldState) stepTo(t gtime.WorldTime) *WorldState {
 	s.quadTree.StepTo(t)
 
 	s.time = t

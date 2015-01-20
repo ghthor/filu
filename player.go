@@ -3,6 +3,9 @@ package engine
 import (
 	"strconv"
 	"strings"
+
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
 )
 
 // Externaly Accessible Actions
@@ -174,68 +177,68 @@ func (p *Player) collides(other collidableEntity) (collides bool) {
 }
 
 func (p *Player) collideWith(other collidableEntity, t WorldTime) {
-	switch ce := other.(type) {
-	case *Player:
-		if p.mi.isMoving() && ce.mi.isMoving() {
-			pa, paOther := p.mi.pathActions[0], ce.mi.pathActions[0]
+	// switch ce := other.(type) {
+	// case *Player:
+	// 	if p.mi.isMoving() && ce.mi.isMoving() {
+	// 		pa, paOther := p.mi.pathActions[0], ce.mi.pathActions[0]
 
-			collision := pathCollision(*pa, *paOther)
+	// 		collision := pathCollision(*pa, *paOther)
 
-			switch collision.CollisionType {
-			case CT_FROM_SIDE:
-				// If my movement starts the collision
-				if pa.Start() == collision.Start() {
-					if paOther.Start() < collision.Start() {
-						// and the other is already moving, they've claimed the destination already
-						p.mi.UndoLastApply()
+	// 		switch collision.CollisionType {
+	// 		case CT_FROM_SIDE:
+	// 			// If my movement starts the collision
+	// 			if pa.Start() == collision.Start() {
+	// 				if paOther.Start() < collision.Start() {
+	// 					// and the other is already moving, they've claimed the destination already
+	// 					p.mi.UndoLastApply()
 
-					} else if paOther.Start() == collision.Start() && paOther.End() < collision.End() {
-						// and the other moves faster then us
-						p.mi.UndoLastApply()
-					} else if pa.Start() == paOther.Start() && pa.End() == paOther.End() {
-						// Same Speed, Same Start, I lose due to order of collision execution
-						p.mi.UndoLastApply()
-					}
-				}
+	// 				} else if paOther.Start() == collision.Start() && paOther.End() < collision.End() {
+	// 					// and the other moves faster then us
+	// 					p.mi.UndoLastApply()
+	// 				} else if pa.Start() == paOther.Start() && pa.End() == paOther.End() {
+	// 					// Same Speed, Same Start, I lose due to order of collision execution
+	// 					p.mi.UndoLastApply()
+	// 				}
+	// 			}
 
-			case CT_HEAD_TO_HEAD:
-				// other started before us and therefore has claimed the position
-				if pa.Start() == t && paOther.Start() < t {
-					p.mi.UndoLastApply()
-				} else if pa.Start() == t && paOther.Start() == t {
-					// we've started at the same time, whoever finishs first wins the destination
-					if pa.End() == collision.End() {
-						// Side effect of pa.End() == paOther.End() is paOther wins the random faceoff
-						p.mi.UndoLastApply()
-					}
-				}
+	// 		case CT_HEAD_TO_HEAD:
+	// 			// other started before us and therefore has claimed the position
+	// 			if pa.Start() == t && paOther.Start() < t {
+	// 				p.mi.UndoLastApply()
+	// 			} else if pa.Start() == t && paOther.Start() == t {
+	// 				// we've started at the same time, whoever finishs first wins the destination
+	// 				if pa.End() == collision.End() {
+	// 					// Side effect of pa.End() == paOther.End() is paOther wins the random faceoff
+	// 					p.mi.UndoLastApply()
+	// 				}
+	// 			}
 
-			case CT_SWAP:
-				p.mi.UndoLastApply()
+	// 		case CT_SWAP:
+	// 			p.mi.UndoLastApply()
 
-			case CT_A_INTO_B:
-				// If I'm A then I don't move
-				if collision.A == *pa {
-					p.mi.UndoLastApply()
-				}
+	// 		case CT_A_INTO_B:
+	// 			// If I'm A then I don't move
+	// 			if collision.A == *pa {
+	// 				p.mi.UndoLastApply()
+	// 			}
 
-			case CT_A_INTO_B_FROM_SIDE:
-				// If I'm A then I can't move until my movement ends with or after collision ending
-				if collision.A == *pa {
-					if pa.End() < collision.End() {
-						p.mi.UndoLastApply()
-					}
-				}
-			}
+	// 		case CT_A_INTO_B_FROM_SIDE:
+	// 			// If I'm A then I can't move until my movement ends with or after collision ending
+	// 			if collision.A == *pa {
+	// 				if pa.End() < collision.End() {
+	// 					p.mi.UndoLastApply()
+	// 				}
+	// 			}
+	// 		}
 
-		} else if p.mi.isMoving() && !ce.mi.isMoving() {
-			pa := p.mi.pathActions[0]
-			// Attempting to move onto an occupied location
-			if pa.Dest == ce.Cell() {
-				p.mi.UndoLastApply()
-			}
-		}
-	}
+	// 	} else if p.mi.isMoving() && !ce.mi.isMoving() {
+	// 		pa := p.mi.pathActions[0]
+	// 		// Attempting to move onto an occupied location
+	// 		if pa.Dest == ce.Cell() {
+	// 			p.mi.UndoLastApply()
+	// 		}
+	// 	}
+	// }
 }
 
 // External interface of the muxer presented to the Node

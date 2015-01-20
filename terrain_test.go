@@ -1,6 +1,8 @@
 package engine
 
 import (
+	. "github.com/ghthor/engine/coord"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )

@@ -2,6 +2,10 @@ package engine
 
 import (
 	"fmt"
+
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -572,7 +576,7 @@ func DescribeQuad(c gospec.Context) {
 			pathAction := entity.mi.pathActions[0]
 			c.Expect(pathAction.Orig, Equals, Cell{0, 0})
 			c.Expect(pathAction.Dest, Equals, Cell{0, 0}.Neighbor(North))
-			c.Expect(pathAction.duration, Equals, int64(entitySpeed))
+			c.Expect(pathAction.Duration, Equals, int64(entitySpeed))
 		})
 
 		c.Specify("consume movement requests and apply appropiate turn facing actions", func() {
@@ -617,7 +621,7 @@ func DescribeQuad(c gospec.Context) {
 				&motionInfo{
 					path.Orig,
 					path.Direction(),
-					uint(path.duration),
+					uint(path.Duration),
 					nil,
 					[]*PathAction{path},
 					nil,

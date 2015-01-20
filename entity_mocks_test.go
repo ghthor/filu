@@ -2,6 +2,9 @@ package engine
 
 import (
 	"fmt"
+
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )

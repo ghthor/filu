@@ -2,6 +2,9 @@ package engine
 
 import (
 	"errors"
+
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
 )
 
 type AABB struct {
@@ -314,7 +317,7 @@ func (q *quadLeaf) updatePositions(t WorldTime) []movableEntity {
 
 		// Removed finished pathActions
 		for _, pa := range mi.pathActions {
-			if pa.end <= t {
+			if pa.TimeSpan.End <= t {
 				mi.lastMoveAction = pa
 				mi.pathActions = mi.pathActions[:0]
 				mi.cell = pa.Dest

@@ -2,6 +2,10 @@ package engine
 
 import (
 	"encoding/json"
+
+	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/time"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )

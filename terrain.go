@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"errors"
 	"strings"
+
+	. "github.com/ghthor/engine/coord"
 )
 
 type (

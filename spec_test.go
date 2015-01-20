@@ -1,25 +1,17 @@
 package engine_test
 
 import (
+	"testing"
+
 	"github.com/ghthor/engine"
 	"github.com/ghthor/gospec"
-	"testing"
 )
 
 func TestAllSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
-	r.AddSpec(engine.DescribeClock)
-	r.AddSpec(engine.DescribeTimeSpan)
-
-	r.AddSpec(engine.DescribeDirection)
-	r.AddSpec(engine.DescribeCell)
-	r.AddSpec(engine.DescribePathCollision)
-	r.AddSpec(engine.DescribeCellCollision)
 	r.AddSpec(engine.DescribeAABB)
 
-	r.AddSpec(engine.DescribePathAction)
-	r.AddSpec(engine.DescribeMoveAction)
 	r.AddSpec(engine.DescribeMovableEntity)
 	r.AddSpec(engine.DescribeEntityCollision)
 	r.AddSpec(engine.DescribeMockEntities)
@@ -32,7 +24,7 @@ func TestAllSpecs(t *testing.T) {
 
 	r.AddSpec(engine.DescribeInputCommands)
 	r.AddSpec(engine.DescribePlayer)
-	r.AddSpec(engine.DescribePlayerCollisions)
+	// r.AddSpec(engine.DescribePlayerCollisions)
 	r.AddSpec(engine.DescribePlayerJson)
 
 	r.AddSpec(engine.DescribeViewPortCulling)
