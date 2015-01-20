@@ -141,9 +141,9 @@ func DescribePlayerCollisions(c gospec.Context) {
 
 		c.Specify("by 2 players", func() {
 			playerA := &Player{mi: newMotionInfo(contested.Neighbor(South), North, 20)}
-			startA := WorldTime(0)
+			startA := Time(0)
 			pathA := &PathAction{
-				NewSpan(startA, startA+WorldTime(playerA.mi.speed)),
+				NewSpan(startA, startA+Time(playerA.mi.speed)),
 				playerA.mi.cell,
 				contested,
 			}
@@ -172,7 +172,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 						c.Specify("if the speeds are different the faster player wins", func() {
 							playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 21)}
 							pathB := &PathAction{
-								NewSpan(startB, startB+WorldTime(playerB.mi.speed)),
+								NewSpan(startB, startB+Time(playerB.mi.speed)),
 								playerB.mi.cell,
 								contested,
 							}
@@ -201,7 +201,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 								playerA.mi.speed)}
 
 							pathB := &PathAction{
-								NewSpan(startB, startB+WorldTime(playerB.mi.speed)),
+								NewSpan(startB, startB+Time(playerB.mi.speed)),
 								playerB.mi.cell,
 								contested,
 							}
@@ -235,7 +235,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 						playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 20)}
 						startB := startA + 1
 						pathB := &PathAction{
-							NewSpan(startB, startB+WorldTime(playerB.mi.speed)),
+							NewSpan(startB, startB+Time(playerB.mi.speed)),
 							playerB.mi.cell,
 							contested,
 						}
@@ -318,7 +318,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 
 				for _, player := range players {
 					player.mi.Apply(&PathAction{
-						NewSpan(0, 0+WorldTime(player.mi.speed)),
+						NewSpan(0, 0+Time(player.mi.speed)),
 						player.Cell(),
 						playerNotMoving.Cell(),
 					})
@@ -540,7 +540,7 @@ func DescribeInputCommands(c gospec.Context) {
 				"north",
 			})
 
-			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.t, Equals, Time(0))
 			c.Expect(moveRequest.Direction, Equals, North)
 		})
 
@@ -551,7 +551,7 @@ func DescribeInputCommands(c gospec.Context) {
 				"east",
 			})
 
-			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.t, Equals, Time(0))
 			c.Expect(moveRequest.Direction, Equals, East)
 		})
 
@@ -562,7 +562,7 @@ func DescribeInputCommands(c gospec.Context) {
 				"south",
 			})
 
-			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.t, Equals, Time(0))
 			c.Expect(moveRequest.Direction, Equals, South)
 		})
 
@@ -573,7 +573,7 @@ func DescribeInputCommands(c gospec.Context) {
 				"west",
 			})
 
-			c.Expect(moveRequest.t, Equals, WorldTime(0))
+			c.Expect(moveRequest.t, Equals, Time(0))
 			c.Expect(moveRequest.Direction, Equals, West)
 		})
 	})
@@ -591,17 +591,17 @@ func DescribeInputCommands(c gospec.Context) {
 			player.SubmitInput("move=0", "north")
 			input := <-player.collectInput
 
-			c.Expect(input.timeIssued, Equals, WorldTime(0))
+			c.Expect(input.timeIssued, Equals, Time(0))
 
 			player.SubmitInput("move=1824081", "north")
 			input = <-player.collectInput
 
-			c.Expect(input.timeIssued, Equals, WorldTime(1824081))
+			c.Expect(input.timeIssued, Equals, Time(1824081))
 
 			player.SubmitInput("move=99", "north")
 			input = <-player.collectInput
 
-			c.Expect(input.timeIssued, Equals, WorldTime(99))
+			c.Expect(input.timeIssued, Equals, Time(99))
 		})
 
 		c.Specify("errors with invalid input and doesn't publish the command", func() {

@@ -234,13 +234,13 @@ func DescribePathAction(c gospec.Context) {
 func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can move in any direction immediately after moving", func() {
 		pathAction1 := &PathAction{
-			time.NewSpan(time.WorldTime(0), time.WorldTime(20)),
+			time.NewSpan(time.Time(0), time.Time(20)),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
 
 		pathAction2 := &PathAction{
-			time.NewSpan(time.WorldTime(20), time.WorldTime(40)),
+			time.NewSpan(time.Time(20), time.Time(40)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
@@ -253,14 +253,14 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("an entity can't move before turning", func() {
 		pathAction := &PathAction{
-			time.NewSpan(time.WorldTime(21), time.WorldTime(41)),
+			time.NewSpan(time.Time(21), time.Time(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
 			To:   pathAction.Direction().Reverse(),
-			Time: time.WorldTime(pathAction.Start()),
+			Time: time.Time(pathAction.Start()),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -268,14 +268,14 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("An entity can't move immediatly after turning", func() {
 		pathAction := &PathAction{
-			time.NewSpan(time.WorldTime(21), time.WorldTime(41)),
+			time.NewSpan(time.Time(21), time.Time(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
 			To:   pathAction.Direction(),
-			Time: time.WorldTime(pathAction.Start() - TurnActionDelay),
+			Time: time.Time(pathAction.Start() - TurnActionDelay),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -287,17 +287,17 @@ func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can't immediatly turn after turning", func() {
 		turnAction1 := TurnAction{
 			South, North,
-			time.WorldTime(0),
+			time.Time(0),
 		}
 
 		turnAction2 := TurnAction{
 			North, South,
-			time.WorldTime(TurnActionDelay),
+			time.Time(TurnActionDelay),
 		}
 
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsFalse)
 
-		turnAction2.Time = time.WorldTime(TurnActionDelay + 1)
+		turnAction2.Time = time.Time(TurnActionDelay + 1)
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsTrue)
 	})
 }

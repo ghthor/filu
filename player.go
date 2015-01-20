@@ -176,7 +176,7 @@ func (p *Player) collides(other collidableEntity) (collides bool) {
 	return
 }
 
-func (p *Player) collideWith(other collidableEntity, t WorldTime) {
+func (p *Player) collideWith(other collidableEntity, t Time) {
 	// switch ce := other.(type) {
 	// case *Player:
 	// 	if p.mi.isMoving() && ce.mi.isMoving() {
@@ -251,7 +251,7 @@ func (p *Player) SubmitInput(cmd, params string) error {
 	}
 
 	p.collectInput <- InputCmd{
-		timeIssued: WorldTime(timeIssued),
+		timeIssued: Time(timeIssued),
 		cmd:        parts[0],
 		params:     params,
 	}

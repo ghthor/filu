@@ -27,7 +27,7 @@ type (
 	}
 
 	MockCollision struct {
-		time WorldTime
+		time Time
 		A, B collidableEntity
 	}
 
@@ -98,7 +98,7 @@ func (e *MockCollidableEntity) Json() EntityJson {
 }
 
 func (e *MockCollidableEntity) collides(other collidableEntity) bool { return true }
-func (e *MockCollidableEntity) collideWith(other collidableEntity, t WorldTime) {
+func (e *MockCollidableEntity) collideWith(other collidableEntity, t Time) {
 	e.collisions = append(e.collisions, MockCollision{t, e, other})
 }
 
@@ -120,7 +120,7 @@ func (e *MockAliveEntity) Json() EntityJson {
 func (e *MockAliveEntity) motionInfo() *motionInfo { return e.mi }
 
 func (e *MockAliveEntity) collides(other collidableEntity) bool { return true }
-func (e *MockAliveEntity) collideWith(other collidableEntity, t WorldTime) {
+func (e *MockAliveEntity) collideWith(other collidableEntity, t Time) {
 	e.collisions = append(e.collisions, MockCollision{t, e, other})
 }
 
@@ -145,7 +145,7 @@ func CollidedWith(a, b interface{}) (collided bool, pos, neg gospec.Message, err
 		collisionsB = e.collisions
 	}
 
-	var time WorldTime
+	var time Time
 outer:
 	for _, collision1 := range collisionsA {
 		for _, collision2 := range collisionsB {

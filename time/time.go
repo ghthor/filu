@@ -3,29 +3,29 @@ package time
 type (
 	// Represents an Instant in Time
 	// Spans of Time are represented by int64
-	WorldTime int64
-	Clock     WorldTime
+	Time  int64
+	Clock Time
 )
 
-func (c Clock) Now() WorldTime {
-	return WorldTime(c)
+func (c Clock) Now() Time {
+	return Time(c)
 }
 
 func (c Clock) Tick() Clock {
 	return Clock(int64(c) + 1)
 }
 
-func (c Clock) Future(mag int64) WorldTime {
-	f := WorldTime(int64(c) + mag)
+func (c Clock) Future(mag int64) Time {
+	f := Time(int64(c) + mag)
 	return f
 }
 
 type Span struct {
-	Start, End WorldTime
+	Start, End Time
 	Duration   int64
 }
 
-func NewSpan(start, end WorldTime) Span {
+func NewSpan(start, end Time) Span {
 	return Span{
 		start,
 		end,
@@ -33,11 +33,11 @@ func NewSpan(start, end WorldTime) Span {
 	}
 }
 
-func (a Span) Remaining(from WorldTime) int64 {
+func (a Span) Remaining(from Time) int64 {
 	return int64(a.End) - int64(from)
 }
 
-func (a Span) Contains(t WorldTime) bool {
+func (a Span) Contains(t Time) bool {
 	return a.Start <= t && t <= a.End
 }
 

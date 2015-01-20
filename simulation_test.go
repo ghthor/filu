@@ -30,7 +30,7 @@ func DescribeWorldState(c gospec.Context) {
 		jsonState := worldState.Json()
 		jsonState.TerrainMap.Prepare()
 
-		c.Assume(jsonState.Time, Equals, WorldTime(0))
+		c.Assume(jsonState.Time, Equals, Time(0))
 		c.Assume(len(jsonState.Entities), Equals, 1)
 
 		jsonBytes, err := json.Marshal(jsonState)
@@ -159,12 +159,12 @@ func DescribeDiffConn(c gospec.Context) {
 	}
 
 	c.Specify("stores the next state as the last state", func() {
-		c.Assume(conn.lastState.Time, Equals, WorldTime(0))
+		c.Assume(conn.lastState.Time, Equals, Time(0))
 		conn.SendJson("update", WorldStateJson{
 			Time:       1,
 			TerrainMap: conn.lastState.TerrainMap,
 		})
-		c.Expect(conn.lastState.Time, Equals, WorldTime(1))
+		c.Expect(conn.lastState.Time, Equals, Time(1))
 	})
 
 	c.Specify("the connection sends", func() {

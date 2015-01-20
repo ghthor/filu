@@ -22,7 +22,7 @@ type (
 	}
 
 	moveRequest struct {
-		t WorldTime
+		t Time
 		Direction
 	}
 
@@ -48,11 +48,11 @@ type (
 	collidableEntity interface {
 		entity
 		collides(collidableEntity) bool
-		collideWith(collidableEntity, WorldTime)
+		collideWith(collidableEntity, Time)
 	}
 
 	entityCollision struct {
-		time WorldTime
+		time Time
 		A, B collidableEntity
 	}
 )
@@ -141,7 +141,7 @@ func (c entityCollision) collide() {
 }
 
 type InputCmd struct {
-	timeIssued WorldTime
+	timeIssued Time
 	cmd        string
 	params     string
 }

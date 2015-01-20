@@ -21,18 +21,18 @@ func DescribeClock(c gospec.Context) {
 
 	c.Specify("Tick moves Clock forward in time", func() {
 		for i := 0; i < 100; i++ {
-			c.Expect(clk.Now(), Equals, WorldTime(i))
+			c.Expect(clk.Now(), Equals, Time(i))
 			clk = clk.Tick()
 		}
 	})
 
 	c.Specify("Future produces WorldTime offset's that are in the future", func() {
 		future := clk.Future(10)
-		c.Expect(future, Equals, WorldTime(10))
+		c.Expect(future, Equals, Time(10))
 
 		clk = clk.Tick()
 		future = clk.Future(10)
-		c.Expect(future, Equals, WorldTime(11))
+		c.Expect(future, Equals, Time(11))
 	})
 }
 

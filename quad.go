@@ -108,14 +108,14 @@ type (
 		QueryAll(AABB) []entity
 		QueryCollidables(Cell) []collidableEntity
 
-		StepTo(WorldTime)
+		StepTo(Time)
 
 		// Broad phase
 		// 1. updatePosistions - serial
-		updatePositions(WorldTime) []movableEntity
+		updatePositions(Time) []movableEntity
 
 		// 2. stepTo           - concurrent
-		stepTo(WorldTime, chan []movableEntity)
+		stepTo(Time, chan []movableEntity)
 	}
 
 	quadLeaf struct {
@@ -309,7 +309,7 @@ func (q *quadLeaf) QueryCollidables(c Cell) []collidableEntity {
 	return matches
 }
 
-func (q *quadLeaf) updatePositions(t WorldTime) []movableEntity {
+func (q *quadLeaf) updatePositions(t Time) []movableEntity {
 	// Worst Case sizing
 	movedOutside := make([]movableEntity, 0, len(q.movable))
 	for _, e := range q.movable {
@@ -335,7 +335,7 @@ func (q *quadLeaf) updatePositions(t WorldTime) []movableEntity {
 	return movedOutside
 }
 
-func stepBounded(q quad, t WorldTime) {
+func stepBounded(q quad, t Time) {
 	unsolvable := make(chan []movableEntity)
 	go q.stepTo(t, unsolvable)
 
@@ -353,7 +353,7 @@ func stepBounded(q quad, t WorldTime) {
 	}
 }
 
-func (q *quadLeaf) StepTo(t WorldTime) {
+func (q *quadLeaf) StepTo(t Time) {
 	if q.parent != nil {
 		panic("StepTo called on child quadLeaf")
 	}
@@ -361,7 +361,7 @@ func (q *quadLeaf) StepTo(t WorldTime) {
 	stepBounded(q, t)
 }
 
-func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
+func (q *quadLeaf) stepTo(t Time, unsolvable chan []movableEntity) {
 
 	// This loop filters out Actions that can't happen yet because of TurnAction Delays
 	beganMoving := make([]movableEntity, 0, len(q.movable))
@@ -384,7 +384,7 @@ func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 		// If the last MoveAction was a PathAction that ended on this Step
 		if pathAction, ok := mi.lastMoveAction.(*PathAction); (ok && pathAction.End() == t) || (mi.facing == direction) {
 			pathAction = &PathAction{
-				NewSpan(t, t+WorldTime(mi.speed)),
+				NewSpan(t, t+Time(mi.speed)),
 				mi.cell,
 				dest,
 			}
@@ -544,7 +544,7 @@ func (q *quadTree) QueryCollidables(c Cell) []collidableEntity {
 	return matches
 }
 
-func (q *quadTree) updatePositions(t WorldTime) []movableEntity {
+func (q *quadTree) updatePositions(t Time) []movableEntity {
 	changedQuad := make([]movableEntity, 0, 4)
 
 	// Adjust positions of all MovableEntities stored in every quadLeaf
@@ -570,7 +570,7 @@ func (q *quadTree) updatePositions(t WorldTime) []movableEntity {
 }
 
 // Broad phase
-func (q *quadTree) StepTo(t WorldTime) {
+func (q *quadTree) StepTo(t Time) {
 	q.updatePositions(t)
 
 	if q.parent != nil {
@@ -580,7 +580,7 @@ func (q *quadTree) StepTo(t WorldTime) {
 	stepBounded(q, t)
 }
 
-func (q *quadTree) stepTo(t WorldTime, unsolvable chan []movableEntity) {
+func (q *quadTree) stepTo(t Time, unsolvable chan []movableEntity) {
 	leftToSolve := make(chan []movableEntity, 4)
 
 	for _, quad := range q.quads {

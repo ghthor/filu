@@ -21,14 +21,14 @@ type (
 	// Internal format used by the simulation
 	WorldState struct {
 		processingTime time.Duration
-		time           gtime.WorldTime
+		time           gtime.Time
 		quadTree       quad
 		terrain        TerrainMap
 	}
 
 	// External format used to send state to the clients
 	WorldStateJson struct {
-		Time       gtime.WorldTime `json:"time"`
+		Time       gtime.Time      `json:"time"`
 		Entities   []EntityJson    `json:"entities"`
 		Removed    []EntityJson    `json:"removed"`
 		TerrainMap *TerrainMapJson `json:"terrainMap,omitempty"`
@@ -258,7 +258,7 @@ func (s *WorldState) step() *WorldState {
 	return s.stepTo(s.time + 1)
 }
 
-func (s *WorldState) stepTo(t gtime.WorldTime) *WorldState {
+func (s *WorldState) stepTo(t gtime.Time) *WorldState {
 	s.quadTree.StepTo(t)
 
 	s.time = t

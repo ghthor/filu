@@ -537,7 +537,7 @@ func DescribeQuad(c gospec.Context) {
 		}, nil, 20)
 		c.Assume(err, IsNil)
 
-		worldTime := WorldTime(0)
+		worldTime := Time(0)
 		step := func() {
 			worldTime++
 			world.StepTo(worldTime)
