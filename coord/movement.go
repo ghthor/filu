@@ -74,8 +74,8 @@ type (
 	}
 
 	TurnAction struct {
-		from, to Direction
-		time     time.WorldTime
+		From, To Direction
+		Time     time.WorldTime
 	}
 
 	PathAction struct {
@@ -95,8 +95,8 @@ type (
 // TODO Conditionalize this with the fps
 const TurnActionDelay = 10
 
-func (a TurnAction) Start() time.WorldTime { return a.time }
-func (a TurnAction) End() time.WorldTime   { return a.time }
+func (a TurnAction) Start() time.WorldTime { return a.Time }
+func (a TurnAction) End() time.WorldTime   { return a.Time }
 func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
 	if anAction == nil {
 		return true
@@ -104,7 +104,7 @@ func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
 
 	switch action := anAction.(type) {
 	case TurnAction:
-		if a.time-action.time > TurnActionDelay {
+		if a.Time-action.Time > TurnActionDelay {
 			return true
 		} else {
 			return false
@@ -143,7 +143,7 @@ func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 
 	switch action := anAction.(type) {
 	case TurnAction:
-		if pa.Start()-action.End() > TurnActionDelay && action.to == pa.Direction() {
+		if pa.Start()-action.End() > TurnActionDelay && action.To == pa.Direction() {
 			return true
 		} else {
 			return false

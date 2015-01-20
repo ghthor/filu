@@ -259,8 +259,8 @@ func DescribeMoveAction(c gospec.Context) {
 		}
 
 		turnAction := TurnAction{
-			to:   pathAction.Direction().Reverse(),
-			time: time.WorldTime(pathAction.Start()),
+			To:   pathAction.Direction().Reverse(),
+			Time: time.WorldTime(pathAction.Start()),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -274,13 +274,13 @@ func DescribeMoveAction(c gospec.Context) {
 		}
 
 		turnAction := TurnAction{
-			to:   pathAction.Direction(),
-			time: time.WorldTime(pathAction.Start() - TurnActionDelay),
+			To:   pathAction.Direction(),
+			Time: time.WorldTime(pathAction.Start() - TurnActionDelay),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
 
-		turnAction.time = turnAction.time - 1
+		turnAction.Time = turnAction.Time - 1
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsTrue)
 	})
 
@@ -297,7 +297,7 @@ func DescribeMoveAction(c gospec.Context) {
 
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsFalse)
 
-		turnAction2.time = time.WorldTime(TurnActionDelay + 1)
+		turnAction2.Time = time.WorldTime(TurnActionDelay + 1)
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsTrue)
 	})
 }
