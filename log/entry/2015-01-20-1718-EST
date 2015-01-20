@@ -1,0 +1,24 @@
+Tue Jan 20 17:18:27 EST 2015
+
+# journal - Big Picture architecture stuff
+Been thinking about where I want this to be heading during this rewrite.
+I need to have a database in here somewhere, I can't ignore that.
+So what I'm thinking is starting db design phase sometime soon.
+
+The overall architecture of the server is going to stay the same, but the impl
+is going to be changing.
+The current version is too prone to breaking and doesn't make much sense to me.
+The simulation loop and the input processing/output loops are the main issue right now.
+They are the parts that are depending on all this messy implementation code.
+
+I need to look what needs to be brought out of the client now.
+The protocol stuff and conn stuff I know for sure can be.
+
+I'm going to design the database with the engine having one connection.
+And then all the http/udp clients can have there own connections.
+I will have a full db build file in the repo along with migrations.
+Once I hit a stable point the migrations will be deleted and
+they will be restarted. This is so there isn't a ton of cruft
+that builds up over time because of them.
+
+Tue Jan 20 17:30:34 EST 2015
