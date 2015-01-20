@@ -1,0 +1,48 @@
+Mon Jan 19 20:01:26 EST 2015
+
+# journal - Identified my main Pain point
+Anything concerning accessing or modifying the motionInfo.
+It's ALL WRONG!
+Accessing through the interface interacts with the input vacuum go routine.
+Then the motionInfo is served from the interface function.
+But I made a change inside the (*Player).collideWith() function to use the method and...
+It blew up and deadlocks during the tests.
+
+`ff "\.mi\." | grep "_test" | wc -l` -> `108`
+Theres 108 lines of test code that dig into this internal variable instead of using the interface.
+This is because using the interface subscribes you to interacting with the input vacuum loop.
+While this behavior is correct in a way, it is confusing.
+The way I understand it now, I don't understand why I'm deadlocking.
+This is part of the problem.
+
+I think this needs to be completely rethought and re-executed.
+Using what I know about designing packages would be a good place to start.
+If I can start laying down some solid walls with the package barrier these issues should start to disappear.
+If they don't disappear, having a package barrier will aid me in rewriting with identifier collision.
+
+If I learned anything from the journal rewrite
+It was that porting tests to a new package was WAY more productive than
+Trying to rewrite them in place.
+This is absolutely because of the way I wrote the tests initially.
+I don't know how much better the tests are for journal now in this regard.
+The same rigidity may still exist.
+Maybe that's the point of tests?
+
+You can't write tests like those in rob pikes [APL interrupter](https://github.com/robpike/ivy) for every project can you?
+If I can write tests like this, I need to.
+How do I do this for my Math library?
+Maybe I should use that as a case study to discover how I can do this better.
+Using the package barrier Helps because it forces all external tests to use a public interface.
+Even if the implementation internal to the package changes only the tests in that package should be affected.
+At least, that's the way it felt when I was working on journal as I was pkgizing it.
+Maybe this really is the key though, it enables quicker red/green feedback as well.
+Because!!!
+Even if you change the public API during a rewrite.. You only have to worrry about going green in the current package.
+If you break the package's users, so what, you fix that after you've re stabilized.
+Really a bingo moment going on right here.
+Predicting lots of progress tomorrow.
+
+Noticed that I believe journal removed whitespace around a `###` header in a idea that I made in the last entry.
+Should take a look at that.
+
+Mon Jan 19 20:25:22 EST 2015
