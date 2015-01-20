@@ -1,0 +1,11 @@
+Tue Jan 20 13:45:58 EST 2015
+
+# journal - Fixing the build has exposed api issues
+A whole section of the player collisions code is
+depending on the unexported type coord.pathCollison.
+I had to comment out a the implementation and part of the
+test code in order to get it to compile.
+This is alright though since this is what is going to be
+formally rewritten on the next few days.
+
+Tue Jan 20 13:49:29 EST 2015
