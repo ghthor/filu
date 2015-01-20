@@ -317,7 +317,7 @@ func (q *quadLeaf) updatePositions(t WorldTime) []movableEntity {
 
 		// Removed finished pathActions
 		for _, pa := range mi.pathActions {
-			if pa.TimeSpan.End <= t {
+			if pa.Span.End <= t {
 				mi.lastMoveAction = pa
 				mi.pathActions = mi.pathActions[:0]
 				mi.cell = pa.Dest

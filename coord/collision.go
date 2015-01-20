@@ -18,13 +18,13 @@ type (
 
 	PathCollision struct {
 		CollisionType
-		time.TimeSpan
+		time.Span
 		A, B PathAction
 	}
 
 	CellCollision struct {
 		CollisionType
-		time.TimeSpan
+		time.Span
 		Cell Cell
 		Path PathAction
 	}
@@ -129,7 +129,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	case a.Dest == b.Orig:
 		// A is moving into the Cell B is leaving
 		if a.Direction() == b.Direction() {
-			if a.TimeSpan.Start >= b.TimeSpan.Start && a.TimeSpan.End >= b.TimeSpan.End {
+			if a.Span.Start >= b.Span.Start && a.Span.End >= b.Span.End {
 				goto EXIT
 			}
 			c.CollisionType = CT_A_INTO_B
@@ -144,38 +144,38 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	}
 
 CT_SAME_ORIG_DEST_TIMESPAN:
-	if a.TimeSpan.Start < b.TimeSpan.Start {
-		start = a.TimeSpan.Start
+	if a.Span.Start < b.Span.Start {
+		start = a.Span.Start
 	} else {
-		start = b.TimeSpan.Start
+		start = b.Span.Start
 	}
 
-	if a.TimeSpan.End > b.TimeSpan.End {
-		end = a.TimeSpan.End
+	if a.Span.End > b.Span.End {
+		end = a.Span.End
 	} else {
-		end = b.TimeSpan.End
+		end = b.Span.End
 	}
 
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	c.Span = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_TIMESPAN:
-	if a.TimeSpan.Start < b.TimeSpan.Start {
-		start = a.TimeSpan.Start
+	if a.Span.Start < b.Span.Start {
+		start = a.Span.Start
 	} else {
-		start = b.TimeSpan.Start
+		start = b.Span.Start
 	}
 
-	if a.TimeSpan.End == b.TimeSpan.Start {
-		end = a.TimeSpan.End
-	} else if b.TimeSpan.End == a.TimeSpan.Start {
-		end = b.TimeSpan.End
+	if a.Span.End == b.Span.Start {
+		end = a.Span.End
+	} else if b.Span.End == a.Span.Start {
+		end = b.Span.End
 	} else {
 		var at, as, bt, bs float64
 		// Starts
-		at, bt = float64(a.TimeSpan.Start), float64(b.TimeSpan.Start)
+		at, bt = float64(a.Span.Start), float64(b.Span.Start)
 		// Speeds
-		as, bs = float64(a.TimeSpan.End-a.TimeSpan.Start), float64(b.TimeSpan.End-b.TimeSpan.Start)
+		as, bs = float64(a.Span.End-a.Span.Start), float64(b.Span.End-b.Span.Start)
 
 		end = time.WorldTime(math.Ceil((at*bs + bt*as + as*bs) / (bs + as)))
 
@@ -185,36 +185,36 @@ CT_SAME_ORIG_TIMESPAN:
 		}
 	}
 
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	c.Span = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_PERP_TIMESPAN:
-	if a.TimeSpan.Start < b.TimeSpan.Start {
-		start = a.TimeSpan.Start
+	if a.Span.Start < b.Span.Start {
+		start = a.Span.Start
 	} else {
-		start = b.TimeSpan.Start
+		start = b.Span.Start
 	}
 
-	if a.TimeSpan.End < b.TimeSpan.End {
-		end = a.TimeSpan.End
+	if a.Span.End < b.Span.End {
+		end = a.Span.End
 	} else {
-		end = b.TimeSpan.End
+		end = b.Span.End
 	}
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	c.Span = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_HEAD_TO_HEAD_TIMESPAN:
 	// Start of collision
-	if a.TimeSpan.Start == b.TimeSpan.End {
-		start = a.TimeSpan.Start
-	} else if b.TimeSpan.Start == a.TimeSpan.End {
-		start = b.TimeSpan.Start
+	if a.Span.Start == b.Span.End {
+		start = a.Span.Start
+	} else if b.Span.Start == a.Span.End {
+		start = b.Span.Start
 	} else {
 		var at, as, bt, bs float64
 		// Starts
-		at, bt = float64(a.TimeSpan.Start), float64(b.TimeSpan.Start)
+		at, bt = float64(a.Span.Start), float64(b.Span.Start)
 		// Speeds
-		as, bs = float64(a.TimeSpan.End-a.TimeSpan.Start), float64(b.TimeSpan.End-b.TimeSpan.Start)
+		as, bs = float64(a.Span.End-a.Span.Start), float64(b.Span.End-b.Span.Start)
 
 		start = time.WorldTime(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
 
@@ -225,55 +225,55 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 	}
 
 	// End of Collision
-	if a.TimeSpan.End >= b.TimeSpan.End {
-		end = a.TimeSpan.End
+	if a.Span.End >= b.Span.End {
+		end = a.Span.End
 	} else {
-		end = b.TimeSpan.End
+		end = b.Span.End
 	}
 
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	c.Span = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_FROM_SIDE_TIMESPAN:
-	if a.TimeSpan.Start > b.TimeSpan.Start {
-		start = a.TimeSpan.Start
+	if a.Span.Start > b.Span.Start {
+		start = a.Span.Start
 	} else {
-		start = b.TimeSpan.Start
+		start = b.Span.Start
 	}
 
-	if a.TimeSpan.End > b.TimeSpan.End {
-		end = a.TimeSpan.End
+	if a.Span.End > b.Span.End {
+		end = a.Span.End
 	} else {
-		end = b.TimeSpan.End
+		end = b.Span.End
 	}
 
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	c.Span = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_SWAP_TIMESPAN:
 	// TODO this is a.TimeSpan.Add(b.TimeSpan)
-	if a.TimeSpan.Start <= b.TimeSpan.Start {
-		start = a.TimeSpan.Start
+	if a.Span.Start <= b.Span.Start {
+		start = a.Span.Start
 	} else {
-		start = b.TimeSpan.Start
+		start = b.Span.Start
 	}
 
-	if a.TimeSpan.End >= b.TimeSpan.End {
-		end = a.TimeSpan.End
+	if a.Span.End >= b.Span.End {
+		end = a.Span.End
 	} else {
-		end = b.TimeSpan.End
+		end = b.Span.End
 	}
 
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	c.Span = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_A_INTO_B_TIMESPAN:
-	if a.TimeSpan.Start <= b.TimeSpan.Start {
-		start = a.TimeSpan.Start
+	if a.Span.Start <= b.Span.Start {
+		start = a.Span.Start
 	} else {
 		var as, ae, bs, be float64
-		as, ae = float64(a.TimeSpan.Start), float64(a.TimeSpan.End)
-		bs, be = float64(b.TimeSpan.Start), float64(b.TimeSpan.End)
+		as, ae = float64(a.Span.Start), float64(a.Span.End)
+		bs, be = float64(b.Span.Start), float64(b.Span.End)
 
 		start = time.WorldTime(math.Floor(((as / (ae - as)) - (bs / (be - bs))) / ((1 / (ae - as)) - (1 / (be - bs)))))
 
@@ -282,13 +282,13 @@ CT_A_INTO_B_TIMESPAN:
 			start += 1
 		}
 	}
-	c.TimeSpan = time.NewTimeSpan(start, b.TimeSpan.End)
+	c.Span = time.NewTimeSpan(start, b.Span.End)
 	goto EXIT
 
 CT_A_INTO_B_FROM_SIDE_TIMESPAN:
-	start = a.TimeSpan.Start
-	end = b.TimeSpan.End
-	c.TimeSpan = time.NewTimeSpan(start, end)
+	start = a.Span.Start
+	end = b.Span.End
+	c.Span = time.NewTimeSpan(start, end)
 
 EXIT:
 	return
@@ -299,17 +299,17 @@ func cellCollision(p PathAction, c Cell) (cc CellCollision) {
 	switch c {
 	case p.Dest:
 		cc.CollisionType = CT_CELL_DEST
-		cc.TimeSpan = p.TimeSpan
+		cc.Span = p.Span
 	case p.Orig:
 		cc.CollisionType = CT_CELL_ORIG
-		cc.TimeSpan = p.TimeSpan
+		cc.Span = p.Span
 	}
 	return
 }
 
 func (c PathCollision) Type() CollisionType   { return c.CollisionType }
-func (c PathCollision) Start() time.WorldTime { return c.TimeSpan.Start }
-func (c PathCollision) End() time.WorldTime   { return c.TimeSpan.End }
+func (c PathCollision) Start() time.WorldTime { return c.Span.Start }
+func (c PathCollision) End() time.WorldTime   { return c.Span.End }
 func (c PathCollision) OverlapAt(t time.WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
@@ -383,8 +383,8 @@ func (c PathCollision) OverlapAt(t time.WorldTime) (overlap float64) {
 }
 
 func (c CellCollision) Type() CollisionType   { return c.CollisionType }
-func (c CellCollision) Start() time.WorldTime { return c.TimeSpan.Start }
-func (c CellCollision) End() time.WorldTime   { return c.TimeSpan.End }
+func (c CellCollision) Start() time.WorldTime { return c.Span.Start }
+func (c CellCollision) End() time.WorldTime   { return c.Span.End }
 func (c CellCollision) OverlapAt(t time.WorldTime) (overlap float64) {
 	switch c.CollisionType {
 	case CT_CELL_DEST:

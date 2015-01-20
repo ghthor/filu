@@ -77,7 +77,7 @@ func DescribePathAction(c gospec.Context) {
 		}
 
 		c.Specify("where the sum of the origin% and destination% equals 1.0", func() {
-			for t := pa.TimeSpan.Start; t <= pa.TimeSpan.End; t++ {
+			for t := pa.Span.Start; t <= pa.Span.End; t++ {
 				p := [...]PartialCell{
 					pa.OrigPartial(t),
 					pa.DestPartial(t),
@@ -92,16 +92,16 @@ func DescribePathAction(c gospec.Context) {
 		c.Specify("where the origin% and destination%", func() {
 			c.Specify("equal 1.0 and 0.0 if the time", func() {
 				c.Specify("before the start of the action", func() {
-					orig := pa.OrigPartial(pa.TimeSpan.Start - 1)
-					dest := pa.DestPartial(pa.TimeSpan.Start - 1)
+					orig := pa.OrigPartial(pa.Span.Start - 1)
+					dest := pa.DestPartial(pa.Span.Start - 1)
 
 					c.Expect(orig.Percentage, Equals, 1.0)
 					c.Expect(dest.Percentage, Equals, 0.0)
 				})
 
 				c.Specify("is the start of the action", func() {
-					orig := pa.OrigPartial(pa.TimeSpan.Start)
-					dest := pa.DestPartial(pa.TimeSpan.Start)
+					orig := pa.OrigPartial(pa.Span.Start)
+					dest := pa.DestPartial(pa.Span.Start)
 
 					c.Expect(orig.Percentage, Equals, 1.0)
 					c.Expect(dest.Percentage, Equals, 0.0)
@@ -110,16 +110,16 @@ func DescribePathAction(c gospec.Context) {
 
 			c.Specify("equal 0.0 and 1.0 if the time", func() {
 				c.Specify("is the end of the action", func() {
-					orig := pa.OrigPartial(pa.TimeSpan.End)
-					dest := pa.DestPartial(pa.TimeSpan.End)
+					orig := pa.OrigPartial(pa.Span.End)
+					dest := pa.DestPartial(pa.Span.End)
 
 					c.Expect(orig.Percentage, Equals, 0.0)
 					c.Expect(dest.Percentage, Equals, 1.0)
 				})
 
 				c.Specify("after the end of the action", func() {
-					orig := pa.OrigPartial(pa.TimeSpan.End + 1)
-					dest := pa.DestPartial(pa.TimeSpan.End + 1)
+					orig := pa.OrigPartial(pa.Span.End + 1)
+					dest := pa.DestPartial(pa.Span.End + 1)
 
 					c.Expect(orig.Percentage, Equals, 0.0)
 					c.Expect(dest.Percentage, Equals, 1.0)
@@ -169,23 +169,23 @@ func DescribePathAction(c gospec.Context) {
 		})
 
 		c.Specify("but not if the time is out of the scope of this action", func() {
-			_, err := pa.TraversesAt(Dest, pa.TimeSpan.Start-1)
+			_, err := pa.TraversesAt(Dest, pa.Span.Start-1)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "timeOutOfRange")
 
-			_, err = pa.TraversesAt(Dest, pa.TimeSpan.End+1)
+			_, err = pa.TraversesAt(Dest, pa.Span.End+1)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "timeOutOfRange")
 		})
 
 		c.Specify("shouldn't traverse destination cell at the begining of the action", func() {
-			_, err := pa.TraversesAt(Dest, pa.TimeSpan.Start)
+			_, err := pa.TraversesAt(Dest, pa.Span.Start)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "miss")
 		})
 
 		c.Specify("shouldn't traverse origin cell at the end of the action", func() {
-			_, err := pa.TraversesAt(Orig, pa.TimeSpan.End)
+			_, err := pa.TraversesAt(Orig, pa.Span.End)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "miss")
 		})
@@ -247,7 +247,7 @@ func DescribeMoveAction(c gospec.Context) {
 
 		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsTrue)
 
-		pathAction2.TimeSpan.Start = pathAction1.TimeSpan.End + 1
+		pathAction2.Span.Start = pathAction1.Span.End + 1
 		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsFalse)
 	})
 

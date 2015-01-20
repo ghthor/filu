@@ -79,7 +79,7 @@ type (
 	}
 
 	PathAction struct {
-		time.TimeSpan
+		time.Span
 		Orig, Dest Cell
 	}
 
@@ -118,23 +118,23 @@ func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
 
 func (pa PathAction) String() string {
 	return fmt.Sprintf("PA{s:%v d:%v e:%v f:%v t:%v}",
-		pa.TimeSpan.Start,
-		pa.TimeSpan.Duration,
-		pa.TimeSpan.End,
+		pa.Span.Start,
+		pa.Span.Duration,
+		pa.Span.End,
 		pa.Orig, pa.Dest)
 }
 
 func (pa PathAction) Json() PathActionJson {
 	return PathActionJson{
-		pa.TimeSpan.Start,
-		pa.TimeSpan.End,
+		pa.Span.Start,
+		pa.Span.End,
 		pa.Orig,
 		pa.Dest,
 	}
 }
 
-func (pa *PathAction) Start() time.WorldTime { return pa.TimeSpan.Start }
-func (pa *PathAction) End() time.WorldTime   { return pa.TimeSpan.End }
+func (pa *PathAction) Start() time.WorldTime { return pa.Span.Start }
+func (pa *PathAction) End() time.WorldTime   { return pa.Span.End }
 
 func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 	if anAction == nil {
@@ -163,24 +163,24 @@ func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 
 func (pa PathAction) OrigPartial(now time.WorldTime) (pc PartialCell) {
 	pc.Cell = pa.Orig
-	if now <= pa.TimeSpan.Start {
+	if now <= pa.Span.Start {
 		pc.Percentage = 1.0
-	} else if now >= pa.TimeSpan.End {
+	} else if now >= pa.Span.End {
 		pc.Percentage = 0.0
 	} else {
-		pc.Percentage = float64(pa.Remaining(now)) / float64(pa.TimeSpan.Duration)
+		pc.Percentage = float64(pa.Remaining(now)) / float64(pa.Span.Duration)
 	}
 	return
 }
 
 func (pa PathAction) DestPartial(now time.WorldTime) (pc PartialCell) {
 	pc.Cell = pa.Dest
-	if now <= pa.TimeSpan.Start {
+	if now <= pa.Span.Start {
 		pc.Percentage = 0.0
-	} else if now >= pa.TimeSpan.End {
+	} else if now >= pa.Span.End {
 		pc.Percentage = 1.0
 	} else {
-		pc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.TimeSpan.Duration))
+		pc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.Span.Duration))
 	}
 	return
 }
@@ -217,18 +217,18 @@ func (pa PathAction) Traverses(c Cell) bool {
 }
 
 func (pa PathAction) TraversesAt(c Cell, t time.WorldTime) (pc PartialCell, err error) {
-	if t < pa.TimeSpan.Start || t > pa.TimeSpan.End {
+	if t < pa.Span.Start || t > pa.Span.End {
 		return pc, errors.New("timeOutOfRange")
 	}
 
 	if c == pa.Orig {
-		if t == pa.TimeSpan.End {
+		if t == pa.Span.End {
 			return pc, errors.New("miss")
 		}
 		pc = pa.OrigPartial(t)
 
 	} else if pa.Dest == c {
-		if t == pa.TimeSpan.Start {
+		if t == pa.Span.Start {
 			return pc, errors.New("miss")
 		}
 		pc = pa.DestPartial(t)
