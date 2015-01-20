@@ -21,8 +21,8 @@ func (c Clock) Future(mag int64) WorldTime {
 }
 
 type TimeSpan struct {
-	start, end WorldTime
-	duration   int64
+	Start, End WorldTime
+	Duration   int64
 }
 
 func NewTimeSpan(start, end WorldTime) TimeSpan {
@@ -34,16 +34,16 @@ func NewTimeSpan(start, end WorldTime) TimeSpan {
 }
 
 func (a TimeSpan) Remaining(from WorldTime) int64 {
-	return int64(a.end) - int64(from)
+	return int64(a.End) - int64(from)
 }
 
 func (a TimeSpan) Contains(t WorldTime) bool {
-	return a.start <= t && t <= a.end
+	return a.Start <= t && t <= a.End
 }
 
 func (a TimeSpan) Overlaps(other TimeSpan) bool {
-	return a.Contains(other.start) ||
-		a.Contains(other.end) ||
-		other.Contains(a.start) ||
-		other.Contains(a.end)
+	return a.Contains(other.Start) ||
+		a.Contains(other.End) ||
+		other.Contains(a.Start) ||
+		other.Contains(a.End)
 }

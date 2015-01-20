@@ -1,6 +1,7 @@
-package engine
+package coord
 
 import (
+	"github.com/ghthor/engine/time"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -70,13 +71,13 @@ func DescribePathAction(c gospec.Context) {
 	c.Specify("should calculate partial cell percentages", func() {
 
 		pa := PathAction{
-			NewTimeSpan(10, 20),
+			time.NewTimeSpan(10, 20),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
 
 		c.Specify("where the sum of the origin% and destination% equals 1.0", func() {
-			for t := pa.start; t <= pa.end; t++ {
+			for t := pa.TimeSpan.Start; t <= pa.TimeSpan.End; t++ {
 				p := [...]PartialCell{
 					pa.OrigPartial(t),
 					pa.DestPartial(t),
@@ -91,16 +92,16 @@ func DescribePathAction(c gospec.Context) {
 		c.Specify("where the origin% and destination%", func() {
 			c.Specify("equal 1.0 and 0.0 if the time", func() {
 				c.Specify("before the start of the action", func() {
-					orig := pa.OrigPartial(pa.start - 1)
-					dest := pa.DestPartial(pa.start - 1)
+					orig := pa.OrigPartial(pa.TimeSpan.Start - 1)
+					dest := pa.DestPartial(pa.TimeSpan.Start - 1)
 
 					c.Expect(orig.Percentage, Equals, 1.0)
 					c.Expect(dest.Percentage, Equals, 0.0)
 				})
 
 				c.Specify("is the start of the action", func() {
-					orig := pa.OrigPartial(pa.start)
-					dest := pa.DestPartial(pa.start)
+					orig := pa.OrigPartial(pa.TimeSpan.Start)
+					dest := pa.DestPartial(pa.TimeSpan.Start)
 
 					c.Expect(orig.Percentage, Equals, 1.0)
 					c.Expect(dest.Percentage, Equals, 0.0)
@@ -109,16 +110,16 @@ func DescribePathAction(c gospec.Context) {
 
 			c.Specify("equal 0.0 and 1.0 if the time", func() {
 				c.Specify("is the end of the action", func() {
-					orig := pa.OrigPartial(pa.end)
-					dest := pa.DestPartial(pa.end)
+					orig := pa.OrigPartial(pa.TimeSpan.End)
+					dest := pa.DestPartial(pa.TimeSpan.End)
 
 					c.Expect(orig.Percentage, Equals, 0.0)
 					c.Expect(dest.Percentage, Equals, 1.0)
 				})
 
 				c.Specify("after the end of the action", func() {
-					orig := pa.OrigPartial(pa.end + 1)
-					dest := pa.DestPartial(pa.end + 1)
+					orig := pa.OrigPartial(pa.TimeSpan.End + 1)
+					dest := pa.DestPartial(pa.TimeSpan.End + 1)
 
 					c.Expect(orig.Percentage, Equals, 0.0)
 					c.Expect(dest.Percentage, Equals, 1.0)
@@ -138,13 +139,13 @@ func DescribePathAction(c gospec.Context) {
 	})
 
 	c.Specify("must know if it is traversing a cell at an instant in time", func() {
-		clk, duration := Clock(0), int64(25)
+		clk, duration := time.Clock(0), int64(25)
 
 		Orig := Cell{0, 0}
 		Dest := Cell{0, 1}
 
 		pa := PathAction{
-			NewTimeSpan(clk.Now(), clk.Future(duration)),
+			time.NewTimeSpan(clk.Now(), clk.Future(duration)),
 			Orig,
 			Dest,
 		}
@@ -168,23 +169,23 @@ func DescribePathAction(c gospec.Context) {
 		})
 
 		c.Specify("but not if the time is out of the scope of this action", func() {
-			_, err := pa.TraversesAt(Dest, pa.start-1)
+			_, err := pa.TraversesAt(Dest, pa.TimeSpan.Start-1)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "timeOutOfRange")
 
-			_, err = pa.TraversesAt(Dest, pa.end+1)
+			_, err = pa.TraversesAt(Dest, pa.TimeSpan.End+1)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "timeOutOfRange")
 		})
 
 		c.Specify("shouldn't traverse destination cell at the begining of the action", func() {
-			_, err := pa.TraversesAt(Dest, pa.start)
+			_, err := pa.TraversesAt(Dest, pa.TimeSpan.Start)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "miss")
 		})
 
 		c.Specify("shouldn't traverse origin cell at the end of the action", func() {
-			_, err := pa.TraversesAt(Orig, pa.end)
+			_, err := pa.TraversesAt(Orig, pa.TimeSpan.End)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "miss")
 		})
@@ -233,33 +234,33 @@ func DescribePathAction(c gospec.Context) {
 func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can move in any direction immediately after moving", func() {
 		pathAction1 := &PathAction{
-			NewTimeSpan(WorldTime(0), WorldTime(20)),
+			time.NewTimeSpan(time.WorldTime(0), time.WorldTime(20)),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
 
 		pathAction2 := &PathAction{
-			NewTimeSpan(WorldTime(20), WorldTime(40)),
+			time.NewTimeSpan(time.WorldTime(20), time.WorldTime(40)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsTrue)
 
-		pathAction2.start = pathAction1.end + 1
+		pathAction2.TimeSpan.Start = pathAction1.TimeSpan.End + 1
 		c.Expect(pathAction2.CanHappenAfter(pathAction1), IsFalse)
 	})
 
 	c.Specify("an entity can't move before turning", func() {
 		pathAction := &PathAction{
-			NewTimeSpan(WorldTime(21), WorldTime(41)),
+			time.NewTimeSpan(time.WorldTime(21), time.WorldTime(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
 			to:   pathAction.Direction().Reverse(),
-			time: WorldTime(pathAction.Start()),
+			time: time.WorldTime(pathAction.Start()),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -267,14 +268,14 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("An entity can't move immediatly after turning", func() {
 		pathAction := &PathAction{
-			NewTimeSpan(WorldTime(21), WorldTime(41)),
+			time.NewTimeSpan(time.WorldTime(21), time.WorldTime(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
 			to:   pathAction.Direction(),
-			time: WorldTime(pathAction.Start() - TurnActionDelay),
+			time: time.WorldTime(pathAction.Start() - TurnActionDelay),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -286,17 +287,17 @@ func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can't immediatly turn after turning", func() {
 		turnAction1 := TurnAction{
 			South, North,
-			WorldTime(0),
+			time.WorldTime(0),
 		}
 
 		turnAction2 := TurnAction{
 			North, South,
-			WorldTime(TurnActionDelay),
+			time.WorldTime(TurnActionDelay),
 		}
 
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsFalse)
 
-		turnAction2.time = WorldTime(TurnActionDelay + 1)
+		turnAction2.time = time.WorldTime(TurnActionDelay + 1)
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsTrue)
 	})
 }

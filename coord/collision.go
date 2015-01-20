@@ -1,7 +1,9 @@
-package engine
+package coord
 
 import (
 	"math"
+
+	"github.com/ghthor/engine/time"
 )
 
 type (
@@ -9,20 +11,20 @@ type (
 
 	Collision interface {
 		Type() CollisionType
-		Start() WorldTime
-		End() WorldTime
-		OverlapAt(WorldTime) float64
+		Start() time.WorldTime
+		End() time.WorldTime
+		OverlapAt(time.WorldTime) float64
 	}
 
 	PathCollision struct {
 		CollisionType
-		TimeSpan
+		time.TimeSpan
 		A, B PathAction
 	}
 
 	CellCollision struct {
 		CollisionType
-		TimeSpan
+		time.TimeSpan
 		Cell Cell
 		Path PathAction
 	}
@@ -83,7 +85,7 @@ func (A PathAction) CollidesWith(B interface{}) (c Collision) {
 }
 
 func pathCollision(a, b PathAction) (c PathCollision) {
-	var start, end WorldTime
+	var start, end time.WorldTime
 	c.A, c.B = a, b
 
 	switch {
@@ -127,7 +129,7 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	case a.Dest == b.Orig:
 		// A is moving into the Cell B is leaving
 		if a.Direction() == b.Direction() {
-			if a.start >= b.start && a.end >= b.end {
+			if a.TimeSpan.Start >= b.TimeSpan.Start && a.TimeSpan.End >= b.TimeSpan.End {
 				goto EXIT
 			}
 			c.CollisionType = CT_A_INTO_B
@@ -142,40 +144,40 @@ func pathCollision(a, b PathAction) (c PathCollision) {
 	}
 
 CT_SAME_ORIG_DEST_TIMESPAN:
-	if a.start < b.start {
-		start = a.start
+	if a.TimeSpan.Start < b.TimeSpan.Start {
+		start = a.TimeSpan.Start
 	} else {
-		start = b.start
+		start = b.TimeSpan.Start
 	}
 
-	if a.end > b.end {
-		end = a.end
+	if a.TimeSpan.End > b.TimeSpan.End {
+		end = a.TimeSpan.End
 	} else {
-		end = b.end
+		end = b.TimeSpan.End
 	}
 
-	c.TimeSpan = NewTimeSpan(start, end)
+	c.TimeSpan = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_TIMESPAN:
-	if a.start < b.start {
-		start = a.start
+	if a.TimeSpan.Start < b.TimeSpan.Start {
+		start = a.TimeSpan.Start
 	} else {
-		start = b.start
+		start = b.TimeSpan.Start
 	}
 
-	if a.end == b.start {
-		end = a.end
-	} else if b.end == a.start {
-		end = b.end
+	if a.TimeSpan.End == b.TimeSpan.Start {
+		end = a.TimeSpan.End
+	} else if b.TimeSpan.End == a.TimeSpan.Start {
+		end = b.TimeSpan.End
 	} else {
 		var at, as, bt, bs float64
 		// Starts
-		at, bt = float64(a.start), float64(b.start)
+		at, bt = float64(a.TimeSpan.Start), float64(b.TimeSpan.Start)
 		// Speeds
-		as, bs = float64(a.end-a.start), float64(b.end-b.start)
+		as, bs = float64(a.TimeSpan.End-a.TimeSpan.Start), float64(b.TimeSpan.End-b.TimeSpan.Start)
 
-		end = WorldTime(math.Ceil((at*bs + bt*as + as*bs) / (bs + as)))
+		end = time.WorldTime(math.Ceil((at*bs + bt*as + as*bs) / (bs + as)))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
 		if c.OverlapAt(end-1) == 0.0 {
@@ -183,38 +185,38 @@ CT_SAME_ORIG_TIMESPAN:
 		}
 	}
 
-	c.TimeSpan = NewTimeSpan(start, end)
+	c.TimeSpan = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_PERP_TIMESPAN:
-	if a.start < b.start {
-		start = a.start
+	if a.TimeSpan.Start < b.TimeSpan.Start {
+		start = a.TimeSpan.Start
 	} else {
-		start = b.start
+		start = b.TimeSpan.Start
 	}
 
-	if a.end < b.end {
-		end = a.end
+	if a.TimeSpan.End < b.TimeSpan.End {
+		end = a.TimeSpan.End
 	} else {
-		end = b.end
+		end = b.TimeSpan.End
 	}
-	c.TimeSpan = NewTimeSpan(start, end)
+	c.TimeSpan = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_HEAD_TO_HEAD_TIMESPAN:
 	// Start of collision
-	if a.start == b.end {
-		start = a.start
-	} else if b.start == a.end {
-		start = b.start
+	if a.TimeSpan.Start == b.TimeSpan.End {
+		start = a.TimeSpan.Start
+	} else if b.TimeSpan.Start == a.TimeSpan.End {
+		start = b.TimeSpan.Start
 	} else {
 		var at, as, bt, bs float64
 		// Starts
-		at, bt = float64(a.start), float64(b.start)
+		at, bt = float64(a.TimeSpan.Start), float64(b.TimeSpan.Start)
 		// Speeds
-		as, bs = float64(a.end-a.start), float64(b.end-b.start)
+		as, bs = float64(a.TimeSpan.End-a.TimeSpan.Start), float64(b.TimeSpan.End-b.TimeSpan.Start)
 
-		start = WorldTime(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
+		start = time.WorldTime(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
 		if c.OverlapAt(start+1) == 0.0 {
@@ -223,70 +225,70 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 	}
 
 	// End of Collision
-	if a.end >= b.end {
-		end = a.end
+	if a.TimeSpan.End >= b.TimeSpan.End {
+		end = a.TimeSpan.End
 	} else {
-		end = b.end
+		end = b.TimeSpan.End
 	}
 
-	c.TimeSpan = NewTimeSpan(start, end)
+	c.TimeSpan = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_FROM_SIDE_TIMESPAN:
-	if a.start > b.start {
-		start = a.start
+	if a.TimeSpan.Start > b.TimeSpan.Start {
+		start = a.TimeSpan.Start
 	} else {
-		start = b.start
+		start = b.TimeSpan.Start
 	}
 
-	if a.end > b.end {
-		end = a.end
+	if a.TimeSpan.End > b.TimeSpan.End {
+		end = a.TimeSpan.End
 	} else {
-		end = b.end
+		end = b.TimeSpan.End
 	}
 
-	c.TimeSpan = NewTimeSpan(start, end)
+	c.TimeSpan = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_SWAP_TIMESPAN:
 	// TODO this is a.TimeSpan.Add(b.TimeSpan)
-	if a.start <= b.start {
-		start = a.start
+	if a.TimeSpan.Start <= b.TimeSpan.Start {
+		start = a.TimeSpan.Start
 	} else {
-		start = b.start
+		start = b.TimeSpan.Start
 	}
 
-	if a.end >= b.end {
-		end = a.end
+	if a.TimeSpan.End >= b.TimeSpan.End {
+		end = a.TimeSpan.End
 	} else {
-		end = b.end
+		end = b.TimeSpan.End
 	}
 
-	c.TimeSpan = NewTimeSpan(start, end)
+	c.TimeSpan = time.NewTimeSpan(start, end)
 	goto EXIT
 
 CT_A_INTO_B_TIMESPAN:
-	if a.start <= b.start {
-		start = a.start
+	if a.TimeSpan.Start <= b.TimeSpan.Start {
+		start = a.TimeSpan.Start
 	} else {
 		var as, ae, bs, be float64
-		as, ae = float64(a.start), float64(a.end)
-		bs, be = float64(b.start), float64(b.end)
+		as, ae = float64(a.TimeSpan.Start), float64(a.TimeSpan.End)
+		bs, be = float64(b.TimeSpan.Start), float64(b.TimeSpan.End)
 
-		start = WorldTime(math.Floor(((as / (ae - as)) - (bs / (be - bs))) / ((1 / (ae - as)) - (1 / (be - bs)))))
+		start = time.WorldTime(math.Floor(((as / (ae - as)) - (bs / (be - bs))) / ((1 / (ae - as)) - (1 / (be - bs)))))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
 		if c.OverlapAt(start+1) == 0.0 {
 			start += 1
 		}
 	}
-	c.TimeSpan = NewTimeSpan(start, b.end)
+	c.TimeSpan = time.NewTimeSpan(start, b.TimeSpan.End)
 	goto EXIT
 
 CT_A_INTO_B_FROM_SIDE_TIMESPAN:
-	start = a.start
-	end = b.end
-	c.TimeSpan = NewTimeSpan(start, end)
+	start = a.TimeSpan.Start
+	end = b.TimeSpan.End
+	c.TimeSpan = time.NewTimeSpan(start, end)
 
 EXIT:
 	return
@@ -305,10 +307,10 @@ func cellCollision(p PathAction, c Cell) (cc CellCollision) {
 	return
 }
 
-func (c PathCollision) Type() CollisionType { return c.CollisionType }
-func (c PathCollision) Start() WorldTime    { return c.TimeSpan.start }
-func (c PathCollision) End() WorldTime      { return c.TimeSpan.end }
-func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
+func (c PathCollision) Type() CollisionType   { return c.CollisionType }
+func (c PathCollision) Start() time.WorldTime { return c.TimeSpan.Start }
+func (c PathCollision) End() time.WorldTime   { return c.TimeSpan.End }
+func (c PathCollision) OverlapAt(t time.WorldTime) (overlap float64) {
 
 	switch c.CollisionType {
 	case CT_SAME_ORIG:
@@ -380,10 +382,10 @@ func (c PathCollision) OverlapAt(t WorldTime) (overlap float64) {
 	return
 }
 
-func (c CellCollision) Type() CollisionType { return c.CollisionType }
-func (c CellCollision) Start() WorldTime    { return c.TimeSpan.start }
-func (c CellCollision) End() WorldTime      { return c.TimeSpan.end }
-func (c CellCollision) OverlapAt(t WorldTime) (overlap float64) {
+func (c CellCollision) Type() CollisionType   { return c.CollisionType }
+func (c CellCollision) Start() time.WorldTime { return c.TimeSpan.Start }
+func (c CellCollision) End() time.WorldTime   { return c.TimeSpan.End }
+func (c CellCollision) OverlapAt(t time.WorldTime) (overlap float64) {
 	switch c.CollisionType {
 	case CT_CELL_DEST:
 		overlap = c.Path.DestPartial(t).Percentage

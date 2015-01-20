@@ -1,6 +1,7 @@
-package engine
+package coord
 
 import (
+	"github.com/ghthor/engine/time"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -11,8 +12,8 @@ func overlapPeakAndDecrease(c gospec.Context, collision PathCollision) float64 {
 	// Going to fix this requirement when I implement floating point time
 	// The collision needs > 3 steps and 2 of them have to be after the peak
 	// This is the easiest way to enforce this
-	c.Assume(collision.A.duration, Satisfies, collision.A.duration > 1)
-	c.Assume(collision.B.duration, Satisfies, collision.B.duration > 1)
+	c.Assume(collision.A.Duration, Satisfies, collision.A.Duration > 1)
+	c.Assume(collision.B.Duration, Satisfies, collision.B.Duration > 1)
 
 	overlap := collision.OverlapAt(start)
 	c.Expect(overlap, Equals, 0.0)
@@ -52,8 +53,8 @@ func overlapPeakLevelThenDecrease(c gospec.Context, collision PathCollision) {
 	// Going to fix this requirement when I implement floating point time
 	// The collision needs > 3 steps and 2 of them have to be after the peak
 	// This is the easiest way to enforce this
-	c.Assume(collision.A.duration, Satisfies, collision.A.duration > 1)
-	c.Assume(collision.B.duration, Satisfies, collision.B.duration > 1)
+	c.Assume(collision.A.Duration, Satisfies, collision.A.Duration > 1)
+	c.Assume(collision.B.Duration, Satisfies, collision.B.Duration > 1)
 
 	overlap := collision.OverlapAt(start)
 	c.Expect(overlap, Equals, 0.0)
@@ -75,7 +76,7 @@ func overlapPeakLevelThenDecrease(c gospec.Context, collision PathCollision) {
 
 	c.Expect(peak, Satisfies, peak > collision.OverlapAt(start))
 
-	for ; t <= collision.A.end; t++ {
+	for ; t <= collision.A.TimeSpan.End; t++ {
 		overlap = collision.OverlapAt(t)
 		c.Expect(overlap, IsWithin(0.0000000000000001), peak)
 		prevOverlap = overlap
@@ -135,8 +136,8 @@ func DescribePathCollision(c gospec.Context) {
 	var collision PathCollision
 
 	c.Specify("when path A is following into path B's position from the side", func() {
-		pathA.TimeSpan = NewTimeSpan(15, 35)
-		pathB.TimeSpan = NewTimeSpan(10, 30)
+		pathA.TimeSpan = time.NewTimeSpan(15, 35)
+		pathB.TimeSpan = time.NewTimeSpan(10, 30)
 
 		pathA.Orig = Cell{0, 1}
 		pathA.Dest = Cell{0, 0}
@@ -156,19 +157,19 @@ func DescribePathCollision(c gospec.Context) {
 
 		c.Specify("the collision will begin when", func() {
 			specs := [...]struct {
-				A, B        TimeSpan
+				A, B        time.TimeSpan
 				description string
 			}{{
-				NewTimeSpan(15, 35),
-				NewTimeSpan(10, 30),
+				time.NewTimeSpan(15, 35),
+				time.NewTimeSpan(10, 30),
 				"when path A starts if path A starts after path B",
 			}, {
-				NewTimeSpan(10, 30),
-				NewTimeSpan(15, 35),
+				time.NewTimeSpan(10, 30),
+				time.NewTimeSpan(15, 35),
 				"when path A starts if path A starts before path B",
 			}, {
-				NewTimeSpan(10, 30),
-				NewTimeSpan(10, 30),
+				time.NewTimeSpan(10, 30),
+				time.NewTimeSpan(10, 30),
 				"when path A and path B start at the same time",
 			}}
 
@@ -177,27 +178,27 @@ func DescribePathCollision(c gospec.Context) {
 					pathA.TimeSpan = spec.A
 					pathB.TimeSpan = spec.B
 
-					c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
-					c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+					c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.TimeSpan.Start)
+					c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.TimeSpan.Start)
 				})
 			}
 		})
 
 		c.Specify("the collision will end when", func() {
 			specs := [...]struct {
-				A, B        TimeSpan
+				A, B        time.TimeSpan
 				description string
 			}{{
-				NewTimeSpan(15, 35),
-				NewTimeSpan(10, 30),
+				time.NewTimeSpan(15, 35),
+				time.NewTimeSpan(10, 30),
 				"when path B ends if path B ends before path A",
 			}, {
-				NewTimeSpan(10, 30),
-				NewTimeSpan(15, 35),
+				time.NewTimeSpan(10, 30),
+				time.NewTimeSpan(15, 35),
 				"when path B ends if path B ends after path A",
 			}, {
-				NewTimeSpan(10, 30),
-				NewTimeSpan(10, 30),
+				time.NewTimeSpan(10, 30),
+				time.NewTimeSpan(10, 30),
 				"when path A and path B end at the same time",
 			}}
 
@@ -206,25 +207,25 @@ func DescribePathCollision(c gospec.Context) {
 					pathA.TimeSpan = spec.A
 					pathB.TimeSpan = spec.B
 
-					c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
-					c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+					c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.TimeSpan.End)
+					c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.TimeSpan.End)
 				})
 			}
 		})
 		specs := [...]struct {
-			A, B        TimeSpan
+			A, B        time.TimeSpan
 			description string
 		}{{
-			NewTimeSpan(15, 35),
-			NewTimeSpan(10, 30),
+			time.NewTimeSpan(15, 35),
+			time.NewTimeSpan(10, 30),
 			"when path B ends before path A",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(15, 35),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(15, 35),
 			"when path B ends after path A",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 30),
 			"when path A and path B end at the same time",
 		}}
 
@@ -239,8 +240,8 @@ func DescribePathCollision(c gospec.Context) {
 		}
 
 		c.Specify("when B starts as A ends the peak will be 1.0", func() {
-			pathA.TimeSpan = NewTimeSpan(10, 30)
-			pathB.TimeSpan = NewTimeSpan(30, 40)
+			pathA.TimeSpan = time.NewTimeSpan(10, 30)
+			pathB.TimeSpan = time.NewTimeSpan(30, 40)
 
 			peak := overlapPeakAndDecrease(c, pathCollision(pathA, pathB))
 			c.Expect(peak, Equals, 1.0)
@@ -251,8 +252,8 @@ func DescribePathCollision(c gospec.Context) {
 	})
 
 	c.Specify("when path A is following into path B's position in the same direction", func() {
-		pathA.TimeSpan = NewTimeSpan(5, 25)
-		pathB.TimeSpan = NewTimeSpan(10, 30)
+		pathA.TimeSpan = time.NewTimeSpan(5, 25)
+		pathB.TimeSpan = time.NewTimeSpan(10, 30)
 
 		pathA.Orig = Cell{-1, 0}
 		pathA.Dest = Cell{0, 0}
@@ -271,7 +272,7 @@ func DescribePathCollision(c gospec.Context) {
 		c.Assume(collision.B, Equals, pathB)
 
 		c.Specify("will not collide if path A doesn't end before path B", func() {
-			pathA.end = pathB.end
+			pathA.TimeSpan.End = pathB.TimeSpan.End
 
 			expectations := func() {
 				collision = pathCollision(pathA, pathB)
@@ -282,74 +283,74 @@ func DescribePathCollision(c gospec.Context) {
 			}
 
 			c.Specify("and starts at the same time as path B", func() {
-				pathA.start = pathB.start
+				pathA.TimeSpan.Start = pathB.TimeSpan.Start
 				expectations()
 			})
 
 			c.Specify("and starts after path B", func() {
-				pathA.start = pathB.start + 1
+				pathA.TimeSpan.Start = pathB.TimeSpan.Start + 1
 				expectations()
 			})
 		})
 
 		c.Specify("the collision will begin when", func() {
 			c.Specify("path A starts if path A starts before path B", func() {
-				pathA.start = pathB.start - 1
+				pathA.TimeSpan.Start = pathB.TimeSpan.Start - 1
 
 				collision = pathCollision(pathA, pathB)
-				c.Expect(collision.Start(), Equals, pathA.start)
+				c.Expect(collision.Start(), Equals, pathA.TimeSpan.Start)
 
 				c.Specify("and ends when path B completes", func() {
-					c.Expect(collision.End(), Equals, pathB.end)
+					c.Expect(collision.End(), Equals, pathB.TimeSpan.End)
 				})
 			})
 
 			c.Specify("they both start if they both start at the same time", func() {
-				pathA.TimeSpan = NewTimeSpan(10, 20)
-				pathB.TimeSpan = NewTimeSpan(10, 21)
+				pathA.TimeSpan = time.NewTimeSpan(10, 20)
+				pathB.TimeSpan = time.NewTimeSpan(10, 21)
 
 				collision = pathCollision(pathA, pathB)
-				c.Expect(collision.Start(), Equals, pathA.start)
-				c.Expect(collision.Start(), Equals, pathB.start)
+				c.Expect(collision.Start(), Equals, pathA.TimeSpan.Start)
+				c.Expect(collision.Start(), Equals, pathB.TimeSpan.Start)
 
 				c.Specify("and ends when path B completes", func() {
-					c.Expect(collision.End(), Equals, pathB.end)
+					c.Expect(collision.End(), Equals, pathB.TimeSpan.End)
 				})
 			})
 
 			c.Specify("path A catchs path B if path B starts before path A", func() {
-				for i := WorldTime(0); i <= 5*10; i += 5 {
-					pathA.TimeSpan = NewTimeSpan(2+i, 12+i)
-					pathB.TimeSpan = NewTimeSpan(0+i, 20+i)
+				for i := time.WorldTime(0); i <= 5*10; i += 5 {
+					pathA.TimeSpan = time.NewTimeSpan(2+i, 12+i)
+					pathB.TimeSpan = time.NewTimeSpan(0+i, 20+i)
 					collision = pathCollision(pathA, pathB)
-					c.Expect(collision.Start(), Equals, WorldTime(4+i))
+					c.Expect(collision.Start(), Equals, time.WorldTime(4+i))
 				}
 
-				pathA.TimeSpan = NewTimeSpan(3, 10)
-				pathB.TimeSpan = NewTimeSpan(2, 13)
+				pathA.TimeSpan = time.NewTimeSpan(3, 10)
+				pathB.TimeSpan = time.NewTimeSpan(2, 13)
 				collision = pathCollision(pathA, pathB)
-				c.Expect(collision.Start(), Equals, WorldTime(4))
+				c.Expect(collision.Start(), Equals, time.WorldTime(4))
 
 				c.Specify("and ends when path B completes", func() {
-					c.Expect(collision.End(), Equals, pathB.end)
+					c.Expect(collision.End(), Equals, pathB.TimeSpan.End)
 				})
 			})
 		})
 
 		specs := [...]struct {
-			A, B        TimeSpan
+			A, B        time.TimeSpan
 			description string
 		}{{
 			pathA.TimeSpan,
 			pathB.TimeSpan,
 			"when path A starts before path B",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(10, 40),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 40),
 			"when path A and path B start together",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(5, 40),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(5, 40),
 			"when path A starts after path B",
 		}}
 
@@ -364,8 +365,8 @@ func DescribePathCollision(c gospec.Context) {
 		}
 
 		c.Specify("they have the same speed the overlap will grow to a peak and stay level until B completes", func() {
-			pathA.TimeSpan = NewTimeSpan(10, 30)
-			pathB.TimeSpan = NewTimeSpan(15, 35)
+			pathA.TimeSpan = time.NewTimeSpan(10, 30)
+			pathB.TimeSpan = time.NewTimeSpan(15, 35)
 
 			overlapPeakLevelThenDecrease(c, pathCollision(pathA, pathB))
 			overlapPeakLevelThenDecrease(c, pathCollision(pathB, pathA))
@@ -374,8 +375,8 @@ func DescribePathCollision(c gospec.Context) {
 
 	c.Specify("when path A has the same destination as path B and the paths are opposing", func() {
 		m, n, o := Cell{-1, 0}, Cell{0, 0}, Cell{1, 0}
-		pathA = PathAction{NewTimeSpan(10, 30), m, n}
-		pathB = PathAction{NewTimeSpan(10, 30), o, n}
+		pathA = PathAction{time.NewTimeSpan(10, 30), m, n}
+		pathB = PathAction{time.NewTimeSpan(10, 30), o, n}
 
 		collision = pathCollision(pathA, pathB)
 		c.Assume(collision.Type(), Equals, CT_HEAD_TO_HEAD)
@@ -389,99 +390,99 @@ func DescribePathCollision(c gospec.Context) {
 
 		c.Specify("the collision begins when", func() {
 			c.Specify("path A starts if path A starts when path B ends", func() {
-				pathA.TimeSpan = NewTimeSpan(30, 50)
-				pathB.TimeSpan = NewTimeSpan(10, 30)
+				pathA.TimeSpan = time.NewTimeSpan(30, 50)
+				pathB.TimeSpan = time.NewTimeSpan(10, 30)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.TimeSpan.Start)
 			})
 			c.Specify("path B starts if path B starts when path A ends", func() {
-				pathA.TimeSpan = NewTimeSpan(10, 30)
-				pathB.TimeSpan = NewTimeSpan(30, 50)
+				pathA.TimeSpan = time.NewTimeSpan(10, 30)
+				pathB.TimeSpan = time.NewTimeSpan(30, 50)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.TimeSpan.Start)
 			})
 		})
 
 		c.Specify("the collision begins when path A meets path B", func() {
-			pathA.TimeSpan = NewTimeSpan(0, 10)
-			pathB.TimeSpan = NewTimeSpan(0, 10)
-			c.Expect(pathCollision(pathA, pathB).Start(), Equals, WorldTime(5))
-			c.Expect(pathCollision(pathB, pathA).Start(), Equals, WorldTime(5))
+			pathA.TimeSpan = time.NewTimeSpan(0, 10)
+			pathB.TimeSpan = time.NewTimeSpan(0, 10)
+			c.Expect(pathCollision(pathA, pathB).Start(), Equals, time.WorldTime(5))
+			c.Expect(pathCollision(pathB, pathA).Start(), Equals, time.WorldTime(5))
 
-			pathA.TimeSpan = NewTimeSpan(2, 12)
-			pathB.TimeSpan = NewTimeSpan(0, 10)
-			c.Expect(pathCollision(pathA, pathB).Start(), Equals, WorldTime(6))
-			c.Expect(pathCollision(pathB, pathA).Start(), Equals, WorldTime(6))
+			pathA.TimeSpan = time.NewTimeSpan(2, 12)
+			pathB.TimeSpan = time.NewTimeSpan(0, 10)
+			c.Expect(pathCollision(pathA, pathB).Start(), Equals, time.WorldTime(6))
+			c.Expect(pathCollision(pathB, pathA).Start(), Equals, time.WorldTime(6))
 
-			pathA.TimeSpan = NewTimeSpan(3, 13)
-			pathB.TimeSpan = NewTimeSpan(4, 14)
+			pathA.TimeSpan = time.NewTimeSpan(3, 13)
+			pathB.TimeSpan = time.NewTimeSpan(4, 14)
 			// Float answer is 8.5
-			c.Expect(pathCollision(pathA, pathB).Start(), Equals, WorldTime(8))
-			c.Expect(pathCollision(pathB, pathA).Start(), Equals, WorldTime(8))
+			c.Expect(pathCollision(pathA, pathB).Start(), Equals, time.WorldTime(8))
+			c.Expect(pathCollision(pathB, pathA).Start(), Equals, time.WorldTime(8))
 
-			pathA.TimeSpan = NewTimeSpan(3, 17)
-			pathB.TimeSpan = NewTimeSpan(5, 11)
+			pathA.TimeSpan = time.NewTimeSpan(3, 17)
+			pathB.TimeSpan = time.NewTimeSpan(5, 11)
 			// Float answer is 8 * 3/19
-			c.Expect(pathCollision(pathA, pathB).Start(), Equals, WorldTime(8))
-			c.Expect(pathCollision(pathB, pathA).Start(), Equals, WorldTime(8))
+			c.Expect(pathCollision(pathA, pathB).Start(), Equals, time.WorldTime(8))
+			c.Expect(pathCollision(pathB, pathA).Start(), Equals, time.WorldTime(8))
 		})
 
 		c.Specify("the collision ends when", func() {
 			c.Specify("path A ends if it ends after Path B", func() {
-				pathA.TimeSpan = NewTimeSpan(10, 30)
-				pathB.TimeSpan = NewTimeSpan(5, 25)
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.end)
+				pathA.TimeSpan = time.NewTimeSpan(10, 30)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.TimeSpan.End)
 			})
 
 			c.Specify("path B ends if it ends after Path A", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
-				pathB.TimeSpan = NewTimeSpan(10, 30)
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(10, 30)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.TimeSpan.End)
 			})
 		})
 
 		specs := [...]struct {
-			A, B        TimeSpan
+			A, B        time.TimeSpan
 			description string
 		}{{
 			pathA.TimeSpan,
 			pathB.TimeSpan,
 			"and path A and B have the same time span",
 		}, {
-			NewTimeSpan(5, 25),
-			NewTimeSpan(15, 35),
+			time.NewTimeSpan(5, 25),
+			time.NewTimeSpan(15, 35),
 			"and path A starts and ends before path B",
 		}, {
-			NewTimeSpan(15, 35),
-			NewTimeSpan(5, 25),
+			time.NewTimeSpan(15, 35),
+			time.NewTimeSpan(5, 25),
 			"and path B starts and ends before path A",
 		}, {
-			NewTimeSpan(5, 35),
-			NewTimeSpan(15, 25),
+			time.NewTimeSpan(5, 35),
+			time.NewTimeSpan(15, 25),
 			"and path A starts before and ends after path B",
 		}, {
-			NewTimeSpan(15, 25),
-			NewTimeSpan(5, 35),
+			time.NewTimeSpan(15, 25),
+			time.NewTimeSpan(5, 35),
 			"and path B starts before and ends after path A",
 		}, {
-			NewTimeSpan(5, 25),
-			NewTimeSpan(10, 25),
+			time.NewTimeSpan(5, 25),
+			time.NewTimeSpan(10, 25),
 			"and path A starts before and ends with path B",
 		}, {
-			NewTimeSpan(10, 25),
-			NewTimeSpan(5, 25),
+			time.NewTimeSpan(10, 25),
+			time.NewTimeSpan(5, 25),
 			"and path B starts before and ends with path A",
 		}, {
-			NewTimeSpan(10, 25),
-			NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 25),
+			time.NewTimeSpan(10, 30),
 			"and path A starts with and ends before path B",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(10, 25),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 25),
 			"and path B starts with and ends before path A",
 		}}
 
@@ -499,8 +500,8 @@ func DescribePathCollision(c gospec.Context) {
 	c.Specify("when path A has the same destination as path B and the paths are perpendicular", func() {
 		// Side 1
 		m, n, o := Cell{-1, 0}, Cell{0, 0}, Cell{0, 1}
-		pathA = PathAction{NewTimeSpan(10, 30), m, n}
-		pathB = PathAction{NewTimeSpan(10, 30), o, n}
+		pathA = PathAction{time.NewTimeSpan(10, 30), m, n}
+		pathB = PathAction{time.NewTimeSpan(10, 30), o, n}
 
 		collision = pathCollision(pathA, pathB)
 		c.Assume(collision.Type(), Equals, CT_FROM_SIDE)
@@ -514,8 +515,8 @@ func DescribePathCollision(c gospec.Context) {
 
 		// Side 2
 		m, n, o = Cell{-1, 0}, Cell{0, 0}, Cell{0, -1}
-		pathA = PathAction{NewTimeSpan(10, 30), m, n}
-		pathB = PathAction{NewTimeSpan(10, 30), o, n}
+		pathA = PathAction{time.NewTimeSpan(10, 30), m, n}
+		pathB = PathAction{time.NewTimeSpan(10, 30), o, n}
 
 		collision = pathCollision(pathA, pathB)
 		c.Assume(collision.Type(), Equals, CT_FROM_SIDE)
@@ -529,74 +530,74 @@ func DescribePathCollision(c gospec.Context) {
 
 		c.Specify("the collision begins when", func() {
 			c.Specify("path A starts if path B starts first", func() {
-				pathA.TimeSpan = NewTimeSpan(10, 30)
-				pathB.TimeSpan = NewTimeSpan(5, 25)
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+				pathA.TimeSpan = time.NewTimeSpan(10, 30)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.TimeSpan.Start)
 			})
 
 			c.Specify("path B starts if path A starts first", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
-				pathB.TimeSpan = NewTimeSpan(10, 30)
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.start)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(10, 30)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.TimeSpan.Start)
 			})
 		})
 
 		c.Specify("the collision ends when", func() {
 			c.Specify("path A ends if it ends after Path B", func() {
-				pathA.TimeSpan = NewTimeSpan(10, 30)
-				pathB.TimeSpan = NewTimeSpan(5, 25)
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.end)
+				pathA.TimeSpan = time.NewTimeSpan(10, 30)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.TimeSpan.End)
 			})
 
 			c.Specify("path B ends if it ends after Path A", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
-				pathB.TimeSpan = NewTimeSpan(10, 30)
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(10, 30)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.TimeSpan.End)
 			})
 		})
 
 		specs := [...]struct {
-			A, B        TimeSpan
+			A, B        time.TimeSpan
 			description string
 		}{{
 			pathA.TimeSpan,
 			pathB.TimeSpan,
 			"and path A and B have the same time span",
 		}, {
-			NewTimeSpan(5, 25),
-			NewTimeSpan(15, 35),
+			time.NewTimeSpan(5, 25),
+			time.NewTimeSpan(15, 35),
 			"and path A starts and ends before path B",
 		}, {
-			NewTimeSpan(15, 35),
-			NewTimeSpan(5, 25),
+			time.NewTimeSpan(15, 35),
+			time.NewTimeSpan(5, 25),
 			"and path B starts and ends before path A",
 		}, {
-			NewTimeSpan(5, 35),
-			NewTimeSpan(15, 25),
+			time.NewTimeSpan(5, 35),
+			time.NewTimeSpan(15, 25),
 			"and path A starts before and ends after path B",
 		}, {
-			NewTimeSpan(15, 25),
-			NewTimeSpan(5, 35),
+			time.NewTimeSpan(15, 25),
+			time.NewTimeSpan(5, 35),
 			"and path B starts before and ends after path A",
 		}, {
-			NewTimeSpan(5, 25),
-			NewTimeSpan(10, 25),
+			time.NewTimeSpan(5, 25),
+			time.NewTimeSpan(10, 25),
 			"and path A starts before and ends with path B",
 		}, {
-			NewTimeSpan(10, 25),
-			NewTimeSpan(5, 25),
+			time.NewTimeSpan(10, 25),
+			time.NewTimeSpan(5, 25),
 			"and path B starts before and ends with path A",
 		}, {
-			NewTimeSpan(10, 25),
-			NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 25),
+			time.NewTimeSpan(10, 30),
 			"and path A starts with and ends before path B",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(10, 25),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 25),
 			"and path B starts with and ends before path A",
 		}}
 
@@ -616,8 +617,8 @@ func DescribePathCollision(c gospec.Context) {
 		pathA = PathAction{Orig: a, Dest: b}
 		pathB = PathAction{Orig: b, Dest: a}
 
-		pathA.TimeSpan = NewTimeSpan(10, 30)
-		pathB.TimeSpan = NewTimeSpan(10, 30)
+		pathA.TimeSpan = time.NewTimeSpan(10, 30)
+		pathB.TimeSpan = time.NewTimeSpan(10, 30)
 
 		collision = pathCollision(pathA, pathB)
 		c.Assume(collision.Type(), Equals, CT_SWAP)
@@ -631,7 +632,7 @@ func DescribePathCollision(c gospec.Context) {
 
 		c.Specify("the collision begins when either start moving", func() {
 			c.Specify("path A starts first", func() {
-				pathB.TimeSpan.start = pathA.TimeSpan.start + 1
+				pathB.TimeSpan.Start = pathA.TimeSpan.Start + 1
 
 				collision = pathCollision(pathA, pathB)
 				c.Expect(collision.Start(), Equals, pathA.Start())
@@ -641,7 +642,7 @@ func DescribePathCollision(c gospec.Context) {
 			})
 
 			c.Specify("path B starts first", func() {
-				pathA.TimeSpan.start = pathB.TimeSpan.start + 1
+				pathA.TimeSpan.Start = pathB.TimeSpan.Start + 1
 
 				collision = pathCollision(pathA, pathB)
 				c.Expect(collision.Start(), Equals, pathB.Start())
@@ -653,7 +654,7 @@ func DescribePathCollision(c gospec.Context) {
 
 		c.Specify("the collision ends when the last one moving ends", func() {
 			c.Specify("path A ends last", func() {
-				pathA.TimeSpan.end = pathB.TimeSpan.end + 1
+				pathA.TimeSpan.End = pathB.TimeSpan.End + 1
 
 				collision = pathCollision(pathA, pathB)
 				c.Expect(collision.End(), Equals, pathA.End())
@@ -663,7 +664,7 @@ func DescribePathCollision(c gospec.Context) {
 			})
 
 			c.Specify("path B ends last", func() {
-				pathB.TimeSpan.end = pathA.TimeSpan.end + 1
+				pathB.TimeSpan.End = pathA.TimeSpan.End + 1
 
 				collision = pathCollision(pathA, pathB)
 				c.Expect(collision.End(), Equals, pathB.End())
@@ -674,23 +675,23 @@ func DescribePathCollision(c gospec.Context) {
 		})
 
 		specs := [...]struct {
-			A, B        TimeSpan
+			A, B        time.TimeSpan
 			description string
 		}{{
 			pathA.TimeSpan,
 			pathB.TimeSpan,
 			"and the time span's are equal",
 		}, {
-			NewTimeSpan(10, 90),
-			NewTimeSpan(31, 69),
+			time.NewTimeSpan(10, 90),
+			time.NewTimeSpan(31, 69),
 			"and one starts before and ends after the other",
 		}, {
-			NewTimeSpan(28, 30),
-			NewTimeSpan(30, 32),
+			time.NewTimeSpan(28, 30),
+			time.NewTimeSpan(30, 32),
 			"and one starts as the other ends",
 		}, {
-			NewTimeSpan(20, 30),
-			NewTimeSpan(40, 50),
+			time.NewTimeSpan(20, 30),
+			time.NewTimeSpan(40, 50),
 			"and one starts after the other ends",
 		}}
 
@@ -707,90 +708,90 @@ func DescribePathCollision(c gospec.Context) {
 
 	c.Specify("when path A and path B have the same origin and their facings are inverse", func() {
 		o := Cell{0, 0}
-		pathA = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(South)}
-		pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(North)}
+		pathA = PathAction{time.NewTimeSpan(10, 30), o, o.Neighbor(South)}
+		pathB = PathAction{time.NewTimeSpan(10, 30), o, o.Neighbor(North)}
 
 		c.Assume(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG)
 		c.Assume(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG)
 
 		c.Specify("the collision will begin when either path starts", func() {
 			c.Specify("path A starts first", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.TimeSpan.Start)
 			})
 
 			c.Specify("path B starts first", func() {
-				pathB.TimeSpan = NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.TimeSpan.Start)
 			})
 		})
 
 		c.Specify("the collision will end if one finishs as the other starts", func() {
 			c.Specify("path A ends when path B starts", func() {
-				pathA.TimeSpan = NewTimeSpan(10, 30)
-				pathB.TimeSpan = NewTimeSpan(30, 40)
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.end)
+				pathA.TimeSpan = time.NewTimeSpan(10, 30)
+				pathB.TimeSpan = time.NewTimeSpan(30, 40)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.TimeSpan.End)
 			})
 
 			c.Specify("path B ends when path B starts", func() {
-				pathA.TimeSpan = NewTimeSpan(30, 40)
-				pathB.TimeSpan = NewTimeSpan(10, 30)
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+				pathA.TimeSpan = time.NewTimeSpan(30, 40)
+				pathB.TimeSpan = time.NewTimeSpan(10, 30)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.TimeSpan.End)
 			})
 		})
 
 		c.Specify("the collision will end when the paths no longer overlap", func() {
-			pathA.TimeSpan = NewTimeSpan(0, 10)
-			pathB.TimeSpan = NewTimeSpan(0, 10)
-			c.Expect(pathCollision(pathA, pathB).End(), Equals, WorldTime(5))
-			c.Expect(pathCollision(pathB, pathA).End(), Equals, WorldTime(5))
+			pathA.TimeSpan = time.NewTimeSpan(0, 10)
+			pathB.TimeSpan = time.NewTimeSpan(0, 10)
+			c.Expect(pathCollision(pathA, pathB).End(), Equals, time.WorldTime(5))
+			c.Expect(pathCollision(pathB, pathA).End(), Equals, time.WorldTime(5))
 
-			pathA.TimeSpan = NewTimeSpan(2, 12)
-			pathB.TimeSpan = NewTimeSpan(0, 10)
-			c.Expect(pathCollision(pathA, pathB).End(), Equals, WorldTime(6))
-			c.Expect(pathCollision(pathB, pathA).End(), Equals, WorldTime(6))
+			pathA.TimeSpan = time.NewTimeSpan(2, 12)
+			pathB.TimeSpan = time.NewTimeSpan(0, 10)
+			c.Expect(pathCollision(pathA, pathB).End(), Equals, time.WorldTime(6))
+			c.Expect(pathCollision(pathB, pathA).End(), Equals, time.WorldTime(6))
 
-			pathA.TimeSpan = NewTimeSpan(3, 13)
-			pathB.TimeSpan = NewTimeSpan(4, 14)
+			pathA.TimeSpan = time.NewTimeSpan(3, 13)
+			pathB.TimeSpan = time.NewTimeSpan(4, 14)
 			// Float answer is 8.5
-			c.Expect(pathCollision(pathA, pathB).End(), Equals, WorldTime(9))
-			c.Expect(pathCollision(pathB, pathA).End(), Equals, WorldTime(9))
+			c.Expect(pathCollision(pathA, pathB).End(), Equals, time.WorldTime(9))
+			c.Expect(pathCollision(pathB, pathA).End(), Equals, time.WorldTime(9))
 
-			pathA.TimeSpan = NewTimeSpan(3, 17)
-			pathB.TimeSpan = NewTimeSpan(5, 11)
+			pathA.TimeSpan = time.NewTimeSpan(3, 17)
+			pathB.TimeSpan = time.NewTimeSpan(5, 11)
 			// Float answer is 8 * 3/19
-			c.Expect(pathCollision(pathA, pathB).End(), Equals, WorldTime(9))
-			c.Expect(pathCollision(pathB, pathA).End(), Equals, WorldTime(9))
+			c.Expect(pathCollision(pathA, pathB).End(), Equals, time.WorldTime(9))
+			c.Expect(pathCollision(pathB, pathA).End(), Equals, time.WorldTime(9))
 		})
 
 		specs := [...]struct {
-			A, B        TimeSpan
+			A, B        time.TimeSpan
 			description string
 		}{{
-			NewTimeSpan(10, 30),
-			NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(10, 30),
 			"when path A and B start and end at the same time",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(30, 50),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(30, 50),
 			"when path A ends as path B starts",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(20, 40),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(20, 40),
 			"when path A starts and ends before path B",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(20, 30),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(20, 30),
 			"when path A starts before and ends with path B",
 		}, {
-			NewTimeSpan(10, 30),
-			NewTimeSpan(20, 25),
+			time.NewTimeSpan(10, 30),
+			time.NewTimeSpan(20, 25),
 			"when path A starts before and ends after path B",
 		}}
 
@@ -807,41 +808,41 @@ func DescribePathCollision(c gospec.Context) {
 	c.Specify("when path A and path B share the same origin and destination", func() {
 		o, d := Cell{0, 0}, Cell{1, 0}
 
-		pathA = PathAction{NewTimeSpan(10, 30), o, d}
-		pathB = PathAction{NewTimeSpan(10, 30), o, d}
+		pathA = PathAction{time.NewTimeSpan(10, 30), o, d}
+		pathB = PathAction{time.NewTimeSpan(10, 30), o, d}
 
 		c.Assume(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG_DEST)
 		c.Assume(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG_DEST)
 
 		c.Specify("the collision begins when either path starts", func() {
 			c.Specify("path A starts first", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.TimeSpan.Start)
 			})
 
 			c.Specify("path B starts first", func() {
-				pathB.TimeSpan = NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.TimeSpan.Start)
 			})
 		})
 
 		c.Specify("the collision ends when both paths have completed", func() {
 			c.Specify("path A finishes last", func() {
-				pathA.TimeSpan = NewTimeSpan(15, 35)
+				pathA.TimeSpan = time.NewTimeSpan(15, 35)
 
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.end)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.TimeSpan.End)
 			})
 
 			c.Specify("path B finishes last", func() {
-				pathB.TimeSpan = NewTimeSpan(15, 35)
+				pathB.TimeSpan = time.NewTimeSpan(15, 35)
 
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.TimeSpan.End)
 			})
 		})
 
@@ -851,47 +852,47 @@ func DescribePathCollision(c gospec.Context) {
 
 	c.Specify("when path A and path B share the same origin and are perpendicular", func() {
 		o := Cell{0, 0}
-		pathA = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(North)}
-		pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(East)}
+		pathA = PathAction{time.NewTimeSpan(10, 30), o, o.Neighbor(North)}
+		pathB = PathAction{time.NewTimeSpan(10, 30), o, o.Neighbor(East)}
 
 		c.Specify("a same origin collision is identified", func() {
 			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG_PERP)
 			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG_PERP)
 
-			pathB = PathAction{NewTimeSpan(10, 30), o, o.Neighbor(West)}
+			pathB = PathAction{time.NewTimeSpan(10, 30), o, o.Neighbor(West)}
 			c.Expect(pathCollision(pathA, pathB).Type(), Equals, CT_SAME_ORIG_PERP)
 			c.Expect(pathCollision(pathB, pathA).Type(), Equals, CT_SAME_ORIG_PERP)
 		})
 
 		c.Specify("the collision begins when either path starts first", func() {
 			c.Specify("path A starts first", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathA.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathA.TimeSpan.Start)
 			})
 
 			c.Specify("path B starts first", func() {
-				pathB.TimeSpan = NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.start)
-				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.start)
+				c.Expect(pathCollision(pathA, pathB).Start(), Equals, pathB.TimeSpan.Start)
+				c.Expect(pathCollision(pathB, pathA).Start(), Equals, pathB.TimeSpan.Start)
 			})
 		})
 
 		c.Specify("the collision ends when the first one finishes", func() {
 			c.Specify("path A finishes first", func() {
-				pathA.TimeSpan = NewTimeSpan(5, 25)
+				pathA.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.end)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathA.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathA.TimeSpan.End)
 			})
 
 			c.Specify("path B finishes first", func() {
-				pathB.TimeSpan = NewTimeSpan(5, 25)
+				pathB.TimeSpan = time.NewTimeSpan(5, 25)
 
-				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.end)
-				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.end)
+				c.Expect(pathCollision(pathA, pathB).End(), Equals, pathB.TimeSpan.End)
+				c.Expect(pathCollision(pathB, pathA).End(), Equals, pathB.TimeSpan.End)
 			})
 		})
 
@@ -907,7 +908,7 @@ func DescribeCellCollision(c gospec.Context) {
 		c.Specify("as not happening", func() {
 			cell := Cell{0, 0}
 			path := PathAction{
-				TimeSpan: NewTimeSpan(10, 20),
+				TimeSpan: time.NewTimeSpan(10, 20),
 				Orig:     Cell{1, 1},
 				Dest:     Cell{1, 0},
 			}
@@ -918,7 +919,7 @@ func DescribeCellCollision(c gospec.Context) {
 		c.Specify("if the path's origin is the cell", func() {
 			cell := Cell{0, 0}
 			path := PathAction{
-				TimeSpan: NewTimeSpan(10, 20),
+				TimeSpan: time.NewTimeSpan(10, 20),
 				Orig:     cell,
 				Dest:     Cell{1, 0},
 			}
@@ -947,7 +948,7 @@ func DescribeCellCollision(c gospec.Context) {
 		c.Specify("if the path's destination is the cell", func() {
 			cell := Cell{0, 0}
 			path := PathAction{
-				TimeSpan: NewTimeSpan(10, 30),
+				TimeSpan: time.NewTimeSpan(10, 30),
 				Orig:     Cell{1, 0},
 				Dest:     cell,
 			}

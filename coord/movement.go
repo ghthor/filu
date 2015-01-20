@@ -1,8 +1,10 @@
-package engine
+package coord
 
 import (
 	"errors"
 	"fmt"
+
+	"github.com/ghthor/engine/time"
 )
 
 type (
@@ -66,26 +68,26 @@ func (p PartialCell) String() string {
 
 type (
 	MoveAction interface {
-		Start() WorldTime
-		End() WorldTime
+		Start() time.WorldTime
+		End() time.WorldTime
 		CanHappenAfter(action MoveAction) bool
 	}
 
 	TurnAction struct {
 		from, to Direction
-		time     WorldTime
+		time     time.WorldTime
 	}
 
 	PathAction struct {
-		TimeSpan
+		time.TimeSpan
 		Orig, Dest Cell
 	}
 
 	PathActionJson struct {
-		Start WorldTime `json:"start"`
-		End   WorldTime `json:"end"`
-		Orig  Cell      `json:"orig"`
-		Dest  Cell      `json:"dest"`
+		Start time.WorldTime `json:"start"`
+		End   time.WorldTime `json:"end"`
+		Orig  Cell           `json:"orig"`
+		Dest  Cell           `json:"dest"`
 	}
 )
 
@@ -93,8 +95,8 @@ type (
 // TODO Conditionalize this with the fps
 const TurnActionDelay = 10
 
-func (a TurnAction) Start() WorldTime { return a.time }
-func (a TurnAction) End() WorldTime   { return a.time }
+func (a TurnAction) Start() time.WorldTime { return a.time }
+func (a TurnAction) End() time.WorldTime   { return a.time }
 func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
 	if anAction == nil {
 		return true
@@ -115,20 +117,24 @@ func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
 }
 
 func (pa PathAction) String() string {
-	return fmt.Sprintf("PA{s:%v d:%v e:%v f:%v t:%v}", pa.start, pa.duration, pa.end, pa.Orig, pa.Dest)
+	return fmt.Sprintf("PA{s:%v d:%v e:%v f:%v t:%v}",
+		pa.TimeSpan.Start,
+		pa.TimeSpan.Duration,
+		pa.TimeSpan.End,
+		pa.Orig, pa.Dest)
 }
 
 func (pa PathAction) Json() PathActionJson {
 	return PathActionJson{
-		pa.start,
-		pa.end,
+		pa.TimeSpan.Start,
+		pa.TimeSpan.End,
 		pa.Orig,
 		pa.Dest,
 	}
 }
 
-func (pa *PathAction) Start() WorldTime { return pa.TimeSpan.start }
-func (pa *PathAction) End() WorldTime   { return pa.TimeSpan.end }
+func (pa *PathAction) Start() time.WorldTime { return pa.TimeSpan.Start }
+func (pa *PathAction) End() time.WorldTime   { return pa.TimeSpan.End }
 
 func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 	if anAction == nil {
@@ -155,26 +161,26 @@ func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 	panic("unknown MoveAction type")
 }
 
-func (pa PathAction) OrigPartial(now WorldTime) (pc PartialCell) {
+func (pa PathAction) OrigPartial(now time.WorldTime) (pc PartialCell) {
 	pc.Cell = pa.Orig
-	if now <= pa.start {
+	if now <= pa.TimeSpan.Start {
 		pc.Percentage = 1.0
-	} else if now >= pa.end {
+	} else if now >= pa.TimeSpan.End {
 		pc.Percentage = 0.0
 	} else {
-		pc.Percentage = float64(pa.Remaining(now)) / float64(pa.duration)
+		pc.Percentage = float64(pa.Remaining(now)) / float64(pa.TimeSpan.Duration)
 	}
 	return
 }
 
-func (pa PathAction) DestPartial(now WorldTime) (pc PartialCell) {
+func (pa PathAction) DestPartial(now time.WorldTime) (pc PartialCell) {
 	pc.Cell = pa.Dest
-	if now <= pa.start {
+	if now <= pa.TimeSpan.Start {
 		pc.Percentage = 0.0
-	} else if now >= pa.end {
+	} else if now >= pa.TimeSpan.End {
 		pc.Percentage = 1.0
 	} else {
-		pc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.duration))
+		pc.Percentage = 1.0 - (float64(pa.Remaining(now)) / float64(pa.TimeSpan.Duration))
 	}
 	return
 }
@@ -210,19 +216,19 @@ func (pa PathAction) Traverses(c Cell) bool {
 	return pa.Orig == c || pa.Dest == c
 }
 
-func (pa PathAction) TraversesAt(c Cell, t WorldTime) (pc PartialCell, err error) {
-	if t < pa.start || t > pa.end {
+func (pa PathAction) TraversesAt(c Cell, t time.WorldTime) (pc PartialCell, err error) {
+	if t < pa.TimeSpan.Start || t > pa.TimeSpan.End {
 		return pc, errors.New("timeOutOfRange")
 	}
 
 	if c == pa.Orig {
-		if t == pa.end {
+		if t == pa.TimeSpan.End {
 			return pc, errors.New("miss")
 		}
 		pc = pa.OrigPartial(t)
 
 	} else if pa.Dest == c {
-		if t == pa.start {
+		if t == pa.TimeSpan.Start {
 			return pc, errors.New("miss")
 		}
 		pc = pa.DestPartial(t)
