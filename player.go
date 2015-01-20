@@ -56,16 +56,6 @@ type Player struct {
 	killMux         chan bool
 }
 
-type PlayerJson struct {
-	// TODO When go updates to 1.1? this can be converted to an embedded type
-	// The current json marshaller doesn't marshall embedded types
-	EntityId    EntityId         `json:"id"`
-	Name        string           `json:"name"`
-	Facing      string           `json:"facing"`
-	PathActions []PathActionJson `json:"pathActions"`
-	Cell        Cell             `json:"cell"`
-}
-
 func (p *Player) Id() EntityId {
 	return p.entityId
 }
@@ -260,22 +250,4 @@ func (p *Player) SubmitInput(cmd, params string) error {
 
 func (p *Player) Disconnect() {
 	p.sim.RemovePlayer(p)
-}
-
-func (p PlayerJson) Id() EntityId { return p.EntityId }
-func (p PlayerJson) AABB() AABB   { return AABB{p.Cell, p.Cell} }
-func (p PlayerJson) IsDifferentFrom(other EntityJson) (different bool) {
-	o := other.(PlayerJson)
-
-	switch {
-	case p.Facing != o.Facing:
-		fallthrough
-	case len(p.PathActions) != len(o.PathActions):
-		different = true
-	case len(p.PathActions) == len(o.PathActions):
-		for i, _ := range o.PathActions {
-			different = different || (p.PathActions[i] != o.PathActions[i])
-		}
-	}
-	return
 }

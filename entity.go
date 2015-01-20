@@ -15,12 +15,6 @@ type (
 		Json() EntityJson
 	}
 
-	EntityJson interface {
-		Id() EntityId
-		AABB() AABB
-		IsDifferentFrom(EntityJson) bool
-	}
-
 	moveRequest struct {
 		t Time
 		Direction

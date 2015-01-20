@@ -26,14 +26,6 @@ type (
 		terrain        TerrainMap
 	}
 
-	// External format used to send state to the clients
-	WorldStateJson struct {
-		Time       gtime.Time      `json:"time"`
-		Entities   []EntityJson    `json:"entities"`
-		Removed    []EntityJson    `json:"removed"`
-		TerrainMap *TerrainMapJson `json:"terrainMap,omitempty"`
-	}
-
 	StateConn interface {
 		SendWorldState(WorldStateJson)
 	}
@@ -280,87 +272,4 @@ func (ws *WorldState) Json() WorldStateJson {
 		s.TerrainMap = terrain
 	}
 	return s
-}
-
-func (s WorldStateJson) Clone() WorldStateJson {
-	terrainMap, err := s.TerrainMap.Clone()
-	if err != nil {
-		panic("error cloning terrain map: " + err.Error())
-	}
-	clone := WorldStateJson{
-		s.Time,
-		make([]EntityJson, len(s.Entities)),
-		nil,
-		terrainMap,
-	}
-	copy(clone.Entities, s.Entities)
-	return clone
-}
-
-func (s WorldStateJson) Cull(aabb coord.AABB) (culled WorldStateJson) {
-	culled.Time = s.Time
-
-	// Cull Entities
-	for _, e := range s.Entities {
-		if aabb.Overlaps(e.AABB()) {
-			culled.Entities = append(culled.Entities, e)
-		}
-	}
-
-	// Cull Terrain
-	// TODO Maybe remove the ability to have an empty TerrainMap
-	// Requires updating some tests to have a terrain map that don't have one
-	if !s.TerrainMap.IsEmpty() {
-		culled.TerrainMap = &TerrainMapJson{TerrainMap: s.TerrainMap.Slice(aabb)}
-	}
-	return
-}
-
-func (s WorldStateJson) Diff(ss WorldStateJson) (diff WorldStateJson) {
-	diff.Time = ss.Time
-
-	if len(s.Entities) == 0 && len(ss.Entities) > 0 {
-		diff.Entities = ss.Entities
-	} else {
-		// Find the entities that have changed from the old state to the new one
-	nextEntity:
-		for _, entity := range ss.Entities {
-			for _, old := range s.Entities {
-				if entity.Id() == old.Id() {
-					if old.IsDifferentFrom(entity) {
-						diff.Entities = append(diff.Entities, entity)
-					}
-					continue nextEntity
-				}
-			}
-			// This is a new Entity
-			diff.Entities = append(diff.Entities, entity)
-		}
-
-		// Check if all the entities in old state exist in the new state
-	entityStillExists:
-		for _, old := range s.Entities {
-			for _, entity := range ss.Entities {
-				if old.Id() == entity.Id() {
-					continue entityStillExists
-				}
-			}
-			diff.Removed = append(diff.Removed, old)
-		}
-	}
-
-	// Diff the TerrainMap
-	diff.TerrainMap = s.TerrainMap.Diff(ss.TerrainMap)
-	return
-}
-
-// TerrainMap needs an extra step before sending
-// TODO remove this maybe?
-// The extra step is to avoid casting the entire terrain map to a string
-// when the world state json is created. The Diff function could run this step
-// and we could call it "Finalize"
-func (s WorldStateJson) Prepare() {
-	if !s.TerrainMap.IsEmpty() {
-		s.TerrainMap.Prepare()
-	}
 }

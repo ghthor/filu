@@ -15,9 +15,12 @@ func TestAllSpecs(t *testing.T) {
 	r.AddSpec(engine.DescribeMockEntities)
 
 	r.AddSpec(engine.DescribeQuad)
+
+	// All have JSON aspects that need to be removed
 	r.AddSpec(engine.DescribeTerrainMap)
 	r.AddSpec(engine.DescribeWorldState)
 	r.AddSpec(engine.DescribeDiffConn)
+
 	r.AddSpec(engine.DescribeSimulation)
 
 	r.AddSpec(engine.DescribeInputCommands)
