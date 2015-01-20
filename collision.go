@@ -7,7 +7,6 @@ import (
 type (
 	CollisionType int
 
-	// This will be renamed to Collision
 	Collision interface {
 		Type() CollisionType
 		Start() WorldTime
