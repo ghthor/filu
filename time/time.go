@@ -25,7 +25,7 @@ type Span struct {
 	Duration   int64
 }
 
-func NewTimeSpan(start, end WorldTime) Span {
+func NewSpan(start, end WorldTime) Span {
 	return Span{
 		start,
 		end,

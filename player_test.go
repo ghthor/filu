@@ -96,7 +96,7 @@ func DescribePlayer(c gospec.Context) {
 		c.Expect(string(jsonBytes), Equals, `{"id":0,"name":"thundercleese","facing":"north","pathActions":null,"cell":{"x":0,"y":0}}`)
 
 		player.mi.pathActions = append(player.mi.pathActions, &PathAction{
-			NewTimeSpan(0, 10),
+			NewSpan(0, 10),
 			Cell{0, 0},
 			Cell{0, 1},
 		})
@@ -143,7 +143,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 			playerA := &Player{mi: newMotionInfo(contested.Neighbor(South), North, 20)}
 			startA := WorldTime(0)
 			pathA := &PathAction{
-				NewTimeSpan(startA, startA+WorldTime(playerA.mi.speed)),
+				NewSpan(startA, startA+WorldTime(playerA.mi.speed)),
 				playerA.mi.cell,
 				contested,
 			}
@@ -172,7 +172,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 						c.Specify("if the speeds are different the faster player wins", func() {
 							playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 21)}
 							pathB := &PathAction{
-								NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
+								NewSpan(startB, startB+WorldTime(playerB.mi.speed)),
 								playerB.mi.cell,
 								contested,
 							}
@@ -201,7 +201,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 								playerA.mi.speed)}
 
 							pathB := &PathAction{
-								NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
+								NewSpan(startB, startB+WorldTime(playerB.mi.speed)),
 								playerB.mi.cell,
 								contested,
 							}
@@ -235,7 +235,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 						playerB := &Player{mi: newMotionInfo(contested.Neighbor(spec.Direction.Reverse()), spec.Direction, 20)}
 						startB := startA + 1
 						pathB := &PathAction{
-							NewTimeSpan(startB, startB+WorldTime(playerB.mi.speed)),
+							NewSpan(startB, startB+WorldTime(playerB.mi.speed)),
 							playerB.mi.cell,
 							contested,
 						}
@@ -273,7 +273,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 			c.Specify(fmt.Sprintf("and a player is attempting to move there from the %v", direction), func() {
 				player := &Player{mi: newMotionInfo(playerNotMoving.Cell().Neighbor(direction), direction.Reverse(), 20)}
 				path := &PathAction{
-					NewTimeSpan(0, 20),
+					NewSpan(0, 20),
 					player.Cell(),
 					playerNotMoving.Cell(),
 				}
@@ -318,7 +318,7 @@ func DescribePlayerCollisions(c gospec.Context) {
 
 				for _, player := range players {
 					player.mi.Apply(&PathAction{
-						NewTimeSpan(0, 0+WorldTime(player.mi.speed)),
+						NewSpan(0, 0+WorldTime(player.mi.speed)),
 						player.Cell(),
 						playerNotMoving.Cell(),
 					})
@@ -355,12 +355,12 @@ func DescribePlayerCollisions(c gospec.Context) {
 		playerB := &Player{mi: newMotionInfo(b, b.DirectionTo(a), 20)}
 
 		playerA.mi.Apply(&PathAction{
-			NewTimeSpan(0, 20),
+			NewSpan(0, 20),
 			a, b,
 		})
 
 		playerB.mi.Apply(&PathAction{
-			NewTimeSpan(0, 20),
+			NewSpan(0, 20),
 			b, a,
 		})
 
@@ -383,8 +383,8 @@ func DescribePlayerCollisions(c gospec.Context) {
 			playerA := &Player{mi: newMotionInfo(m, m.DirectionTo(n), 15)}
 			playerB := &Player{mi: newMotionInfo(n, n.DirectionTo(o), 20)}
 
-			playerA.mi.Apply(&PathAction{NewTimeSpan(20, 35), m, n})
-			playerB.mi.Apply(&PathAction{NewTimeSpan(20, 40), n, o})
+			playerA.mi.Apply(&PathAction{NewSpan(20, 35), m, n})
+			playerB.mi.Apply(&PathAction{NewSpan(20, 40), n, o})
 
 			c.Specify("player A doesn't move", func() {
 				entityCollision{20, playerA, playerB}.collide()
@@ -463,7 +463,7 @@ func DescribePlayerJson(c gospec.Context) {
 		c.Specify("when the player is moving", func() {
 			player.PathActions = []PathActionJson{
 				PathAction{
-					NewTimeSpan(10, 30),
+					NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(North),
 				}.Json(),
@@ -483,7 +483,7 @@ func DescribePlayerJson(c gospec.Context) {
 		c.Specify("when the player has started moving", func() {
 			playerChanged.PathActions = []PathActionJson{
 				PathAction{
-					NewTimeSpan(10, 30),
+					NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(North),
 				}.Json(),
@@ -496,7 +496,7 @@ func DescribePlayerJson(c gospec.Context) {
 			playerChanged.Cell = player.Cell.Neighbor(North)
 			player.PathActions = []PathActionJson{
 				PathAction{
-					NewTimeSpan(10, 30),
+					NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(North),
 				}.Json(),
@@ -511,7 +511,7 @@ func DescribePlayerJson(c gospec.Context) {
 			// TODO Specify "and continued moving in a different direction"
 			player.PathActions = []PathActionJson{
 				PathAction{
-					NewTimeSpan(10, 30),
+					NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(North),
 				}.Json(),
@@ -520,7 +520,7 @@ func DescribePlayerJson(c gospec.Context) {
 			playerChanged.Cell = player.Cell.Neighbor(North)
 			playerChanged.PathActions = []PathActionJson{
 				PathAction{
-					NewTimeSpan(30, 50),
+					NewSpan(30, 50),
 					playerChanged.Cell,
 					playerChanged.Cell.Neighbor(West),
 				}.Json(),

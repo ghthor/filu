@@ -16,7 +16,7 @@ func DescribeMovableEntity(c gospec.Context) {
 			c.Expect(motionInfo.isMoving(), IsFalse)
 
 			motionInfo.pathActions = append(motionInfo.pathActions, &PathAction{
-				NewTimeSpan(0, 20),
+				NewSpan(0, 20),
 				motionInfo.cell,
 				motionInfo.cell.Neighbor(North),
 			})
@@ -32,7 +32,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 			c.Specify("when moving north", func() {
 				motionInfo.pathActions = append(motionInfo.pathActions, &PathAction{
-					NewTimeSpan(0, 20),
+					NewSpan(0, 20),
 					motionInfo.cell,
 					motionInfo.cell.Neighbor(North),
 				})
@@ -44,7 +44,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 			c.Specify("when moving east", func() {
 				motionInfo.pathActions = append(motionInfo.pathActions, &PathAction{
-					NewTimeSpan(0, 20),
+					NewSpan(0, 20),
 					motionInfo.cell,
 					motionInfo.cell.Neighbor(East),
 				})
@@ -56,7 +56,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 			c.Specify("when moving south", func() {
 				motionInfo.pathActions = append(motionInfo.pathActions, &PathAction{
-					NewTimeSpan(0, 20),
+					NewSpan(0, 20),
 					motionInfo.cell,
 					motionInfo.cell.Neighbor(South),
 				})
@@ -68,7 +68,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 			c.Specify("when moving west", func() {
 				motionInfo.pathActions = append(motionInfo.pathActions, &PathAction{
-					NewTimeSpan(0, 20),
+					NewSpan(0, 20),
 					motionInfo.cell,
 					motionInfo.cell.Neighbor(West),
 				})

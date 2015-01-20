@@ -71,7 +71,7 @@ func DescribePathAction(c gospec.Context) {
 	c.Specify("should calculate partial cell percentages", func() {
 
 		pa := PathAction{
-			time.NewTimeSpan(10, 20),
+			time.NewSpan(10, 20),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
@@ -145,7 +145,7 @@ func DescribePathAction(c gospec.Context) {
 		Dest := Cell{0, 1}
 
 		pa := PathAction{
-			time.NewTimeSpan(clk.Now(), clk.Future(duration)),
+			time.NewSpan(clk.Now(), clk.Future(duration)),
 			Orig,
 			Dest,
 		}
@@ -234,13 +234,13 @@ func DescribePathAction(c gospec.Context) {
 func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can move in any direction immediately after moving", func() {
 		pathAction1 := &PathAction{
-			time.NewTimeSpan(time.WorldTime(0), time.WorldTime(20)),
+			time.NewSpan(time.WorldTime(0), time.WorldTime(20)),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
 
 		pathAction2 := &PathAction{
-			time.NewTimeSpan(time.WorldTime(20), time.WorldTime(40)),
+			time.NewSpan(time.WorldTime(20), time.WorldTime(40)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
@@ -253,7 +253,7 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("an entity can't move before turning", func() {
 		pathAction := &PathAction{
-			time.NewTimeSpan(time.WorldTime(21), time.WorldTime(41)),
+			time.NewSpan(time.WorldTime(21), time.WorldTime(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
@@ -268,7 +268,7 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("An entity can't move immediatly after turning", func() {
 		pathAction := &PathAction{
-			time.NewTimeSpan(time.WorldTime(21), time.WorldTime(41)),
+			time.NewSpan(time.WorldTime(21), time.WorldTime(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}

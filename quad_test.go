@@ -356,7 +356,7 @@ func DescribeQuad(c gospec.Context) {
 
 		entity := &MockAliveEntity{mi: newMotionInfo(Cell{0, 0}, North, 20)}
 		path := &PathAction{
-			NewTimeSpan(0, 20),
+			NewSpan(0, 20),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
@@ -612,7 +612,7 @@ func DescribeQuad(c gospec.Context) {
 		c.Specify("adjusts entity's position when pathActions have completed", func() {
 
 			path := &PathAction{
-				NewTimeSpan(0, 20),
+				NewSpan(0, 20),
 				Cell{0, 0},
 				Cell{-1, 0},
 			}

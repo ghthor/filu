@@ -384,7 +384,7 @@ func (q *quadLeaf) stepTo(t WorldTime, unsolvable chan []movableEntity) {
 		// If the last MoveAction was a PathAction that ended on this Step
 		if pathAction, ok := mi.lastMoveAction.(*PathAction); (ok && pathAction.End() == t) || (mi.facing == direction) {
 			pathAction = &PathAction{
-				NewTimeSpan(t, t+WorldTime(mi.speed)),
+				NewSpan(t, t+WorldTime(mi.speed)),
 				mi.cell,
 				dest,
 			}

@@ -156,7 +156,7 @@ CT_SAME_ORIG_DEST_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_TIMESPAN:
@@ -185,7 +185,7 @@ CT_SAME_ORIG_TIMESPAN:
 		}
 	}
 
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_PERP_TIMESPAN:
@@ -200,7 +200,7 @@ CT_SAME_ORIG_PERP_TIMESPAN:
 	} else {
 		end = b.Span.End
 	}
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 	goto EXIT
 
 CT_HEAD_TO_HEAD_TIMESPAN:
@@ -231,7 +231,7 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 	goto EXIT
 
 CT_FROM_SIDE_TIMESPAN:
@@ -247,7 +247,7 @@ CT_FROM_SIDE_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 	goto EXIT
 
 CT_SWAP_TIMESPAN:
@@ -264,7 +264,7 @@ CT_SWAP_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 	goto EXIT
 
 CT_A_INTO_B_TIMESPAN:
@@ -282,13 +282,13 @@ CT_A_INTO_B_TIMESPAN:
 			start += 1
 		}
 	}
-	c.Span = time.NewTimeSpan(start, b.Span.End)
+	c.Span = time.NewSpan(start, b.Span.End)
 	goto EXIT
 
 CT_A_INTO_B_FROM_SIDE_TIMESPAN:
 	start = a.Span.Start
 	end = b.Span.End
-	c.Span = time.NewTimeSpan(start, end)
+	c.Span = time.NewSpan(start, end)
 
 EXIT:
 	return
