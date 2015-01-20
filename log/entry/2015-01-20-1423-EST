@@ -1,0 +1,10 @@
+Tue Jan 20 14:23:27 EST 2015
+
+# journal - Thinking that I should just remove time.Time
+After doing the renames in the time package I'm realizing that the Time type isn't very useful.
+All it does is specify the difference between an int64 and a Time value.
+But that difference isn't all that useful.
+
+I should ask someone about this little detail.
+
+Tue Jan 20 14:26:15 EST 2015
