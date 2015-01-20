@@ -1,9 +1,20 @@
-package engine
+package time
 
 import (
+	"testing"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
+
+func TestUnitSpecs(t *testing.T) {
+	r := gospec.NewRunner()
+
+	r.AddSpec(DescribeClock)
+	r.AddSpec(DescribeTimeSpan)
+
+	gospec.MainGoTest(r, t)
+}
 
 func DescribeClock(c gospec.Context) {
 	clk := Clock(0)

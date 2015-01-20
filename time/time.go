@@ -1,4 +1,4 @@
-package engine
+package time
 
 type (
 	// Represents an Instant in Time
