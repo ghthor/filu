@@ -1,4 +1,4 @@
-# Process architecture of a running game using engine
+# Process architecture of a running game
 
 ![dia diagram of the process architecture](design-notes/process-architecture.png)
 
