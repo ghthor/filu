@@ -1,4 +1,7 @@
-package simulation
+// The sim package defines the interface to a simulation.
+// It also defines how the input/output interface the
+// simulation has to the actors.
+package sim
 
 // An Actor can be connected to the simulation.
 type Actor interface {
