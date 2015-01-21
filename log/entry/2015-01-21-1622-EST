@@ -1,0 +1,25 @@
+Wed Jan 21 16:22:18 EST 2015
+
+# journal - Architecture diagram and interface design
+I am extremely happy with the progress I've made today.
+Allowing myself to accept that I needed to step back and
+do a "rewrite" has freed my mind to apply a functional
+design using interfaces.
+
+Immediately after I committed the Simulation and Actor
+interfaces I knew exactly what I needed to do.
+Create a pkg and implement them.
+The rpg2d implementation will be the first style,
+but the system itself and the behavior is applicable
+to any number of implementations. 3d, 2d, maybe even
+non-realtime. I'm also fairly positive the generic
+nature of the StateConn interface will allow me to make clients
+of all varieties, Browser and Native(OpenGL), and AI
+endpoints in any language that can use a UDP socket.
+
+I may have enough time today to port the existing quadtree
+implementation as the in memory storage for rpg2d.
+I'm going to go take a break for now and maybe do a
+little socialization, take a walk.
+
+Wed Jan 21 16:30:36 EST 2015
