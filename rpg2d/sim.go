@@ -152,7 +152,15 @@ func (s *runningSimulation) startLoop() {
 
 	gameLoop:
 		for {
-			// TODO Implement a prioritized select for ticker.C and haltReq
+			// Prioritized select for ticker.C and haltReq
+			select {
+			case <-ticker.C:
+				// TODO Step the simulation forward in time
+
+			case hasHalted = <-haltReq:
+				break gameLoop
+			default:
+			}
 
 			select {
 			case <-ticker.C:
