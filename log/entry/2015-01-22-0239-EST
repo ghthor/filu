@@ -1,0 +1,86 @@
+Thu Jan 22 02:39:13 EST 2015
+
+# journal - Long term distributed design ideas
+- Distributed servers (Regions)
+    - Each server will host a world region
+    - Creating an actor costs in game resources
+        - Encourage players to host their own region to easily create more than 1 actor
+        - The world has a finite amount of actor's based on real world performance
+        - In game resources are collected and sunk into creating new actors
+
+    - All regions hosted by (gaming company name) will be trusted regions
+        - You can pay us money to have your region become trusted
+            - Assess whether this would enable pay-to-win
+            - The money pays for us to host your region
+        - Resources/skills/experience gained in trusted regions can be
+          carried with you as you travel between trusted regions.
+
+        - Resources/skills/exp gained in untrusted regions is bound to that region
+          and CANNOT be transfered from region to region
+
+        - Becoming a trusted region wipes the region
+            - Advantages of paying for a trusted region
+                - Owner regulates the actors created in that region
+                    - Could create a huge army by themselves without contesting for
+                      the shared resources of another zone
+                - Become a member of the greater community
+
+            - Disadvantages
+                - Once a region becomes trusted anyone can harvest resources
+                  and they transferable to only regions
+                - You can't run mods to create new behavior in your region
+                    - an arena region that caters to competitive combat
+                    - A region with no combat and a fully story driven experience
+                    - A battleground region with capture the flag, king of the hill mechanics
+
+        - A modded region could become trusted/endorsed by (gaming company name)
+            - We run the servers
+            - We encourage players to visit your region before it is trusted
+            - The regions source code is open source
+                - you cooperate with us to verify the region's process is running unmodified
+                  from the open source
+
+    - Region boundaries
+        - with seams
+            - players will have to transfer from region to region
+            - aka loading times as they connect to the server hosting the destination
+
+        - trusted regions
+            - dynamically modify bounds of a region
+                - only simulate chunks with active actors
+                - preload chunks into the quadtree as the actors move around
+                - could enable better server performance from the user's experience
+                    - less zoning
+
+            - Some sort of overlapping chunk simulation
+                - bridge between 2 simulation regions
+                - could enable more seamless movement between simulation regions
+                - region servers cooperate to preload actors transferring from server to server
+                - both servers will calculate the state for the overlapping region
+                - one server would be authoritative until the other verifies the connection
+                    - then they would flip authority
+
+### Why have trusted and untrusted regions?
+Untrusted regions are a wild wild west. It gives anyone the ability to
+build an AI and test without taxing the real game servers. It gives
+anyone playing a risk free place to explore and meet others playing
+the game. While the trusted zones have more risk involved because
+it is verified that no one is duping gold, reporting invalid health values,
+etc(cheating).
+
+Untrusted regions enables anyone to make a modded version of the game.
+You go and change some numbers or remove a skill, play with the games
+balance or resource generation. It allows the players
+to experiment with the game itself. The interface for actors to
+perform input and receive output stays the same allowing  anyone playing
+to zone from region to region and explore the universe.
+
+The game will encourage player regulation. From politics to behavior,
+I want the players to feel like they are shaping the world they
+are playing in. Untrusted regions could be ranked, rated, reviewed
+by the players. Again traveling from the trusted world to the untrusted
+world is risk free. Anything that happens in the trusted world is
+safe from the sea of potential hackers and exploiters in the untrusted
+world.
+
+Thu Jan 22 03:24:18 EST 2015
