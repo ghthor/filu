@@ -1,6 +1,7 @@
-// The sim package defines the interface to a simulation.
-// It also defines how the input/output interface the
-// simulation has to the actors.
+// The sim package defines the interface used to
+// interact with a game world simulation.
+// It also defines the IO interface the
+// simulation can use to communicate with the actors.
 package sim
 
 // An Actor can be connected to the simulation.
