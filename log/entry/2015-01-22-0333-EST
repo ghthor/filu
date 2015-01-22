@@ -1,0 +1,37 @@
+Thu Jan 22 03:33:25 EST 2015
+
+# journal - Rifts
+So I'm sitting thinking about this seamless problem.
+If the actor is connected to both servers at a seam chunk.
+And both servers are calculating the chunks next state.
+Theres still this seam at the chunks edge where, one server
+becomes authoritative if the actor moves over it. This
+will cause problems. How does ability damage travel
+over this seam? How does collision detection work over
+the seam? Look at how I'm doing the unsolvables just
+between chunks in the same quad tree. Does the root node
+of the quadtree have to communicate with the other server
+to verify locations of actors?
+
+The other issue is dos'ing 2 servers by having lots of actors
+active in the seam chunks. One thing that could happen is
+if there are many many actors in the chunks bordering the
+seams than it just becomes a hard zone wall with a load
+time. The seam could also encourage a low population of
+actors around it by becomes more dangerous to be around.
+Spawning more monsters, higher chance of death, etc.
+
+Maybe this encouragement would be enough to avoid large
+crowds around the seams. 
+
+I want the user experience to be smooth and appear
+completely seamless. But if there is a performance issue
+at some value of N active actors in the chunk seam and
+I can't solve it technically, maybe I can solve it with
+mythos. A otherly world rift is opened and produces some
+very dangerous conditions. Also causes a hard zoning wall
+with a load time. If it appears to be a zone wall
+and it acts like a zone wall, than users shouldn't
+realize it wasn't a zone wall.
+
+Thu Jan 22 03:47:31 EST 2015
