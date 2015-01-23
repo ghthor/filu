@@ -38,7 +38,7 @@ type quadNode struct {
 
 	bounds coord.AABB
 
-	children []Quad
+	children [4]Quad
 }
 
 // A leaf in the quad tree that contains the references
