@@ -7,7 +7,7 @@ import (
 
 type EntityJson interface {
 	Id() EntityId
-	AABB() coord.AABB
+	AABB() coord.Bounds
 	IsDifferentFrom(EntityJson) bool
 }
 
@@ -26,8 +26,8 @@ type TerrainMapJson struct {
 	TerrainMap `json:"-"`
 
 	// A Slice of new terrain the client doesn't have
-	Bounds  *coord.AABB `json:"bounds,omitempty"`
-	Terrain string      `json:"terrain,omitempty"`
+	Bounds  *coord.Bounds `json:"bounds,omitempty"`
+	Terrain string        `json:"terrain,omitempty"`
 
 	// An array of type changes
 	Changes []TerrainTypeChange `json:"changes,omitempty"`
@@ -41,8 +41,8 @@ type WorldStateJson struct {
 	TerrainMap *TerrainMapJson `json:"terrainMap,omitempty"`
 }
 
-func (p PlayerJson) Id() EntityId     { return p.EntityId }
-func (p PlayerJson) AABB() coord.AABB { return coord.AABB{p.Cell, p.Cell} }
+func (p PlayerJson) Id() EntityId       { return p.EntityId }
+func (p PlayerJson) AABB() coord.Bounds { return coord.Bounds{p.Cell, p.Cell} }
 func (p PlayerJson) IsDifferentFrom(other EntityJson) (different bool) {
 	o := other.(PlayerJson)
 
@@ -97,14 +97,14 @@ func (m *TerrainMapJson) Diff(other *TerrainMapJson) (diff *TerrainMapJson) {
 
 			// Overlaps the top
 			if oaabb.TopL.Y > maabb.TopL.Y {
-				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.Bounds{
 					oaabb.TopL,
 					coord.Cell{oaabb.BotR.X, maabb.TopL.Y + 1},
 				})}
 
 			} else if oaabb.BotR.Y < maabb.BotR.Y {
 				// Overlaps the bottom
-				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.Bounds{
 					coord.Cell{oaabb.TopL.X, maabb.BotR.Y - 1},
 					oaabb.BotR,
 				})}
@@ -123,13 +123,13 @@ func (m *TerrainMapJson) Diff(other *TerrainMapJson) (diff *TerrainMapJson) {
 
 			// Overlaps the left
 			if oaabb.TopL.X < maabb.TopL.X {
-				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.Bounds{
 					oaabb.TopL,
 					coord.Cell{maabb.TopL.X - 1, oaabb.BotR.Y},
 				})}
 			} else if oaabb.BotR.X > maabb.BotR.X {
 				// Overlaps the right
-				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.AABB{
+				diff = &TerrainMapJson{TerrainMap: other.Slice(coord.Bounds{
 					coord.Cell{maabb.BotR.X + 1, oaabb.TopL.Y},
 					oaabb.BotR,
 				})}
@@ -172,7 +172,7 @@ func (s WorldStateJson) Clone() WorldStateJson {
 	return clone
 }
 
-func (s WorldStateJson) Cull(aabb coord.AABB) (culled WorldStateJson) {
+func (s WorldStateJson) Cull(aabb coord.Bounds) (culled WorldStateJson) {
 	culled.Time = s.Time
 
 	// Cull Entities

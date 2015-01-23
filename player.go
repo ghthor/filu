@@ -64,7 +64,7 @@ func (p *Player) Cell() Cell {
 	return p.mi.cell
 }
 
-func (p *Player) AABB() (aabb AABB) {
+func (p *Player) AABB() (aabb Bounds) {
 	return p.mi.AABB()
 }
 
@@ -150,7 +150,7 @@ func (p *Player) SendWorldState(state WorldStateJson) { p.routeWorldState <- sta
 const viewPortSize = 52
 
 func (p *Player) CullStateToView(s WorldStateJson) WorldStateJson {
-	s = s.Cull(AABB{
+	s = s.Cull(Bounds{
 		p.mi.cell.Add(-viewPortSize/2, viewPortSize/2),
 		p.mi.cell.Add(viewPortSize/2, -viewPortSize/2),
 	})

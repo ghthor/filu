@@ -27,7 +27,7 @@ func DescribeMovableEntity(c gospec.Context) {
 			c.Specify("when it isn't moving", func() {
 				c.Assume(motionInfo.isMoving(), IsFalse)
 				aabb := motionInfo.AABB()
-				c.Expect(aabb, Equals, AABB{Cell{1, 1}, Cell{1, 1}})
+				c.Expect(aabb, Equals, Bounds{Cell{1, 1}, Cell{1, 1}})
 			})
 
 			c.Specify("when moving north", func() {
@@ -39,7 +39,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 				c.Assume(motionInfo.isMoving(), IsTrue)
 				aabb := motionInfo.AABB()
-				c.Expect(aabb, Equals, AABB{Cell{1, 2}, Cell{1, 1}})
+				c.Expect(aabb, Equals, Bounds{Cell{1, 2}, Cell{1, 1}})
 			})
 
 			c.Specify("when moving east", func() {
@@ -51,7 +51,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 				c.Assume(motionInfo.isMoving(), IsTrue)
 				aabb := motionInfo.AABB()
-				c.Expect(aabb, Equals, AABB{Cell{1, 1}, Cell{2, 1}})
+				c.Expect(aabb, Equals, Bounds{Cell{1, 1}, Cell{2, 1}})
 			})
 
 			c.Specify("when moving south", func() {
@@ -63,7 +63,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 				c.Assume(motionInfo.isMoving(), IsTrue)
 				aabb := motionInfo.AABB()
-				c.Expect(aabb, Equals, AABB{Cell{1, 1}, Cell{1, 0}})
+				c.Expect(aabb, Equals, Bounds{Cell{1, 1}, Cell{1, 0}})
 			})
 
 			c.Specify("when moving west", func() {
@@ -75,7 +75,7 @@ func DescribeMovableEntity(c gospec.Context) {
 
 				c.Assume(motionInfo.isMoving(), IsTrue)
 				aabb := motionInfo.AABB()
-				c.Expect(aabb, Equals, AABB{Cell{0, 1}, Cell{1, 1}})
+				c.Expect(aabb, Equals, Bounds{Cell{0, 1}, Cell{1, 1}})
 			})
 		})
 

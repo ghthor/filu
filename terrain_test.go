@@ -9,7 +9,7 @@ import (
 
 func DescribeTerrainMap(c gospec.Context) {
 	c.Specify("a terrain map", func() {
-		terrainMap, err := NewTerrainMap(AABB{
+		terrainMap, err := NewTerrainMap(Bounds{
 			Cell{-2, 3},
 			Cell{2, -2},
 		}, "G")
@@ -47,7 +47,7 @@ GGGGG
 		})
 
 		c.Specify("can be created with a string", func() {
-			terrainMap, err = NewTerrainMap(AABB{Cell{0, 0}, Cell{5, -6}}, `
+			terrainMap, err = NewTerrainMap(Bounds{Cell{0, 0}, Cell{5, -6}}, `
 RRRRRD
 RRRRRD
 RRRRRD
@@ -86,7 +86,7 @@ DDDDDD
 			terrainMap.TerrainTypes[1][2] = TT_DIRT
 			terrainMap.TerrainTypes[4][3] = TT_ROCK
 
-			slice := terrainMap.Slice(AABB{
+			slice := terrainMap.Slice(Bounds{
 				Cell{-1, 2},
 				Cell{1, -1},
 			})
@@ -98,7 +98,7 @@ GGR
 `)
 
 			c.Specify("that can be sliced again", func() {
-				slice = slice.Slice(AABB{
+				slice = slice.Slice(Bounds{
 					Cell{-1, 2},
 					Cell{0, 2},
 				})
@@ -113,11 +113,11 @@ GGR
 		})
 
 		c.Specify("can be sliced by an overlapping rectangle", func() {
-			slice := terrainMap.Slice(AABB{
+			slice := terrainMap.Slice(Bounds{
 				Cell{-5, 2},
 				Cell{2, -1},
 			})
-			c.Expect(slice.Bounds, Equals, AABB{
+			c.Expect(slice.Bounds, Equals, Bounds{
 				Cell{-2, 2},
 				Cell{2, -1},
 			})
@@ -129,7 +129,7 @@ GGR
 				c.Expect(e, Equals, "invalid terrain map slicing operation: no overlap")
 			}()
 
-			terrainMap.Slice(AABB{
+			terrainMap.Slice(Bounds{
 				Cell{-3000, -3000},
 				Cell{-3000, -3001},
 			})
@@ -137,7 +137,7 @@ GGR
 	})
 
 	c.Specify("a terrain map that is being prepared for the client", func() {
-		fullMap, err := NewTerrainMap(AABB{
+		fullMap, err := NewTerrainMap(Bounds{
 			Cell{0, 0},
 			Cell{3, -3},
 		}, `
@@ -166,7 +166,7 @@ DGGR
 		})
 
 		c.Specify("can calculate row or col differences with another TerrainMap", func() {
-			terrainMap := fullMap.Slice(AABB{
+			terrainMap := fullMap.Slice(Bounds{
 				Cell{1, -1},
 				Cell{2, -2},
 			})
@@ -175,7 +175,7 @@ DGGR
 
 			c.Specify("if the width is the same and the left and right edges are the same", func() {
 				c.Specify("and it overlaps the top", func() {
-					terrainMap = fullMap.Slice(AABB{
+					terrainMap = fullMap.Slice(Bounds{
 						Cell{1, 0},
 						Cell{2, -1},
 					})
@@ -185,7 +185,7 @@ DGGR
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(*diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, Bounds{
 						Cell{1, 0},
 						Cell{2, 0},
 					})
@@ -193,7 +193,7 @@ DGGR
 				})
 
 				c.Specify("and it overlaps the bottom", func() {
-					terrainMap = fullMap.Slice(AABB{
+					terrainMap = fullMap.Slice(Bounds{
 						Cell{1, -2},
 						Cell{2, -3},
 					})
@@ -203,7 +203,7 @@ DGGR
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(*diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, Bounds{
 						Cell{1, -3},
 						Cell{2, -3},
 					})
@@ -213,7 +213,7 @@ DGGR
 
 			c.Specify("if the height is the same and the top and bottom edges are the same", func() {
 				c.Specify("and it overlaps the left", func() {
-					terrainMap = fullMap.Slice(AABB{
+					terrainMap = fullMap.Slice(Bounds{
 						Cell{0, -1},
 						Cell{1, -2},
 					})
@@ -223,7 +223,7 @@ DGGR
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(*diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, Bounds{
 						Cell{0, -1},
 						Cell{0, -2},
 					})
@@ -231,7 +231,7 @@ DGGR
 				})
 
 				c.Specify("and it overlaps the right", func() {
-					terrainMap = fullMap.Slice(AABB{
+					terrainMap = fullMap.Slice(Bounds{
 						Cell{2, -1},
 						Cell{3, -2},
 					})
@@ -241,7 +241,7 @@ DGGR
 					diff := oldTerrain.Diff(newTerrain)
 					diff.Prepare()
 
-					c.Expect(*diff.Bounds, Equals, AABB{
+					c.Expect(*diff.Bounds, Equals, Bounds{
 						Cell{3, -1},
 						Cell{3, -2},
 					})

@@ -22,9 +22,9 @@ type Quad interface {
 	Remove(entity.Entity) Quad
 
 	QueryCell(coord.Cell) []entity.Entity
-	QueryBounds(coord.AABB) []entity.Entity
+	QueryBounds(coord.Bounds) []entity.Entity
 
-	Bounds() coord.AABB
+	Bounds() coord.Bounds
 
 	Parent() Quad
 	Child(Corner) Quad
@@ -36,7 +36,7 @@ type Quad interface {
 type quadNode struct {
 	parent Quad
 
-	bounds coord.AABB
+	bounds coord.Bounds
 
 	children [4]Quad
 }
@@ -47,7 +47,7 @@ type quadNode struct {
 type quadLeaf struct {
 	parent Quad
 
-	bounds coord.AABB
+	bounds coord.Bounds
 
 	entities    []entity.Entity
 	moveables   []entity.Movable

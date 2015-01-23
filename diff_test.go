@@ -9,7 +9,7 @@ import (
 )
 
 func DescribeDiffConn(c gospec.Context) {
-	terrainMap, err := NewTerrainMap(coord.AABB{
+	terrainMap, err := NewTerrainMap(coord.Bounds{
 		coord.Cell{-10, 10},
 		coord.Cell{10, -10},
 	}, string(TT_GRASS))
@@ -22,7 +22,7 @@ func DescribeDiffConn(c gospec.Context) {
 		0,
 		[]EntityJson{MockEntity{}.Json()},
 		nil,
-		terrainMap.Slice(coord.AABB{
+		terrainMap.Slice(coord.Bounds{
 			coord.Cell{-2, 2},
 			coord.Cell{2, -2},
 		}).Json(),
@@ -73,7 +73,7 @@ func DescribeDiffConn(c gospec.Context) {
 			// The viewport changing is sensed by DiffConn when the AABB of the TerrainMap has changed
 			// and a Diff is run between the new terrain map and the old one
 			c.Specify("when the viewport has changed", func() {
-				nextState.TerrainMap = terrainMap.Slice(coord.AABB{
+				nextState.TerrainMap = terrainMap.Slice(coord.Bounds{
 					coord.Cell{-3, 2},
 					coord.Cell{1, -2},
 				}).Json()

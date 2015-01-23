@@ -10,12 +10,12 @@ import (
 type (
 	quad interface {
 		Parent() quad
-		AABB() AABB
+		AABB() Bounds
 		Insert(entity) quad
 		InsertAll([]entity) quad
 		Remove(entity)
 		Contains(entity) bool
-		QueryAll(AABB) []entity
+		QueryAll(Bounds) []entity
 		QueryCollidables(Cell) []collidableEntity
 
 		StepTo(Time)
@@ -30,7 +30,7 @@ type (
 
 	quadLeaf struct {
 		parent      quad
-		aabb        AABB
+		aabb        Bounds
 		entities    []entity
 		movable     []movableEntity
 		collidable  []collidableEntity
@@ -39,7 +39,7 @@ type (
 
 	quadTree struct {
 		parent quad
-		aabb   AABB
+		aabb   Bounds
 		quads  [4]quad
 	}
 )
@@ -51,7 +51,7 @@ const (
 	QUAD_SW
 )
 
-func newQuadTree(aabb AABB, entities []entity, maxPerQuad int) (quad, error) {
+func newQuadTree(aabb Bounds, entities []entity, maxPerQuad int) (quad, error) {
 	if aabb.IsInverted() {
 		return nil, errors.New("aabb is Inverted")
 	}
@@ -75,7 +75,7 @@ func newQuadTree(aabb AABB, entities []entity, maxPerQuad int) (quad, error) {
 }
 
 func (q *quadLeaf) Parent() quad { return q.parent }
-func (q *quadLeaf) AABB() AABB   { return q.aabb }
+func (q *quadLeaf) AABB() Bounds { return q.aabb }
 
 func (q *quadLeaf) Insert(e entity) quad {
 	// Check if this Quad is full
@@ -156,7 +156,7 @@ func (q *quadLeaf) Contains(e entity) bool {
 	return false
 }
 
-func (q *quadLeaf) QueryAll(aabb AABB) []entity {
+func (q *quadLeaf) QueryAll(aabb Bounds) []entity {
 	matches := make([]entity, 0, len(q.entities))
 	for _, e := range q.entities {
 		if aabb.Overlaps(e.AABB()) {
@@ -353,7 +353,7 @@ func (q *quadLeaf) divide() (qt *quadTree) {
 }
 
 func (q *quadTree) Parent() quad { return q.parent }
-func (q *quadTree) AABB() AABB   { return q.aabb }
+func (q *quadTree) AABB() Bounds { return q.aabb }
 
 func (q *quadTree) Insert(e entity) quad {
 	for i, quad := range q.quads {
@@ -391,7 +391,7 @@ func (q *quadTree) Contains(e entity) bool {
 	return false
 }
 
-func (q *quadTree) QueryAll(aabb AABB) []entity {
+func (q *quadTree) QueryAll(aabb Bounds) []entity {
 	matches := make([]entity, 0, 10)
 	for _, quad := range q.quads {
 		if quad.AABB().Overlaps(aabb) {

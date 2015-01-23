@@ -13,7 +13,7 @@ type (
 	TerrainType rune
 
 	TerrainMap struct {
-		Bounds AABB
+		Bounds Bounds
 		// y, x
 		TerrainTypes [][]TerrainType
 	}
@@ -30,7 +30,7 @@ const (
 	TT_ROCK  TerrainType = 'R'
 )
 
-func NewTerrainMap(bounds AABB, s string) (TerrainMap, error) {
+func NewTerrainMap(bounds Bounds, s string) (TerrainMap, error) {
 	if len(s) == 0 {
 		return TerrainMap{}, errors.New("invalid TerrainType")
 	}
@@ -84,7 +84,7 @@ func (m TerrainMap) Cell(c Cell) TerrainType {
 	return m.TerrainTypes[y][x]
 }
 
-func (m TerrainMap) Slice(bounds AABB) TerrainMap {
+func (m TerrainMap) Slice(bounds Bounds) TerrainMap {
 	bounds, err := m.Bounds.Intersection(bounds)
 	if err != nil {
 		panic("invalid terrain map slicing operation: " + err.Error())

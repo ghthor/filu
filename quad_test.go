@@ -12,7 +12,7 @@ import (
 
 func DescribeQuad(c gospec.Context) {
 	c.Specify("quad can be queried with an AABB to return all entities that are inside", func() {
-		qt, err := newQuadTree(AABB{
+		qt, err := newQuadTree(Bounds{
 			Cell{-1000, 1000},
 			Cell{1000, -1000},
 		}, nil, 1)
@@ -23,13 +23,13 @@ func DescribeQuad(c gospec.Context) {
 		qt = qt.Insert(MockEntity{2, Cell{-10, -10}})
 		qt = qt.Insert(MockEntity{3, Cell{999, -1000}})
 
-		entities := qt.QueryAll(AABB{
+		entities := qt.QueryAll(Bounds{
 			Cell{0, 0},
 			Cell{10, -10},
 		})
 		c.Expect(len(entities), Equals, 1)
 
-		entities = qt.QueryAll(AABB{
+		entities = qt.QueryAll(Bounds{
 			Cell{-90, 90},
 			Cell{-1, -9},
 		})
@@ -40,7 +40,7 @@ func DescribeQuad(c gospec.Context) {
 	})
 
 	c.Specify("quad can be queried with a cell for any collidable entities", func() {
-		world, err := newQuadTree(AABB{
+		world, err := newQuadTree(Bounds{
 			Cell{-20, 20},
 			Cell{20, -20},
 		}, nil, 20)
@@ -85,7 +85,7 @@ func DescribeQuad(c gospec.Context) {
 	})
 
 	c.Specify("entity is inserted into quadtree", func() {
-		qt, err := newQuadTree(AABB{
+		qt, err := newQuadTree(Bounds{
 			Cell{-1000, 1000},
 			Cell{1000, -1000},
 		}, nil, 1)
@@ -165,7 +165,7 @@ func DescribeQuad(c gospec.Context) {
 	})
 
 	c.Specify("quadTree divides when per quad entity limit is reached", func() {
-		qt, err := newQuadTree(AABB{
+		qt, err := newQuadTree(Bounds{
 			Cell{-1000, 1000},
 			Cell{1000, -1000},
 		}, nil, 1)
@@ -223,7 +223,7 @@ func DescribeQuad(c gospec.Context) {
 	})
 
 	c.Specify("stepping forward in time", func() {
-		world, err := newQuadTree(AABB{
+		world, err := newQuadTree(Bounds{
 			Cell{-20, 20},
 			Cell{20, -20},
 		}, nil, 20)

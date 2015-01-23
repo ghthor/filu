@@ -45,7 +45,7 @@ type (
 )
 
 func (e MockEntityJson) Id() EntityId { return e.EntityId }
-func (e MockEntityJson) AABB() AABB   { return AABB{e.Cell, e.Cell} }
+func (e MockEntityJson) AABB() Bounds { return Bounds{e.Cell, e.Cell} }
 func (e MockEntityJson) IsDifferentFrom(other EntityJson) bool {
 	o := other.(MockEntityJson)
 	if e.Name != o.Name {
@@ -56,7 +56,7 @@ func (e MockEntityJson) IsDifferentFrom(other EntityJson) bool {
 
 func (e MockEntity) Id() EntityId { return e.id }
 func (e MockEntity) Cell() Cell   { return e.cell }
-func (e MockEntity) AABB() AABB   { return AABB{e.cell, e.cell} }
+func (e MockEntity) AABB() Bounds { return Bounds{e.cell, e.cell} }
 func (e MockEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
@@ -71,7 +71,7 @@ func (e MockEntity) String() string {
 
 func (e *MockMobileEntity) Id() EntityId { return e.id }
 func (e *MockMobileEntity) Cell() Cell   { return e.mi.cell }
-func (e *MockMobileEntity) AABB() AABB   { return e.mi.AABB() }
+func (e *MockMobileEntity) AABB() Bounds { return e.mi.AABB() }
 func (e *MockMobileEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
@@ -88,7 +88,7 @@ func (e *MockMobileEntity) String() string {
 
 func (e *MockCollidableEntity) Id() EntityId { return e.id }
 func (e *MockCollidableEntity) Cell() Cell   { return e.cell }
-func (e *MockCollidableEntity) AABB() AABB   { return AABB{e.cell, e.cell} }
+func (e *MockCollidableEntity) AABB() Bounds { return Bounds{e.cell, e.cell} }
 func (e *MockCollidableEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),
@@ -108,7 +108,7 @@ func (e *MockCollidableEntity) String() string {
 
 func (e *MockAliveEntity) Id() EntityId { return e.id }
 func (e *MockAliveEntity) Cell() Cell   { return e.mi.cell }
-func (e *MockAliveEntity) AABB() AABB   { return e.mi.AABB() }
+func (e *MockAliveEntity) AABB() Bounds { return e.mi.AABB() }
 func (e *MockAliveEntity) Json() EntityJson {
 	return MockEntityJson{
 		e.Id(),

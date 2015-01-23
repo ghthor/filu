@@ -6,7 +6,7 @@ import (
 )
 
 func DescribeAABB(c gospec.Context) {
-	aabb := AABB{
+	aabb := Bounds{
 		Cell{0, 0},
 		Cell{0, 0},
 	}
@@ -16,7 +16,7 @@ func DescribeAABB(c gospec.Context) {
 		c.Expect(aabb.Height(), Equals, 1)
 		c.Expect(aabb.Area(), Equals, 1)
 
-		aabb = AABB{
+		aabb = Bounds{
 			Cell{0, 0},
 			Cell{1, -1},
 		}
@@ -27,7 +27,7 @@ func DescribeAABB(c gospec.Context) {
 
 	c.Specify("aabb contains a cell inside of itself", func() {
 		c.Expect(aabb.Contains(Cell{0, 0}), IsTrue)
-		containsCheck := func(aabb AABB) {
+		containsCheck := func(aabb Bounds) {
 			for i := aabb.TopL.X; i <= aabb.BotR.X; i++ {
 				for j := aabb.TopL.Y; j >= aabb.BotR.Y; j-- {
 					c.Expect(aabb.Contains(Cell{i, j}), IsTrue)
@@ -35,18 +35,18 @@ func DescribeAABB(c gospec.Context) {
 			}
 		}
 
-		containsCheck(AABB{
+		containsCheck(Bounds{
 			Cell{0, 0},
 			Cell{1, -1},
 		})
-		containsCheck(AABB{
+		containsCheck(Bounds{
 			Cell{1, 1},
 			Cell{2, -10},
 		})
 	})
 
 	c.Specify("can identify cells that lay on it's edges", func() {
-		edgeCheck := func(aabb AABB) {
+		edgeCheck := func(aabb Bounds) {
 			c.Assume(aabb.IsInverted(), IsFalse)
 
 			// Horizontal Edges
@@ -63,7 +63,7 @@ func DescribeAABB(c gospec.Context) {
 				}
 			}
 
-			outside := AABB{
+			outside := Bounds{
 				aabb.TopL.Add(-1, 1),
 				aabb.BotR.Add(1, -1),
 			}
@@ -85,45 +85,45 @@ func DescribeAABB(c gospec.Context) {
 
 		edgeCheck(aabb)
 
-		edgeCheck(AABB{
+		edgeCheck(Bounds{
 			Cell{0, 0},
 			Cell{1, -1},
 		})
 
-		edgeCheck(AABB{
+		edgeCheck(Bounds{
 			Cell{1, 1},
 			Cell{1, -1},
 		})
 
-		edgeCheck(AABB{
+		edgeCheck(Bounds{
 			Cell{-10, 10},
 			Cell{10, -10},
 		})
 
-		edgeCheck(AABB{
+		edgeCheck(Bounds{
 			Cell{-10, 10},
 			Cell{-10, -10},
 		})
 
-		edgeCheck(AABB{
+		edgeCheck(Bounds{
 			Cell{-10, -10},
 			Cell{10, -10},
 		})
 	})
 
 	c.Specify("can calulate the intersection of 2 AABBs", func() {
-		aabb := AABB{
+		aabb := Bounds{
 			Cell{0, 0},
 			Cell{10, -10},
 		}
 
 		c.Specify("when they overlap", func() {
-			other := AABB{
+			other := Bounds{
 				Cell{5, -5},
 				Cell{15, -15},
 			}
 
-			intersection := AABB{
+			intersection := Bounds{
 				Cell{5, -5},
 				Cell{10, -10},
 			}
@@ -136,12 +136,12 @@ func DescribeAABB(c gospec.Context) {
 			c.Assume(err, IsNil)
 			c.Expect(intersectionResult, Equals, intersection)
 
-			other = AABB{
+			other = Bounds{
 				Cell{-5, 5},
 				Cell{5, -5},
 			}
 
-			intersection = AABB{
+			intersection = Bounds{
 				Cell{0, 0},
 				Cell{5, -5},
 			}
@@ -157,7 +157,7 @@ func DescribeAABB(c gospec.Context) {
 
 		c.Specify("when one is contained inside the other", func() {
 			// aabb Contains other
-			other := AABB{
+			other := Bounds{
 				Cell{5, -5},
 				Cell{6, -6},
 			}
@@ -171,7 +171,7 @@ func DescribeAABB(c gospec.Context) {
 			c.Expect(intersection, Equals, other)
 
 			// other Contains aabb
-			other = AABB{
+			other = Bounds{
 				Cell{-1, 1},
 				Cell{11, -11},
 			}
@@ -186,7 +186,7 @@ func DescribeAABB(c gospec.Context) {
 		})
 
 		c.Specify("and an error is returned if the rectangles do not overlap", func() {
-			other := AABB{
+			other := Bounds{
 				Cell{11, -11},
 				Cell{11, -11},
 			}
@@ -198,7 +198,7 @@ func DescribeAABB(c gospec.Context) {
 	})
 
 	c.Specify("flip topleft and bottomright if they are inverted", func() {
-		aabb = AABB{
+		aabb = Bounds{
 			Cell{0, 0},
 			Cell{-1, 1},
 		}
@@ -208,29 +208,29 @@ func DescribeAABB(c gospec.Context) {
 	})
 
 	c.Specify("expand AABB by a magnitude", func() {
-		c.Expect(aabb.Expand(1), Equals, AABB{
+		c.Expect(aabb.Expand(1), Equals, Bounds{
 			Cell{-1, 1},
 			Cell{1, -1},
 		})
 
-		aabb = AABB{
+		aabb = Bounds{
 			Cell{5, 6},
 			Cell{5, -6},
 		}
 
-		c.Expect(aabb.Expand(2), Equals, AABB{
+		c.Expect(aabb.Expand(2), Equals, Bounds{
 			Cell{3, 8},
 			Cell{7, -8},
 		})
 	})
 
 	c.Specify("AABB can be split into 4 quads", func() {
-		aabb := AABB{
+		aabb := Bounds{
 			Cell{0, 0},
 			Cell{10, -9},
 		}
 
-		quads := [4]AABB{{
+		quads := [4]Bounds{{
 			Cell{0, 0},
 			Cell{4, -4},
 		}, {
@@ -252,12 +252,12 @@ func DescribeAABB(c gospec.Context) {
 		}
 
 		// Width == Height == 2
-		aabb = AABB{
+		aabb = Bounds{
 			Cell{2, -2},
 			Cell{3, -3},
 		}
 
-		quads = [4]AABB{{
+		quads = [4]Bounds{{
 			Cell{2, -2},
 			Cell{2, -2},
 		}, {
@@ -279,7 +279,7 @@ func DescribeAABB(c gospec.Context) {
 		}
 
 		c.Specify("only if the height is greater than 1", func() {
-			aabb = AABB{
+			aabb = Bounds{
 				Cell{1, 1},
 				Cell{2, 1},
 			}
@@ -290,7 +290,7 @@ func DescribeAABB(c gospec.Context) {
 		})
 
 		c.Specify("only if the width is greater than 1", func() {
-			aabb = AABB{
+			aabb = Bounds{
 				Cell{1, 1},
 				Cell{1, 0},
 			}
@@ -301,7 +301,7 @@ func DescribeAABB(c gospec.Context) {
 		})
 
 		c.Specify("only if it isn't inverted", func() {
-			aabb = AABB{
+			aabb = Bounds{
 				Cell{0, 0},
 				Cell{-1, 1},
 			}

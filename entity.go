@@ -11,7 +11,7 @@ type (
 	entity interface {
 		Id() EntityId
 		Cell() Cell
-		AABB() AABB
+		AABB() Bounds
 		Json() EntityJson
 	}
 
@@ -67,7 +67,7 @@ func (mi motionInfo) isMoving() bool {
 	return len(mi.pathActions) != 0
 }
 
-func (mi motionInfo) AABB() (aabb AABB) {
+func (mi motionInfo) AABB() (aabb Bounds) {
 	if mi.isMoving() {
 		pa := mi.pathActions[0]
 		switch pa.Direction() {
@@ -83,7 +83,7 @@ func (mi motionInfo) AABB() (aabb AABB) {
 			aabb.BotR = pa.Dest
 		}
 	} else {
-		aabb = AABB{mi.cell, mi.cell}
+		aabb = Bounds{mi.cell, mi.cell}
 	}
 	return
 }

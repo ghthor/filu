@@ -19,7 +19,7 @@ func (c noopConn) SendJson(msg string, obj interface{}) error {
 
 func DescribeWorldState(c gospec.Context) {
 	c.Specify("generates json compatitable state object", func() {
-		worldState := newWorldState(Clock(0), AABB{
+		worldState := newWorldState(Clock(0), Bounds{
 			Cell{-3, 3},
 			Cell{3, -3},
 		})
@@ -75,7 +75,7 @@ func DescribeWorldState(c gospec.Context) {
 			jsonState.Entities = append(jsonState.Entities[:0], wontBeCulled...)
 			jsonState.Entities = append(jsonState.Entities, toBeCulled...)
 
-			jsonState = jsonState.Cull(AABB{
+			jsonState = jsonState.Cull(Bounds{
 				Cell{-2, 2},
 				Cell{2, -2},
 			})
@@ -118,12 +118,12 @@ GGGGG
 
 			c.Specify("when the viewport has changed", func() {
 				clone := jsonState.Clone()
-				jsonState = jsonState.Cull(AABB{
+				jsonState = jsonState.Cull(Bounds{
 					Cell{-2, 2},
 					Cell{2, -2},
 				})
 
-				clone = clone.Cull(AABB{
+				clone = clone.Cull(Bounds{
 					Cell{-3, 2},
 					Cell{1, -2},
 				})

@@ -53,7 +53,7 @@ func DescribePlayer(c gospec.Context) {
 			}
 		}()
 
-		player.SendWorldState(newWorldState(Clock(0), AABB{
+		player.SendWorldState(newWorldState(Clock(0), Bounds{
 			Cell{-100, 100},
 			Cell{100, -100},
 		}).Json())
