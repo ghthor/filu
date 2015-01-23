@@ -51,49 +51,6 @@ const (
 	QUAD_SW
 )
 
-func splitAABBToQuads(aabb AABB) ([4]AABB, error) {
-	var aabbs [4]AABB
-
-	if aabb.IsInverted() {
-		return aabbs, errors.New("aabb is inverted")
-	}
-
-	w, h := aabb.Width(), aabb.Height()
-
-	if w < 2 || h < 2 {
-		return aabbs, errors.New("aabb is too small to split")
-	}
-
-	// NorthWest
-	nw := AABB{
-		aabb.TopL,
-		Cell{aabb.TopL.X + (w/2 - 1), aabb.TopL.Y - (h/2 - 1)},
-	}
-
-	// NorthEast
-	ne := AABB{
-		Cell{nw.BotR.X + 1, aabb.TopL.Y},
-		Cell{aabb.BotR.X, nw.BotR.Y},
-	}
-
-	se := AABB{
-		Cell{ne.TopL.X, ne.BotR.Y - 1},
-		aabb.BotR,
-	}
-
-	sw := AABB{
-		Cell{aabb.TopL.X, se.TopL.Y},
-		Cell{nw.BotR.X, aabb.BotR.Y},
-	}
-
-	aabbs[QUAD_NW] = nw
-	aabbs[QUAD_NE] = ne
-	aabbs[QUAD_SE] = se
-	aabbs[QUAD_SW] = sw
-
-	return aabbs, nil
-}
-
 func newQuadTree(aabb AABB, entities []entity, maxPerQuad int) (quad, error) {
 	if aabb.IsInverted() {
 		return nil, errors.New("aabb is Inverted")
@@ -373,7 +330,7 @@ func (q *quadLeaf) divide() (qt *quadTree) {
 		aabb:   q.aabb,
 	}
 
-	aabbs, err := splitAABBToQuads(q.aabb)
+	aabbs, err := q.aabb.Quads()
 	if err != nil {
 		panic("error spliting aabb into quads")
 	}

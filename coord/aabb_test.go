@@ -223,4 +223,92 @@ func DescribeAABB(c gospec.Context) {
 			Cell{7, -8},
 		})
 	})
+
+	c.Specify("AABB can be split into 4 quads", func() {
+		aabb := AABB{
+			Cell{0, 0},
+			Cell{10, -9},
+		}
+
+		quads := [4]AABB{{
+			Cell{0, 0},
+			Cell{4, -4},
+		}, {
+			Cell{5, 0},
+			Cell{10, -4},
+		}, {
+			Cell{5, -5},
+			Cell{10, -9},
+		}, {
+			Cell{0, -5},
+			Cell{4, -9},
+		}}
+
+		quadsResult, err := splitAABBToQuads(aabb)
+		c.Assume(err, IsNil)
+
+		for i, quad := range quadsResult {
+			c.Expect(quad, Equals, quads[i])
+		}
+
+		// Width == Height == 2
+		aabb = AABB{
+			Cell{2, -2},
+			Cell{3, -3},
+		}
+
+		quads = [4]AABB{{
+			Cell{2, -2},
+			Cell{2, -2},
+		}, {
+			Cell{3, -2},
+			Cell{3, -2},
+		}, {
+			Cell{3, -3},
+			Cell{3, -3},
+		}, {
+			Cell{2, -3},
+			Cell{2, -3},
+		}}
+
+		quadsResult, err = splitAABBToQuads(aabb)
+		c.Assume(err, IsNil)
+
+		for i, quad := range quadsResult {
+			c.Expect(quad, Equals, quads[i])
+		}
+
+		c.Specify("only if the height is greater than 1", func() {
+			aabb = AABB{
+				Cell{1, 1},
+				Cell{2, 1},
+			}
+
+			_, err := splitAABBToQuads(aabb)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err, Equals, ErrBoundsAreTooSmall)
+		})
+
+		c.Specify("only if the width is greater than 1", func() {
+			aabb = AABB{
+				Cell{1, 1},
+				Cell{1, 0},
+			}
+
+			_, err := splitAABBToQuads(aabb)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err, Equals, ErrBoundsAreTooSmall)
+		})
+
+		c.Specify("only if it isn't inverted", func() {
+			aabb = AABB{
+				Cell{0, 0},
+				Cell{-1, 1},
+			}
+
+			_, err := splitAABBToQuads(aabb)
+			c.Expect(err, Not(IsNil))
+			c.Expect(err, Equals, ErrBoundsAreInverted)
+		})
+	})
 }

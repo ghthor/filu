@@ -91,3 +91,60 @@ func (aabb AABB) Invert() AABB {
 		aabb.BotR, aabb.TopL,
 	}
 }
+
+func (aabb AABB) Quads() ([4]AABB, error) {
+	return splitAABBToQuads(aabb)
+}
+
+var ErrBoundsAreInverted = errors.New("aabb is inverted")
+var ErrBoundsAreTooSmall = errors.New("aabb is too small to split")
+
+func splitAABBToQuads(aabb AABB) ([4]AABB, error) {
+	var aabbs [4]AABB
+
+	if aabb.IsInverted() {
+		return aabbs, ErrBoundsAreInverted
+	}
+
+	w, h := aabb.Width(), aabb.Height()
+
+	if w < 2 || h < 2 {
+		return aabbs, ErrBoundsAreTooSmall
+	}
+
+	// NorthWest
+	nw := AABB{
+		aabb.TopL,
+		Cell{aabb.TopL.X + (w/2 - 1), aabb.TopL.Y - (h/2 - 1)},
+	}
+
+	// NorthEast
+	ne := AABB{
+		Cell{nw.BotR.X + 1, aabb.TopL.Y},
+		Cell{aabb.BotR.X, nw.BotR.Y},
+	}
+
+	se := AABB{
+		Cell{ne.TopL.X, ne.BotR.Y - 1},
+		aabb.BotR,
+	}
+
+	sw := AABB{
+		Cell{aabb.TopL.X, se.TopL.Y},
+		Cell{nw.BotR.X, aabb.BotR.Y},
+	}
+
+	const (
+		QUAD_NW = iota
+		QUAD_NE
+		QUAD_SE
+		QUAD_SW
+	)
+
+	aabbs[QUAD_NW] = nw
+	aabbs[QUAD_NE] = ne
+	aabbs[QUAD_SE] = se
+	aabbs[QUAD_SW] = sw
+
+	return aabbs, nil
+}
