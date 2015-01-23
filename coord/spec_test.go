@@ -18,7 +18,7 @@ func TestUnitSpecs(t *testing.T) {
 	r.AddSpec(DescribePathAction)
 	r.AddSpec(DescribePathCollision)
 
-	r.AddSpec(DescribeAABB)
+	r.AddSpec(DescribeBounds)
 
 	gospec.MainGoTest(r, t)
 }

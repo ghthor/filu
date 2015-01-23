@@ -7,46 +7,46 @@ type Bounds struct {
 	BotR Cell `json:"br"`
 }
 
-func (aabb Bounds) Contains(c Cell) bool {
-	return (aabb.TopL.X <= c.X && aabb.BotR.X >= c.X &&
-		aabb.TopL.Y >= c.Y && aabb.BotR.Y <= c.Y)
+func (b Bounds) Contains(c Cell) bool {
+	return (b.TopL.X <= c.X && b.BotR.X >= c.X &&
+		b.TopL.Y >= c.Y && b.BotR.Y <= c.Y)
 }
 
-func (aabb Bounds) HasOnEdge(c Cell) (onEdge bool) {
+func (b Bounds) HasOnEdge(c Cell) (onEdge bool) {
 	x, y := c.X, c.Y
 	switch {
-	case (x == aabb.TopL.X || x == aabb.BotR.X) && (y <= aabb.TopL.Y && y >= aabb.BotR.Y):
+	case (x == b.TopL.X || x == b.BotR.X) && (y <= b.TopL.Y && y >= b.BotR.Y):
 		fallthrough
-	case (y == aabb.TopL.Y || y == aabb.BotR.Y) && (x >= aabb.TopL.X && x <= aabb.BotR.X):
+	case (y == b.TopL.Y || y == b.BotR.Y) && (x >= b.TopL.X && x <= b.BotR.X):
 		onEdge = true
 	default:
 	}
 	return
 }
 
-func (aabb Bounds) Width() int {
-	return aabb.BotR.X - aabb.TopL.X + 1
+func (b Bounds) Width() int {
+	return b.BotR.X - b.TopL.X + 1
 }
 
-func (aabb Bounds) Height() int {
-	return aabb.TopL.Y - aabb.BotR.Y + 1
+func (b Bounds) Height() int {
+	return b.TopL.Y - b.BotR.Y + 1
 }
 
-func (aabb Bounds) TopR() Cell { return Cell{aabb.BotR.X, aabb.TopL.Y} }
-func (aabb Bounds) BotL() Cell { return Cell{aabb.TopL.X, aabb.BotR.Y} }
+func (b Bounds) TopR() Cell { return Cell{b.BotR.X, b.TopL.Y} }
+func (b Bounds) BotL() Cell { return Cell{b.TopL.X, b.BotR.Y} }
 
-func (aabb Bounds) Area() int {
-	return (aabb.BotR.X - aabb.TopL.X + 1) * (aabb.TopL.Y - aabb.BotR.Y + 1)
+func (b Bounds) Area() int {
+	return (b.BotR.X - b.TopL.X + 1) * (b.TopL.Y - b.BotR.Y + 1)
 }
 
-func (aabb Bounds) Overlaps(other Bounds) bool {
-	if aabb.Contains(other.TopL) || aabb.Contains(other.BotR) ||
-		other.Contains(aabb.TopL) || other.Contains(aabb.BotR) {
+func (b Bounds) Overlaps(other Bounds) bool {
+	if b.Contains(other.TopL) || b.Contains(other.BotR) ||
+		other.Contains(b.TopL) || other.Contains(b.BotR) {
 		return true
 	}
 
-	return aabb.Contains(other.TopR()) || aabb.Contains(other.BotL()) ||
-		other.Contains(aabb.TopR()) || other.Contains(aabb.BotL())
+	return b.Contains(other.TopR()) || b.Contains(other.BotL()) ||
+		other.Contains(b.TopR()) || other.Contains(b.BotL())
 }
 
 func max(a, b int) int {
@@ -63,75 +63,71 @@ func min(a, b int) int {
 	return b
 }
 
-func (aabb Bounds) Intersection(other Bounds) (Bounds, error) {
-	if !aabb.Overlaps(other) {
+func (b Bounds) Intersection(other Bounds) (Bounds, error) {
+	if !b.Overlaps(other) {
 		return Bounds{}, errors.New("no overlap")
 	}
 
 	return Bounds{
-		Cell{max(aabb.TopL.X, other.TopL.X), min(aabb.TopL.Y, other.TopL.Y)},
-		Cell{min(aabb.BotR.X, other.BotR.X), max(aabb.BotR.Y, other.BotR.Y)},
+		Cell{max(b.TopL.X, other.TopL.X), min(b.TopL.Y, other.TopL.Y)},
+		Cell{min(b.BotR.X, other.BotR.X), max(b.BotR.Y, other.BotR.Y)},
 	}, nil
 }
 
-func (aabb Bounds) Expand(mag int) Bounds {
-	aabb.TopL = aabb.TopL.Add(-mag, mag)
-	aabb.BotR = aabb.BotR.Add(mag, -mag)
-	return aabb
+func (b Bounds) Expand(mag int) Bounds {
+	b.TopL = b.TopL.Add(-mag, mag)
+	b.BotR = b.BotR.Add(mag, -mag)
+	return b
 }
 
 // Is BotR actually TopL?
-func (aabb Bounds) IsInverted() bool {
-	return aabb.BotR.Y > aabb.TopL.Y && aabb.BotR.X < aabb.TopL.X
+func (b Bounds) IsInverted() bool {
+	return b.BotR.Y > b.TopL.Y && b.BotR.X < b.TopL.X
 }
 
 // Flip TopL and BotR
-func (aabb Bounds) Invert() Bounds {
+func (b Bounds) Invert() Bounds {
 	return Bounds{
-		aabb.BotR, aabb.TopL,
+		b.BotR, b.TopL,
 	}
 }
 
-func (aabb Bounds) Quads() ([4]Bounds, error) {
-	return splitAABBToQuads(aabb)
-}
+var ErrBoundsAreInverted = errors.New("bounds are inverted")
+var ErrBoundsAreTooSmall = errors.New("bounds are too small to split")
 
-var ErrBoundsAreInverted = errors.New("aabb is inverted")
-var ErrBoundsAreTooSmall = errors.New("aabb is too small to split")
+func (b Bounds) Quads() ([4]Bounds, error) {
+	var bounds [4]Bounds
 
-func splitAABBToQuads(aabb Bounds) ([4]Bounds, error) {
-	var aabbs [4]Bounds
-
-	if aabb.IsInverted() {
-		return aabbs, ErrBoundsAreInverted
+	if b.IsInverted() {
+		return bounds, ErrBoundsAreInverted
 	}
 
-	w, h := aabb.Width(), aabb.Height()
+	w, h := b.Width(), b.Height()
 
 	if w < 2 || h < 2 {
-		return aabbs, ErrBoundsAreTooSmall
+		return bounds, ErrBoundsAreTooSmall
 	}
 
 	// NorthWest
 	nw := Bounds{
-		aabb.TopL,
-		Cell{aabb.TopL.X + (w/2 - 1), aabb.TopL.Y - (h/2 - 1)},
+		b.TopL,
+		Cell{b.TopL.X + (w/2 - 1), b.TopL.Y - (h/2 - 1)},
 	}
 
 	// NorthEast
 	ne := Bounds{
-		Cell{nw.BotR.X + 1, aabb.TopL.Y},
-		Cell{aabb.BotR.X, nw.BotR.Y},
+		Cell{nw.BotR.X + 1, b.TopL.Y},
+		Cell{b.BotR.X, nw.BotR.Y},
 	}
 
 	se := Bounds{
 		Cell{ne.TopL.X, ne.BotR.Y - 1},
-		aabb.BotR,
+		b.BotR,
 	}
 
 	sw := Bounds{
-		Cell{aabb.TopL.X, se.TopL.Y},
-		Cell{nw.BotR.X, aabb.BotR.Y},
+		Cell{b.TopL.X, se.TopL.Y},
+		Cell{nw.BotR.X, b.BotR.Y},
 	}
 
 	const (
@@ -141,10 +137,10 @@ func splitAABBToQuads(aabb Bounds) ([4]Bounds, error) {
 		QUAD_SW
 	)
 
-	aabbs[QUAD_NW] = nw
-	aabbs[QUAD_NE] = ne
-	aabbs[QUAD_SE] = se
-	aabbs[QUAD_SW] = sw
+	bounds[QUAD_NW] = nw
+	bounds[QUAD_NE] = ne
+	bounds[QUAD_SE] = se
+	bounds[QUAD_SW] = sw
 
-	return aabbs, nil
+	return bounds, nil
 }

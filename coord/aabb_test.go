@@ -5,32 +5,32 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-func DescribeAABB(c gospec.Context) {
-	aabb := Bounds{
+func DescribeBounds(c gospec.Context) {
+	b := Bounds{
 		Cell{0, 0},
 		Cell{0, 0},
 	}
 
-	c.Specify("the width, height and area of an aabb", func() {
-		c.Expect(aabb.Width(), Equals, 1)
-		c.Expect(aabb.Height(), Equals, 1)
-		c.Expect(aabb.Area(), Equals, 1)
+	c.Specify("the width, height and area of an bounds", func() {
+		c.Expect(b.Width(), Equals, 1)
+		c.Expect(b.Height(), Equals, 1)
+		c.Expect(b.Area(), Equals, 1)
 
-		aabb = Bounds{
+		b = Bounds{
 			Cell{0, 0},
 			Cell{1, -1},
 		}
-		c.Expect(aabb.Width(), Equals, 2)
-		c.Expect(aabb.Height(), Equals, 2)
-		c.Expect(aabb.Area(), Equals, 4)
+		c.Expect(b.Width(), Equals, 2)
+		c.Expect(b.Height(), Equals, 2)
+		c.Expect(b.Area(), Equals, 4)
 	})
 
-	c.Specify("aabb contains a cell inside of itself", func() {
-		c.Expect(aabb.Contains(Cell{0, 0}), IsTrue)
-		containsCheck := func(aabb Bounds) {
-			for i := aabb.TopL.X; i <= aabb.BotR.X; i++ {
-				for j := aabb.TopL.Y; j >= aabb.BotR.Y; j-- {
-					c.Expect(aabb.Contains(Cell{i, j}), IsTrue)
+	c.Specify("bounds contains a cell inside of itself", func() {
+		c.Expect(b.Contains(Cell{0, 0}), IsTrue)
+		containsCheck := func(b Bounds) {
+			for i := b.TopL.X; i <= b.BotR.X; i++ {
+				for j := b.TopL.Y; j >= b.BotR.Y; j-- {
+					c.Expect(b.Contains(Cell{i, j}), IsTrue)
 				}
 			}
 		}
@@ -46,44 +46,44 @@ func DescribeAABB(c gospec.Context) {
 	})
 
 	c.Specify("can identify cells that lay on it's edges", func() {
-		edgeCheck := func(aabb Bounds) {
-			c.Assume(aabb.IsInverted(), IsFalse)
+		edgeCheck := func(b Bounds) {
+			c.Assume(b.IsInverted(), IsFalse)
 
 			// Horizontal Edges
-			for _, y := range [...]int{aabb.TopL.Y, aabb.BotR.Y} {
-				for x := aabb.TopL.X; x <= aabb.BotR.X; x++ {
-					c.Expect(aabb.HasOnEdge(Cell{x, y}), IsTrue)
+			for _, y := range [...]int{b.TopL.Y, b.BotR.Y} {
+				for x := b.TopL.X; x <= b.BotR.X; x++ {
+					c.Expect(b.HasOnEdge(Cell{x, y}), IsTrue)
 				}
 			}
 
 			// Vertical Edges
-			for _, x := range [...]int{aabb.TopL.X, aabb.BotR.X} {
-				for y := aabb.TopL.Y - 1; y > aabb.BotR.Y; y-- {
-					c.Expect(aabb.HasOnEdge(Cell{x, y}), IsTrue)
+			for _, x := range [...]int{b.TopL.X, b.BotR.X} {
+				for y := b.TopL.Y - 1; y > b.BotR.Y; y-- {
+					c.Expect(b.HasOnEdge(Cell{x, y}), IsTrue)
 				}
 			}
 
 			outside := Bounds{
-				aabb.TopL.Add(-1, 1),
-				aabb.BotR.Add(1, -1),
+				b.TopL.Add(-1, 1),
+				b.BotR.Add(1, -1),
 			}
 
 			// Horizontal Edges
 			for _, y := range [...]int{outside.TopL.Y, outside.BotR.Y} {
 				for x := outside.TopL.X; x <= outside.BotR.X; x++ {
-					c.Expect(aabb.HasOnEdge(Cell{x, y}), IsFalse)
+					c.Expect(b.HasOnEdge(Cell{x, y}), IsFalse)
 				}
 			}
 
 			// Vertical Edges
 			for _, x := range [...]int{outside.TopL.X, outside.BotR.X} {
 				for y := outside.TopL.Y - 1; y > outside.BotR.Y; y-- {
-					c.Expect(aabb.HasOnEdge(Cell{x, y}), IsFalse)
+					c.Expect(b.HasOnEdge(Cell{x, y}), IsFalse)
 				}
 			}
 		}
 
-		edgeCheck(aabb)
+		edgeCheck(b)
 
 		edgeCheck(Bounds{
 			Cell{0, 0},
@@ -111,8 +111,8 @@ func DescribeAABB(c gospec.Context) {
 		})
 	})
 
-	c.Specify("can calulate the intersection of 2 AABBs", func() {
-		aabb := Bounds{
+	c.Specify("can calulate the intersection of 2 bounds", func() {
+		b := Bounds{
 			Cell{0, 0},
 			Cell{10, -10},
 		}
@@ -128,11 +128,11 @@ func DescribeAABB(c gospec.Context) {
 				Cell{10, -10},
 			}
 
-			intersectionResult, err := aabb.Intersection(other)
+			intersectionResult, err := b.Intersection(other)
 			c.Assume(err, IsNil)
 			c.Expect(intersectionResult, Equals, intersection)
 
-			intersectionResult, err = other.Intersection(aabb)
+			intersectionResult, err = other.Intersection(b)
 			c.Assume(err, IsNil)
 			c.Expect(intersectionResult, Equals, intersection)
 
@@ -146,43 +146,43 @@ func DescribeAABB(c gospec.Context) {
 				Cell{5, -5},
 			}
 
-			intersectionResult, err = aabb.Intersection(other)
+			intersectionResult, err = b.Intersection(other)
 			c.Assume(err, IsNil)
 			c.Expect(intersectionResult, Equals, intersection)
 
-			intersectionResult, err = other.Intersection(aabb)
+			intersectionResult, err = other.Intersection(b)
 			c.Assume(err, IsNil)
 			c.Expect(intersectionResult, Equals, intersection)
 		})
 
 		c.Specify("when one is contained inside the other", func() {
-			// aabb Contains other
+			// bounds contain other
 			other := Bounds{
 				Cell{5, -5},
 				Cell{6, -6},
 			}
 
-			intersection, err := aabb.Intersection(other)
+			intersection, err := b.Intersection(other)
 			c.Assume(err, IsNil)
 			c.Expect(intersection, Equals, other)
 
-			intersection, err = other.Intersection(aabb)
+			intersection, err = other.Intersection(b)
 			c.Assume(err, IsNil)
 			c.Expect(intersection, Equals, other)
 
-			// other Contains aabb
+			// other contains bounds
 			other = Bounds{
 				Cell{-1, 1},
 				Cell{11, -11},
 			}
 
-			intersection, err = aabb.Intersection(other)
+			intersection, err = b.Intersection(other)
 			c.Assume(err, IsNil)
-			c.Expect(intersection, Equals, aabb)
+			c.Expect(intersection, Equals, b)
 
-			intersection, err = other.Intersection(aabb)
+			intersection, err = other.Intersection(b)
 			c.Assume(err, IsNil)
-			c.Expect(intersection, Equals, aabb)
+			c.Expect(intersection, Equals, b)
 		})
 
 		c.Specify("and an error is returned if the rectangles do not overlap", func() {
@@ -191,41 +191,41 @@ func DescribeAABB(c gospec.Context) {
 				Cell{11, -11},
 			}
 
-			_, err := aabb.Intersection(other)
+			_, err := b.Intersection(other)
 			c.Expect(err, Not(IsNil))
 			c.Expect(err.Error(), Equals, "no overlap")
 		})
 	})
 
 	c.Specify("flip topleft and bottomright if they are inverted", func() {
-		aabb = Bounds{
+		b = Bounds{
 			Cell{0, 0},
 			Cell{-1, 1},
 		}
 
-		c.Expect(aabb.IsInverted(), IsTrue)
-		c.Expect(aabb.Invert().IsInverted(), IsFalse)
+		c.Expect(b.IsInverted(), IsTrue)
+		c.Expect(b.Invert().IsInverted(), IsFalse)
 	})
 
-	c.Specify("expand AABB by a magnitude", func() {
-		c.Expect(aabb.Expand(1), Equals, Bounds{
+	c.Specify("expand bounds by a magnitude", func() {
+		c.Expect(b.Expand(1), Equals, Bounds{
 			Cell{-1, 1},
 			Cell{1, -1},
 		})
 
-		aabb = Bounds{
+		b = Bounds{
 			Cell{5, 6},
 			Cell{5, -6},
 		}
 
-		c.Expect(aabb.Expand(2), Equals, Bounds{
+		c.Expect(b.Expand(2), Equals, Bounds{
 			Cell{3, 8},
 			Cell{7, -8},
 		})
 	})
 
-	c.Specify("AABB can be split into 4 quads", func() {
-		aabb := Bounds{
+	c.Specify("bounds can be split into 4 quads", func() {
+		b := Bounds{
 			Cell{0, 0},
 			Cell{10, -9},
 		}
@@ -244,7 +244,7 @@ func DescribeAABB(c gospec.Context) {
 			Cell{4, -9},
 		}}
 
-		quadsResult, err := splitAABBToQuads(aabb)
+		quadsResult, err := b.Quads()
 		c.Assume(err, IsNil)
 
 		for i, quad := range quadsResult {
@@ -252,7 +252,7 @@ func DescribeAABB(c gospec.Context) {
 		}
 
 		// Width == Height == 2
-		aabb = Bounds{
+		b = Bounds{
 			Cell{2, -2},
 			Cell{3, -3},
 		}
@@ -271,7 +271,7 @@ func DescribeAABB(c gospec.Context) {
 			Cell{2, -3},
 		}}
 
-		quadsResult, err = splitAABBToQuads(aabb)
+		quadsResult, err = b.Quads()
 		c.Assume(err, IsNil)
 
 		for i, quad := range quadsResult {
@@ -279,34 +279,34 @@ func DescribeAABB(c gospec.Context) {
 		}
 
 		c.Specify("only if the height is greater than 1", func() {
-			aabb = Bounds{
+			b = Bounds{
 				Cell{1, 1},
 				Cell{2, 1},
 			}
 
-			_, err := splitAABBToQuads(aabb)
+			_, err := b.Quads()
 			c.Expect(err, Not(IsNil))
 			c.Expect(err, Equals, ErrBoundsAreTooSmall)
 		})
 
 		c.Specify("only if the width is greater than 1", func() {
-			aabb = Bounds{
+			b = Bounds{
 				Cell{1, 1},
 				Cell{1, 0},
 			}
 
-			_, err := splitAABBToQuads(aabb)
+			_, err := b.Quads()
 			c.Expect(err, Not(IsNil))
 			c.Expect(err, Equals, ErrBoundsAreTooSmall)
 		})
 
 		c.Specify("only if it isn't inverted", func() {
-			aabb = Bounds{
+			b = Bounds{
 				Cell{0, 0},
 				Cell{-1, 1},
 			}
 
-			_, err := splitAABBToQuads(aabb)
+			_, err := b.Quads()
 			c.Expect(err, Not(IsNil))
 			c.Expect(err, Equals, ErrBoundsAreInverted)
 		})
