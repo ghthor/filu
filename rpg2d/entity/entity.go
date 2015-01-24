@@ -9,6 +9,10 @@ type Entity interface {
 
 	// Location in the world
 	Cell() coord.Cell
+
+	// Returns a bounding object incorporating
+	// the entities potential movement targets
+	Bounds() coord.Bounds
 }
 
 // Represents the current motion state of an
