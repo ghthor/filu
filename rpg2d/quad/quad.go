@@ -58,7 +58,9 @@ type Chunk struct {
 // and does collision checks for the chunk and modifies
 // the entities. All entities in the returned chunk will
 // be reinserted into the quad tree to update their location.
-type CollisionHandler func(Chunk) Chunk
+type CollisionHandle interface {
+	NarrowPhaseIn(Chunk) Chunk
+}
 
 // A node in the quad tree that will contain 4 children,
 // one in each corner of the quad nodes bounds.
