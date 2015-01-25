@@ -39,7 +39,15 @@ type SimulationDef struct {
 
 // An implementation of engine/sim.RunningSimulation
 type runningSimulation struct {
-	fps   int
+	fps int
+
+	//---- World state
+	quadTree quad.Quad
+
+	//---- User Settings
+	EntityResolver
+
+	//---- Communication
 
 	// These channels are used by the public api
 	// to add and remove actors. They are 1way
@@ -124,7 +132,16 @@ func (s runningSimulation) Halt() (sim.HaltedSimulation, error) {
 // Implement engine/sim.UnstartedSimulation
 func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
 	rs := &runningSimulation{
-		fps:   s.FPS,
+		fps: s.FPS,
+
+		//---- World State
+		quadTree: s.QuadTree,
+
+		//---- User Settings
+		EntityResolver:     s.EntityResolver,
+
+		//---- Communication
+		// All initialized within startLoop()
 	}
 
 	// Starts 2 go routines and returns
