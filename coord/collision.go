@@ -216,6 +216,13 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 		// Speeds
 		as, bs = float64(a.Span.End-a.Span.Start), float64(b.Span.End-b.Span.Start)
 
+		// The math for this is from a solving a system of equations
+		// for t. The system is composed of 2 lines. I think I will
+		// do some more paper math to better explain this situation.
+		// But for now, this will be sufficent for someone with some
+		// experience in linear algerbra to understand this equation.
+		// See for more info.
+		// https://github.com/ghthor/engine/blob/master/design-notes/math.jpg
 		start = time.Time(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
