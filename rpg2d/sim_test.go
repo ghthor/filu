@@ -1,7 +1,10 @@
 package rpg2d_test
 
 import (
+	"github.com/ghthor/engine/coord"
 	"github.com/ghthor/engine/rpg2d"
+	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim"
 
 	"github.com/ghthor/gospec"
@@ -10,11 +13,42 @@ import (
 
 type mockActor struct{}
 
+// Implement sim.Actor
 func (mockActor) Id() int64           { return 0 }
 func (mockActor) Conn() sim.ActorConn { return nil }
 
+// Implement entity.Entity
+func (mockActor) Cell() coord.Cell {
+	return coord.Cell{}
+}
+
+func (mockActor) Bounds() coord.Bounds {
+	return coord.Bounds{
+		coord.Cell{},
+		coord.Cell{},
+	}
+}
+
+type mockEntityResolver struct{}
+
+func (mockEntityResolver) EntityForActor(a sim.Actor) entity.Entity {
+	return a.(entity.Entity)
+}
+
 func DescribeASimulation(c gospec.Context) {
-	def := rpg2d.SimulationDef{40}
+	quad, err := quad.New(coord.Bounds{
+		TopL: coord.Cell{-1000, 1000},
+		BotR: coord.Cell{1000, -1000},
+	}, 10, nil)
+
+	c.Assume(err, IsNil)
+	def := rpg2d.SimulationDef{
+		FPS: 40,
+
+		QuadTree: quad,
+
+		EntityResolver: mockEntityResolver{},
+	}
 
 	c.Specify("a simulation can be started", func() {
 		rs, err := def.Begin()
