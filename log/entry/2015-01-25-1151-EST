@@ -1,0 +1,16 @@
+Sun Jan 25 11:51:43 EST 2015
+
+# journal - Some things to clean up quad
+I have those stupid height/width != 1 check that panic.
+My hack work around doesn't even make sense....
+Well it does, it needs to NOT divide if it's that size.
+But the other thing, Is I just don't understand what's going
+on there. I need to attack this problem when I'm more
+well rested. I'm running on empty now. I got the
+algorithm for bubbling the out of bounds entities during
+the recursive decent of the input application phase.
+
+As far as I could tell, it was working as expected.
+We'll have to see when I'm not on empty.
+
+Sun Jan 25 11:54:59 EST 2015
