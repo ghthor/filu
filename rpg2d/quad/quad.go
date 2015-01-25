@@ -205,11 +205,13 @@ func (q quadLeaf) divide() Quad {
 		}
 	}
 
+	var quad Quad = qn
+
 	for _, e := range q.entities {
-		qn.Insert(e)
+		quad = quad.Insert(e)
 	}
 
-	return qn
+	return quad
 }
 
 func (q quadLeaf) Remove(remove entity.Entity) Quad {
