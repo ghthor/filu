@@ -14,5 +14,7 @@ func TestUnitSpecs(t *testing.T) {
 	r.AddSpec(DescribeQuad)
 	r.AddSpec(DescribeQuadInsert)
 
+	r.AddSpec(DescribePhase)
+
 	gospec.MainGoTest(r, t)
 }

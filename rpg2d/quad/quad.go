@@ -33,6 +33,9 @@ type Quad interface {
 	QueryBounds(coord.Bounds) []entity.Entity
 
 	Chunk() Chunk
+
+	//---- Phases
+	RunInputPhase(InputPhaseHandler) (q Quad, OutOfBounds []entity.Entity)
 }
 
 func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, error) {

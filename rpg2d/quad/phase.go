@@ -1,5 +1,7 @@
 package quad
 
+import "github.com/ghthor/engine/rpg2d/entity"
+
 // 1. Input Application Phase - User Defined
 //
 // The input phase takes the user input and applies
@@ -10,6 +12,14 @@ package quad
 // state that cannot happen because of collisions.
 type InputPhaseHandler interface {
 	ApplyInputsIn(Chunk) Chunk
+}
+
+// Convenience type so input phase handlers can be written
+// as closures or as functions.
+type InputPhaseHandlerFn func(Chunk) Chunk
+
+func (f InputPhaseHandlerFn) ApplyInputsIn(c Chunk) Chunk {
+	return f(c)
 }
 
 // 2. Broad Phase - Internal
@@ -37,4 +47,52 @@ type InputPhaseHandler interface {
 // just shut the fuck up and write the fucking code.
 type NarrowPhaseHandler interface {
 	ResolveCollisions(Chunk) Chunk
+}
+
+func (q quadNode) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
+	// TODO Implement this method more efficiently
+	// It may use a lot of memory because of all the
+	// slice creation/appending/copying.
+	var outOfBounds []entity.Entity
+
+	// TODO Implement concurrently
+	// For each child, recursively descend and run input phase
+	for i, quad := range q.children {
+		quad, oobc := quad.RunInputPhase(p)
+		q.children[i] = quad
+		outOfBounds = append(outOfBounds, oobc...)
+	}
+
+	// Use a var of the interface value
+	// This enables us to use Insert() method functionally
+	var quad Quad = q
+
+	// For each entity that was out of bounds for a child
+	// check if it is still within our own bounds.
+	for i, e := range outOfBounds {
+		if quad.Bounds().Contains(e.Cell()) {
+			quad = quad.Insert(e)
+			outOfBounds = append(outOfBounds[:i], outOfBounds[i+1:]...)
+		}
+	}
+
+	return quad, outOfBounds
+}
+
+func (q quadLeaf) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
+	chunk := p.ApplyInputsIn(q.Chunk())
+
+	// Use a var of the interface value
+	// This enables us to use Remove() method functionally
+	var quad Quad = q
+	var outOfBounds []entity.Entity
+
+	for _, e := range chunk.Entities {
+		if !quad.Bounds().Contains(e.Cell()) {
+			quad = quad.Remove(e)
+			outOfBounds = append(outOfBounds, e)
+		}
+	}
+
+	return quad, outOfBounds
 }
