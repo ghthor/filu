@@ -211,7 +211,8 @@ func (s *runningSimulation) startLoop() {
 				// a is the new sim.Actor{} to be inserted into the sim
 				a := <-actor.toBeAdded
 
-				// TODO Add the actor into the simulation
+				e := s.EntityForActor(a)
+				s.quadTree = s.quadTree.Insert(e)
 
 				// signal that the operation was a success
 				actor.wasAdded <- a
