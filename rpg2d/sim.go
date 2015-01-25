@@ -145,7 +145,7 @@ func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
 	}
 
 	// Starts 2 go routines and returns
-	// The Ticker and the Communication Game Loop
+	// The ticker and the engine communication kernel
 	rs.startLoop()
 
 	return rs, nil
@@ -160,6 +160,8 @@ func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
 // by the public api to request adding & removing actors
 func (s *runningSimulation) startLoop() {
 	ticker := time.NewTicker(time.Duration(1000/s.fps) * time.Millisecond)
+
+	//---- Create all the communication channels
 
 	// Make the 2way channels that will be used to make
 	// add and remove actor requests to the go routine game loop
