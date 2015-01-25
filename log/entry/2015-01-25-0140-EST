@@ -1,0 +1,124 @@
+Sun Jan 25 01:40:23 EST 2015
+
+# journal - Reimplementation of the quad tree
+Over the past few days I've been working on porting everything into pkgs.
+I feel that is has gone very well so far.
+The implementation of the communication logic in the simulation section is quite beautiful.
+
+I've spent a considerable amount of time making sure the godoc is well filled out.
+I've only done this with the pkg's that were mostly a rewrite.
+The coord pkg didn't have this done because it was mostly a copy and paste job.
+
+I'm slightly unhappy with the coord pkg.
+I think it should be a child package of the rpg2d implementation of simulation.
+It really only makes sense there.
+Or I have a general math/twoD pkg, but that name is kind of bad.
+Maybe, math/math2d.
+That could work, it is sort of similar to io/ioutil.
+
+Um, I've introduced this idea I've had called chunks.
+A chunk is a rectangle bounds containing some entities.
+A chunk is a grouping that implies something interesting is happening between the entities.
+Either they can the potential to interact with each other this frame.
+Or they ARE interacting with each other this frame.
+
+Chunks are interesting in that, they wrap up all the codependent interactions into a
+group that with any outcome of the turn can't effect any other chunk.
+It is a standalone collection of entities that can be processed concurrently with all
+the other chunks of that frame.
+
+The quad will be initiated with a chunk generator.
+It will then pass the chunks it creates through 3 phases of processing.
+
+1. Input Application
+2. Broad Phase
+3. Narrow Phase
+
+The chunk generator can be will be provided by the user of the quad pkg.
+It will be an interface type.
+
+Each of the 3 phases will also be provided by the user of the quad pkg.
+
+### Input Application
+This phase applies the input events from each actor to there entities.
+It is naive.
+It assumes the input will succeed.
+
+### Broad Phase
+After the Input Application phase the entity will have a current state
+and a potential future state. The potential future state is used by the
+broad phase to find potential collisions that must be solved during the narrow
+phase. The broad phase could have optimizations applied to it so that
+there is less being passed through the narrow phase.
+
+### Narrow Phase
+The narrow phase is mostly concerned with the outcome of movement over time.
+Will this entity collide with this other entity in the future if this event
+is allowed to be applied? The narrow phase is the final gateway that must be
+passed by an entities potential future before it becomes it's current state.
+
+I'm going to add a new phase now that I've written this out.
+
+1. Naive Chunk Generation
+2. Input Application
+3. Broad Phase
+4. Narrow Phase
+
+The naive chunk generation step honestly may be a performance problem in the future.
+It may end up being that it isn't worth the processing and data.
+
+Maybe the Input Application phase isn't passed a chunk, but only an entity and
+a handle to the quad tree. The reason it would need a handle to the quad tree
+is so it could do it's own chunk generation based on the abilities of the
+entity to move, interact with the world around it.
+
+This way the Naive chunk generation step can be implemented by the user of
+the pkg and can be more aware of the rules of the game the quad tree is
+being used in. Like what abilities the actor has, how the actor can move, etc.
+This is all important is determining the bounds of that actors ability to
+interact with the world.
+
+At any rate, the entire reason for these phases is that
+the user's implementation can be completely blind to
+the state of the quad tree at that time.
+All the user's code has to deal with is a leaf of the quad tree.
+None of the actor's contained in the chunk have the ability
+to make any action that turn that could interact with anything
+outside the bounds of the chunk.
+
+When the chunk is returned from the user's code the quad tree
+will determine what modifications must be made to it's internal
+state to reflect what has happened during that phase.
+The way I see this right now in my head, it will only happen
+AFTER the narrow phase. The chunk from Each phase before
+the narrow phase SHOULD just be passed directly into the next
+phase if I've imagined it correctly. This design is very
+functional and will be quite parallel and concurrent.
+
+My mind is blowing up with ideas about how this should enable
+the quad tree to be distributed across multiple physical
+machines. I want this so badly and my brain is trying at
+every corner to design with this in mind and solve this
+puzzle. I think I've made a step in the very right direction
+this weekend. It is amazing what taking a step back from
+focusing on design and, instead, focusing on modularity
+packageization and package public interfaces can have on
+my imagination.
+
+I don't quite know the genesis of the chunk idea.
+But I'm guessing it had something to do with looking
+at the current bubbling nature of the previous implementation
+of the broad phase. How solving the broad phase at the leaf
+level was a pain because if the entity was on the edge
+and was potentially interacting out of bounds of the leaf
+it would have to be bubbled up to the parent. This is sort of
+intuitive and I understand why I came to that solution
+when I was solving this problem before. Honestly I think
+my interaction the previous week and my frustration with
+my lack of understanding with monads may be the real genesis
+of this potential solution.
+
+These past 3 weeks I've learned so much. But maybe I should
+sign off for now and leave this for another entry.
+
+Sun Jan 25 02:17:33 EST 2015
