@@ -11,9 +11,9 @@ import (
 func DescribeQuadInsert(c gospec.Context) {
 	c.Specify("a quad", func() {
 		q, err := quad.New(coord.Bounds{
-			TopL: coord.Cell{-1000, 1000},
-			BotR: coord.Cell{1000, -1000},
-		}, 10, nil)
+			TopL: coord.Cell{-10, 10},
+			BotR: coord.Cell{10, -10},
+		}, 1, nil)
 		c.Assume(err, IsNil)
 
 		c.Specify("can insert", func() {
@@ -65,6 +65,25 @@ func DescribeQuadInsert(c gospec.Context) {
 
 					c.Expect(len(chunk.Entities), Equals, 0)
 					c.Expect(len(chunk.Collidables), Equals, 0)
+				})
+			})
+
+			c.Specify("some entities", func() {
+				e1 := MockEntity{0, coord.Cell{-10, 10}}
+				e3 := MockCollidableEntity{1, coord.Cell{10, -10}}
+				e2 := MockMobileEntity{2, coord.Cell{5, -1}}
+
+				q = q.Insert(e1)
+				q = q.Insert(e2)
+				q = q.Insert(e3)
+				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 3)
+
+				c.Specify("and remove them", func() {
+					q = q.Remove(e1)
+
+					c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
+					c.Expect(q.QueryCell(coord.Cell{10, -10})[0].Id(), Equals, int64(1))
+					c.Expect(q.QueryCell(coord.Cell{5, -1})[0].Id(), Equals, int64(2))
 				})
 			})
 		})
