@@ -136,6 +136,7 @@ func DescribePathAction(c gospec.Context) {
 
 		c.Expect(pa.Traverses(Cell{0, 0}), IsTrue)
 		c.Expect(pa.Traverses(Cell{0, 1}), IsTrue)
+		c.Expect(pa.Traverses(Cell{0, 2}), IsFalse)
 	})
 
 	c.Specify("must know if it is traversing a cell at an instant in time", func() {
