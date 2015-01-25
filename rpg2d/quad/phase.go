@@ -9,7 +9,7 @@ package quad
 // The narrow phase should revert any changes to the movement
 // state that cannot happen because of collisions.
 type InputPhaseHandler interface {
-	InputPhaseIn(Chunk) Chunk
+	ApplyInputsIn(Chunk) Chunk
 }
 
 // 2. Broad Phase - Internal
@@ -36,5 +36,5 @@ type InputPhaseHandler interface {
 // return and I need to stop thinking about it for now and
 // just shut the fuck up and write the fucking code.
 type NarrowPhaseHandler interface {
-	NarrowPhaseIn(Chunk) Chunk
+	ResolveCollisions(Chunk) Chunk
 }
