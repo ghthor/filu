@@ -3,14 +3,38 @@ package rpg2d
 import (
 	"time"
 
+	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim"
 )
+
+// An interface the user will implement to resolve
+// an entity from an actor. This is user defined
+// because the user is creating the entities and actors
+// that will be added to the simulation. This allows the
+// user to define how the actors state is stored,
+// aka database design/interaction.
+type EntityResolver interface {
+	EntityForActor(sim.Actor) entity.Entity
+}
 
 // A SimulationDef used to configure a simulation
 // to define the how the simulation will behave.
 type SimulationDef struct {
 	// The target FPS for the simulation to calculate at
 	FPS int
+
+	// Initial World State
+	QuadTree quad.Quad
+
+	// User defined to resolve an entity from and actor
+	EntityResolver EntityResolver
+
+	// User defined input application phase
+	InputPhaseHandler quad.InputPhaseHandler
+
+	// User defined the narrow phase
+	NarrowPhaseHandler quad.NarrowPhaseHandler
 }
 
 // An implementation of engine/sim.RunningSimulation
