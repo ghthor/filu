@@ -94,7 +94,7 @@ func (q quadNode) Remove(e entity.Entity) Quad {
 func (q quadNode) QueryCell(c coord.Cell) []entity.Entity {
 	for _, quad := range q.children {
 		// If the cell is within the childs bounds
-		if quad.Bounds().Expand(1).Contains(c) {
+		if quad.Bounds().Contains(c) {
 			return quad.QueryCell(c)
 		}
 	}
