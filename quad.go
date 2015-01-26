@@ -44,13 +44,6 @@ type (
 	}
 )
 
-const (
-	QUAD_NW = iota
-	QUAD_NE
-	QUAD_SE
-	QUAD_SW
-)
-
 func newQuadTree(aabb Bounds, entities []entity, maxPerQuad int) (quad, error) {
 	if aabb.IsInverted() {
 		return nil, errors.New("aabb is Inverted")
