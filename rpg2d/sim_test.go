@@ -37,8 +37,8 @@ func (mockEntityResolver) EntityForActor(a sim.Actor) entity.Entity {
 
 func DescribeASimulation(c gospec.Context) {
 	quad, err := quad.New(coord.Bounds{
-		TopL: coord.Cell{-1000, 1000},
-		BotR: coord.Cell{1000, -1000},
+		TopL: coord.Cell{-1000, 999},
+		BotR: coord.Cell{999, -1000},
 	}, 10, nil)
 
 	c.Assume(err, IsNil)
