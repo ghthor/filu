@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ghthor/engine/rpg2d/coord"
-	gtime "github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 )
 
 // A connection used to push viewport state
@@ -21,7 +21,7 @@ type (
 	// Internal format used by the simulation
 	WorldState struct {
 		processingTime time.Duration
-		time           gtime.Time
+		time           stime.Time
 		quadTree       quad
 		terrain        TerrainMap
 	}
@@ -43,7 +43,7 @@ type (
 	}
 
 	simulation struct {
-		clock        gtime.Clock
+		clock        stime.Clock
 		nextEntityId EntityId
 		state        *WorldState
 
@@ -73,7 +73,7 @@ func NewSimulation(fps int) Simulation {
 	return newSimulation(fps)
 }
 
-func newWorldState(clock gtime.Clock, bounds coord.Bounds) *WorldState {
+func newWorldState(clock stime.Clock, bounds coord.Bounds) *WorldState {
 	quadTree, err := newQuadTree(bounds, nil, 20)
 	if err != nil {
 		panic("error creating quadTree: " + err.Error())
@@ -92,7 +92,7 @@ func newWorldState(clock gtime.Clock, bounds coord.Bounds) *WorldState {
 }
 
 func newSimulation(fps int) *simulation {
-	clk := gtime.Clock(0)
+	clk := stime.Clock(0)
 
 	s := &simulation{
 		clock: clk,
@@ -245,7 +245,7 @@ func (s *WorldState) step() *WorldState {
 	return s.stepTo(s.time + 1)
 }
 
-func (s *WorldState) stepTo(t gtime.Time) *WorldState {
+func (s *WorldState) stepTo(t stime.Time) *WorldState {
 	s.quadTree.StepTo(t)
 
 	s.time = t

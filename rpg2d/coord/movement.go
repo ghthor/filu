@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 )
 
 type (
@@ -68,26 +68,26 @@ func (p PartialCell) String() string {
 
 type (
 	MoveAction interface {
-		Start() time.Time
-		End() time.Time
+		Start() stime.Time
+		End() stime.Time
 		CanHappenAfter(action MoveAction) bool
 	}
 
 	TurnAction struct {
 		From, To Direction
-		Time     time.Time
+		Time     stime.Time
 	}
 
 	PathAction struct {
-		time.Span
+		stime.Span
 		Orig, Dest Cell
 	}
 
 	PathActionJson struct {
-		Start time.Time `json:"start"`
-		End   time.Time `json:"end"`
-		Orig  Cell      `json:"orig"`
-		Dest  Cell      `json:"dest"`
+		Start stime.Time `json:"start"`
+		End   stime.Time `json:"end"`
+		Orig  Cell       `json:"orig"`
+		Dest  Cell       `json:"dest"`
 	}
 )
 
@@ -95,8 +95,8 @@ type (
 // TODO Conditionalize this with the fps
 const TurnActionDelay = 10
 
-func (a TurnAction) Start() time.Time { return a.Time }
-func (a TurnAction) End() time.Time   { return a.Time }
+func (a TurnAction) Start() stime.Time { return a.Time }
+func (a TurnAction) End() stime.Time   { return a.Time }
 func (a TurnAction) CanHappenAfter(anAction MoveAction) bool {
 	if anAction == nil {
 		return true
@@ -133,8 +133,8 @@ func (pa PathAction) Json() PathActionJson {
 	}
 }
 
-func (pa *PathAction) Start() time.Time { return pa.Span.Start }
-func (pa *PathAction) End() time.Time   { return pa.Span.End }
+func (pa *PathAction) Start() stime.Time { return pa.Span.Start }
+func (pa *PathAction) End() stime.Time   { return pa.Span.End }
 
 func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 	if anAction == nil {
@@ -161,7 +161,7 @@ func (pa *PathAction) CanHappenAfter(anAction MoveAction) bool {
 	panic("unknown MoveAction type")
 }
 
-func (pa PathAction) OrigPartial(now time.Time) (pc PartialCell) {
+func (pa PathAction) OrigPartial(now stime.Time) (pc PartialCell) {
 	pc.Cell = pa.Orig
 	if now <= pa.Span.Start {
 		pc.Percentage = 1.0
@@ -173,7 +173,7 @@ func (pa PathAction) OrigPartial(now time.Time) (pc PartialCell) {
 	return
 }
 
-func (pa PathAction) DestPartial(now time.Time) (pc PartialCell) {
+func (pa PathAction) DestPartial(now stime.Time) (pc PartialCell) {
 	pc.Cell = pa.Dest
 	if now <= pa.Span.Start {
 		pc.Percentage = 0.0
@@ -216,7 +216,7 @@ func (pa PathAction) Traverses(c Cell) bool {
 	return pa.Orig == c || pa.Dest == c
 }
 
-func (pa PathAction) TraversesAt(c Cell, t time.Time) (pc PartialCell, err error) {
+func (pa PathAction) TraversesAt(c Cell, t stime.Time) (pc PartialCell, err error) {
 	if t < pa.Span.Start || t > pa.Span.End {
 		return pc, errors.New("timeOutOfRange")
 	}

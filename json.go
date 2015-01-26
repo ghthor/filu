@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
-	"github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 )
 
 type EntityJson interface {
@@ -35,7 +35,7 @@ type TerrainMapJson struct {
 
 // External format used to send state to the clients
 type WorldStateJson struct {
-	Time       time.Time       `json:"time"`
+	Time       stime.Time      `json:"time"`
 	Entities   []EntityJson    `json:"entities"`
 	Removed    []EntityJson    `json:"removed"`
 	TerrainMap *TerrainMapJson `json:"terrainMap,omitempty"`

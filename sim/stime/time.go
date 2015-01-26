@@ -1,4 +1,4 @@
-package time
+package stime
 
 type (
 	// Represents an Instant in Time

@@ -1,7 +1,7 @@
 package coord
 
 import (
-	"github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -71,7 +71,7 @@ func DescribePathAction(c gospec.Context) {
 	c.Specify("should calculate partial cell percentages", func() {
 
 		pa := PathAction{
-			time.NewSpan(10, 20),
+			stime.NewSpan(10, 20),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
@@ -140,13 +140,13 @@ func DescribePathAction(c gospec.Context) {
 	})
 
 	c.Specify("must know if it is traversing a cell at an instant in time", func() {
-		clk, duration := time.Clock(0), int64(25)
+		clk, duration := stime.Clock(0), int64(25)
 
 		Orig := Cell{0, 0}
 		Dest := Cell{0, 1}
 
 		pa := PathAction{
-			time.NewSpan(clk.Now(), clk.Future(duration)),
+			stime.NewSpan(clk.Now(), clk.Future(duration)),
 			Orig,
 			Dest,
 		}
@@ -235,13 +235,13 @@ func DescribePathAction(c gospec.Context) {
 func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can move in any direction immediately after moving", func() {
 		pathAction1 := &PathAction{
-			time.NewSpan(time.Time(0), time.Time(20)),
+			stime.NewSpan(stime.Time(0), stime.Time(20)),
 			Cell{0, 0},
 			Cell{0, 1},
 		}
 
 		pathAction2 := &PathAction{
-			time.NewSpan(time.Time(20), time.Time(40)),
+			stime.NewSpan(stime.Time(20), stime.Time(40)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
@@ -254,14 +254,14 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("an entity can't move before turning", func() {
 		pathAction := &PathAction{
-			time.NewSpan(time.Time(21), time.Time(41)),
+			stime.NewSpan(stime.Time(21), stime.Time(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
 			To:   pathAction.Direction().Reverse(),
-			Time: time.Time(pathAction.Start()),
+			Time: stime.Time(pathAction.Start()),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -269,14 +269,14 @@ func DescribeMoveAction(c gospec.Context) {
 
 	c.Specify("An entity can't move immediatly after turning", func() {
 		pathAction := &PathAction{
-			time.NewSpan(time.Time(21), time.Time(41)),
+			stime.NewSpan(stime.Time(21), stime.Time(41)),
 			Cell{0, 1},
 			Cell{1, 1},
 		}
 
 		turnAction := TurnAction{
 			To:   pathAction.Direction(),
-			Time: time.Time(pathAction.Start() - TurnActionDelay),
+			Time: stime.Time(pathAction.Start() - TurnActionDelay),
 		}
 
 		c.Expect(pathAction.CanHappenAfter(turnAction), IsFalse)
@@ -288,17 +288,17 @@ func DescribeMoveAction(c gospec.Context) {
 	c.Specify("an entity can't immediatly turn after turning", func() {
 		turnAction1 := TurnAction{
 			South, North,
-			time.Time(0),
+			stime.Time(0),
 		}
 
 		turnAction2 := TurnAction{
 			North, South,
-			time.Time(TurnActionDelay),
+			stime.Time(TurnActionDelay),
 		}
 
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsFalse)
 
-		turnAction2.Time = time.Time(TurnActionDelay + 1)
+		turnAction2.Time = stime.Time(TurnActionDelay + 1)
 		c.Expect(turnAction2.CanHappenAfter(turnAction1), IsTrue)
 	})
 }

@@ -3,7 +3,7 @@ package coord
 import (
 	"math"
 
-	"github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 )
 
 type (
@@ -11,20 +11,20 @@ type (
 
 	Collision interface {
 		Type() CollisionType
-		Start() time.Time
-		End() time.Time
-		OverlapAt(time.Time) float64
+		Start() stime.Time
+		End() stime.Time
+		OverlapAt(stime.Time) float64
 	}
 
 	PathCollision struct {
 		CollisionType
-		time.Span
+		stime.Span
 		A, B PathAction
 	}
 
 	CellCollision struct {
 		CollisionType
-		time.Span
+		stime.Span
 		Cell Cell
 		Path PathAction
 	}
@@ -85,7 +85,7 @@ func (A PathAction) CollidesWith(B interface{}) (c Collision) {
 }
 
 func pathCollision(a, b PathAction) (c PathCollision) {
-	var start, end time.Time
+	var start, end stime.Time
 	c.A, c.B = a, b
 
 	switch {
@@ -156,7 +156,7 @@ CT_SAME_ORIG_DEST_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_TIMESPAN:
@@ -177,7 +177,7 @@ CT_SAME_ORIG_TIMESPAN:
 		// Speeds
 		as, bs = float64(a.Span.End-a.Span.Start), float64(b.Span.End-b.Span.Start)
 
-		end = time.Time(math.Ceil((at*bs + bt*as + as*bs) / (bs + as)))
+		end = stime.Time(math.Ceil((at*bs + bt*as + as*bs) / (bs + as)))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
 		if c.OverlapAt(end-1) == 0.0 {
@@ -185,7 +185,7 @@ CT_SAME_ORIG_TIMESPAN:
 		}
 	}
 
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 	goto EXIT
 
 CT_SAME_ORIG_PERP_TIMESPAN:
@@ -200,7 +200,7 @@ CT_SAME_ORIG_PERP_TIMESPAN:
 	} else {
 		end = b.Span.End
 	}
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 	goto EXIT
 
 CT_HEAD_TO_HEAD_TIMESPAN:
@@ -223,7 +223,7 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 		// experience in linear algerbra to understand this equation.
 		// See for more info.
 		// https://github.com/ghthor/engine/blob/master/design-notes/math.jpg
-		start = time.Time(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
+		start = stime.Time(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
 		if c.OverlapAt(start+1) == 0.0 {
@@ -238,7 +238,7 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 	goto EXIT
 
 CT_FROM_SIDE_TIMESPAN:
@@ -254,7 +254,7 @@ CT_FROM_SIDE_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 	goto EXIT
 
 CT_SWAP_TIMESPAN:
@@ -271,7 +271,7 @@ CT_SWAP_TIMESPAN:
 		end = b.Span.End
 	}
 
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 	goto EXIT
 
 CT_A_INTO_B_TIMESPAN:
@@ -282,20 +282,20 @@ CT_A_INTO_B_TIMESPAN:
 		as, ae = float64(a.Span.Start), float64(a.Span.End)
 		bs, be = float64(b.Span.Start), float64(b.Span.End)
 
-		start = time.Time(math.Floor(((as / (ae - as)) - (bs / (be - bs))) / ((1 / (ae - as)) - (1 / (be - bs)))))
+		start = stime.Time(math.Floor(((as / (ae - as)) - (bs / (be - bs))) / ((1 / (ae - as)) - (1 / (be - bs)))))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
 		if c.OverlapAt(start+1) == 0.0 {
 			start += 1
 		}
 	}
-	c.Span = time.NewSpan(start, b.Span.End)
+	c.Span = stime.NewSpan(start, b.Span.End)
 	goto EXIT
 
 CT_A_INTO_B_FROM_SIDE_TIMESPAN:
 	start = a.Span.Start
 	end = b.Span.End
-	c.Span = time.NewSpan(start, end)
+	c.Span = stime.NewSpan(start, end)
 
 EXIT:
 	return
@@ -315,9 +315,9 @@ func cellCollision(p PathAction, c Cell) (cc CellCollision) {
 }
 
 func (c PathCollision) Type() CollisionType { return c.CollisionType }
-func (c PathCollision) Start() time.Time    { return c.Span.Start }
-func (c PathCollision) End() time.Time      { return c.Span.End }
-func (c PathCollision) OverlapAt(t time.Time) (overlap float64) {
+func (c PathCollision) Start() stime.Time   { return c.Span.Start }
+func (c PathCollision) End() stime.Time     { return c.Span.End }
+func (c PathCollision) OverlapAt(t stime.Time) (overlap float64) {
 
 	switch c.CollisionType {
 	case CT_SAME_ORIG:
@@ -390,9 +390,9 @@ func (c PathCollision) OverlapAt(t time.Time) (overlap float64) {
 }
 
 func (c CellCollision) Type() CollisionType { return c.CollisionType }
-func (c CellCollision) Start() time.Time    { return c.Span.Start }
-func (c CellCollision) End() time.Time      { return c.Span.End }
-func (c CellCollision) OverlapAt(t time.Time) (overlap float64) {
+func (c CellCollision) Start() stime.Time   { return c.Span.Start }
+func (c CellCollision) End() stime.Time     { return c.Span.End }
+func (c CellCollision) OverlapAt(t stime.Time) (overlap float64) {
 	switch c.CollisionType {
 	case CT_CELL_DEST:
 		overlap = c.Path.DestPartial(t).Percentage

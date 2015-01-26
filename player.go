@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	. "github.com/ghthor/engine/rpg2d/coord"
-	. "github.com/ghthor/engine/time"
+	. "github.com/ghthor/engine/sim/stime"
 )
 
 // Externaly Accessible Actions

@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
-	"github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -21,7 +21,7 @@ func DescribePlayerJson(c gospec.Context) {
 		c.Specify("when the player is moving", func() {
 			player.PathActions = []coord.PathActionJson{
 				coord.PathAction{
-					time.NewSpan(10, 30),
+					stime.NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(coord.North),
 				}.Json(),
@@ -41,7 +41,7 @@ func DescribePlayerJson(c gospec.Context) {
 		c.Specify("when the player has started moving", func() {
 			playerChanged.PathActions = []coord.PathActionJson{
 				coord.PathAction{
-					time.NewSpan(10, 30),
+					stime.NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(coord.North),
 				}.Json(),
@@ -54,7 +54,7 @@ func DescribePlayerJson(c gospec.Context) {
 			playerChanged.Cell = player.Cell.Neighbor(coord.North)
 			player.PathActions = []coord.PathActionJson{
 				coord.PathAction{
-					time.NewSpan(10, 30),
+					stime.NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(coord.North),
 				}.Json(),
@@ -69,7 +69,7 @@ func DescribePlayerJson(c gospec.Context) {
 			// TODO Specify "and continued moving in a different direction"
 			player.PathActions = []coord.PathActionJson{
 				coord.PathAction{
-					time.NewSpan(10, 30),
+					stime.NewSpan(10, 30),
 					player.Cell,
 					player.Cell.Neighbor(coord.North),
 				}.Json(),
@@ -78,7 +78,7 @@ func DescribePlayerJson(c gospec.Context) {
 			playerChanged.Cell = player.Cell.Neighbor(coord.North)
 			playerChanged.PathActions = []coord.PathActionJson{
 				coord.PathAction{
-					time.NewSpan(30, 50),
+					stime.NewSpan(30, 50),
 					playerChanged.Cell,
 					playerChanged.Cell.Neighbor(coord.West),
 				}.Json(),

@@ -2,7 +2,7 @@ package engine
 
 import (
 	. "github.com/ghthor/engine/rpg2d/coord"
-	. "github.com/ghthor/engine/time"
+	. "github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"

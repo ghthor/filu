@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
-	"github.com/ghthor/engine/time"
+	"github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
@@ -29,12 +29,12 @@ func DescribeDiffConn(c gospec.Context) {
 	}
 
 	c.Specify("stores the next state as the last state", func() {
-		c.Assume(conn.lastState.Time, Equals, time.Time(0))
+		c.Assume(conn.lastState.Time, Equals, stime.Time(0))
 		conn.SendJson("update", WorldStateJson{
 			Time:       1,
 			TerrainMap: conn.lastState.TerrainMap,
 		})
-		c.Expect(conn.lastState.Time, Equals, time.Time(1))
+		c.Expect(conn.lastState.Time, Equals, stime.Time(1))
 	})
 
 	c.Specify("the connection sends", func() {
