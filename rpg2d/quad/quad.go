@@ -35,9 +35,23 @@ type Quad interface {
 // Guards against unspecified behavior if the maxSize is 1
 var ErrMaxSizeTooSmall = errors.New("max size must be > 1")
 
+// Guard against unspecified behavior if the height is not even
+var ErrBoundsHeightMustBeEven = errors.New("bounds height must be even")
+
+// Guard against unspecified behavior if the width is not even
+var ErrBoundsWidthMustBeEven = errors.New("bounds width must be even")
+
 func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, error) {
 	if maxSize < 2 {
 		return nil, ErrMaxSizeTooSmall
+	}
+
+	if bounds.Width()%2 != 0 {
+		return nil, ErrBoundsWidthMustBeEven
+	}
+
+	if bounds.Height()%2 != 0 {
+		return nil, ErrBoundsHeightMustBeEven
 	}
 
 	return quadLeaf{

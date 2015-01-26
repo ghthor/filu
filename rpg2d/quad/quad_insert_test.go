@@ -11,8 +11,8 @@ import (
 func DescribeQuadInsert(c gospec.Context) {
 	c.Specify("a quad", func() {
 		q, err := quad.New(coord.Bounds{
-			TopL: coord.Cell{-10, 10},
-			BotR: coord.Cell{10, -10},
+			TopL: coord.Cell{-10, 9},
+			BotR: coord.Cell{9, -10},
 		}, 2, nil)
 		c.Assume(err, IsNil)
 
@@ -69,9 +69,9 @@ func DescribeQuadInsert(c gospec.Context) {
 			})
 
 			c.Specify("some entities", func() {
-				e1 := MockEntity{0, coord.Cell{-10, 10}}
-				e3 := MockCollidableEntity{1, coord.Cell{10, -10}}
+				e1 := MockEntity{0, coord.Cell{-10, 9}}
 				e2 := MockMobileEntity{2, coord.Cell{5, -1}}
+				e3 := MockCollidableEntity{1, coord.Cell{9, -10}}
 
 				q = q.Insert(e1)
 				q = q.Insert(e2)
@@ -82,7 +82,7 @@ func DescribeQuadInsert(c gospec.Context) {
 					q = q.Remove(e1)
 
 					c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
-					c.Expect(q.QueryCell(coord.Cell{10, -10})[0].Id(), Equals, int64(1))
+					c.Expect(q.QueryCell(coord.Cell{9, -10})[0].Id(), Equals, int64(1))
 					c.Expect(q.QueryCell(coord.Cell{5, -1})[0].Id(), Equals, int64(2))
 				})
 			})

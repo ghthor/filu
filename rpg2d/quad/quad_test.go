@@ -11,8 +11,8 @@ import (
 func DescribeQuad(c gospec.Context) {
 	c.Specify("a quad tree", func() {
 		q, err := quad.New(coord.Bounds{
-			TopL: coord.Cell{-1000, 1000},
-			BotR: coord.Cell{1000, -1000},
+			TopL: coord.Cell{-1000, 999},
+			BotR: coord.Cell{999, -1000},
 		}, 2, nil)
 		c.Assume(err, IsNil)
 
