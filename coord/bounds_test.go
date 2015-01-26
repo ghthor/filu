@@ -278,6 +278,130 @@ func DescribeBounds(c gospec.Context) {
 			c.Expect(quad, Equals, quads[i])
 		}
 
+		c.Specify("if the bounds contains at least 4 cells", func() {
+			type testCase struct {
+				spec   string
+				bounds Bounds
+			}
+
+			cases := []testCase{{
+				"in the NW quadrant",
+				Bounds{
+					Cell{-2, 2},
+					Cell{-1, 1},
+				},
+			}, {
+				"in the NE quadrant",
+				Bounds{
+					Cell{1, 2},
+					Cell{2, 1},
+				},
+			}, {
+				"in the SE quadrant",
+				Bounds{
+					Cell{1, -1},
+					Cell{2, -2},
+				},
+			}, {
+				"in the SE quadrant",
+				Bounds{
+					Cell{-2, -1},
+					Cell{-1, -2},
+				},
+			}, {
+				"spanning the NW and NE quadrants",
+				Bounds{
+					Cell{-1, 2},
+					Cell{0, 1},
+				},
+			}, {
+				"spanning the NE and NW quadrants",
+				Bounds{
+					Cell{0, 2},
+					Cell{1, 1},
+				},
+			}, {
+				"spanning the NE and SE quadrants",
+				Bounds{
+					Cell{1, 1},
+					Cell{2, 0},
+				},
+			}, {
+				"spanning the SE and NE quadrants",
+				Bounds{
+					Cell{1, 0},
+					Cell{2, -1},
+				},
+			}, {
+				"spanning the SE and SW quadrants",
+				Bounds{
+					Cell{0, -1},
+					Cell{1, -2},
+				},
+			}, {
+				"spanning the SW and SE quadrants",
+				Bounds{
+					Cell{-1, -1},
+					Cell{0, -2},
+				},
+			}, {
+				"spanning the SW and NW quadrants",
+				Bounds{
+					Cell{-2, 0},
+					Cell{-1, -1},
+				},
+			}, {
+				"spanning the NW and SW quadrants",
+				Bounds{
+					Cell{-2, 1},
+					Cell{-1, 0},
+				},
+			}}
+
+			// Verify that all the test cases split single cell quads
+			for _, testCase := range cases {
+				c.Specify(testCase.spec, func() {
+					b := testCase.bounds
+					c.Assume(b.Area(), Equals, 4)
+
+					quads, err := b.Quads()
+					c.Assume(err, IsNil)
+
+					for quadrant := QUAD_NW; quadrant <= QUAD_SW; quadrant++ {
+						q := quads[quadrant]
+						c.Expect(q.Area(), Equals, 1)
+						c.Expect(q.TopL, Equals, q.BotR)
+						c.Expect(q.Width(), Equals, 1)
+						c.Expect(q.Height(), Equals, 1)
+
+						// Verify the bounds of this quad is 1 cell
+						c.Expect(q.TopL, Equals, q.TopR())
+						c.Expect(q.TopL, Equals, q.BotR)
+						c.Expect(q.TopL, Equals, q.BotL())
+
+						c.Expect(q.TopR(), Equals, q.BotR)
+						c.Expect(q.TopR(), Equals, q.BotL())
+
+						c.Expect(q.BotR, Equals, q.BotR)
+
+						// We only compare 1 of the corner values of q.
+						// This is because the expectations above verify
+						// That TopR == TopL == BotR == BotL
+						switch quadrant {
+						case QUAD_NW:
+							c.Expect(q.TopL, Equals, b.TopL)
+						case QUAD_NE:
+							c.Expect(q.TopR(), Equals, b.TopR())
+						case QUAD_SE:
+							c.Expect(q.BotR, Equals, b.BotR)
+						case QUAD_SW:
+							c.Expect(q.BotL(), Equals, b.BotL())
+						}
+					}
+				})
+			}
+		})
+
 		c.Specify("only if the height is greater than 1", func() {
 			b = Bounds{
 				Cell{1, 1},
