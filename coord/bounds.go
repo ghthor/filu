@@ -95,6 +95,20 @@ func (b Bounds) Invert() Bounds {
 var ErrBoundsAreInverted = errors.New("bounds are inverted")
 var ErrBoundsAreTooSmall = errors.New("bounds are too small to split")
 
+const (
+	QUAD_NW = iota
+	QUAD_NE
+	QUAD_SE
+	QUAD_SW
+)
+
+const (
+	NW = iota
+	NE
+	SE
+	SW
+)
+
 func (b Bounds) Quads() ([4]Bounds, error) {
 	var bounds [4]Bounds
 
@@ -129,13 +143,6 @@ func (b Bounds) Quads() ([4]Bounds, error) {
 		Cell{b.TopL.X, se.TopL.Y},
 		Cell{nw.BotR.X, b.BotR.Y},
 	}
-
-	const (
-		QUAD_NW = iota
-		QUAD_NE
-		QUAD_SE
-		QUAD_SW
-	)
 
 	bounds[QUAD_NW] = nw
 	bounds[QUAD_NE] = ne
