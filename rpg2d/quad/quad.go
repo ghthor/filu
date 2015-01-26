@@ -6,6 +6,7 @@ import (
 
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/sim/stime"
 )
 
 // Represents one of the four quad corners
@@ -28,8 +29,12 @@ type Quad interface {
 
 	Chunk() Chunk
 
-	//---- Phases
-	RunInputPhase(InputPhaseHandler) (q Quad, OutOfBounds []entity.Entity)
+	RunPhase(stime.Time, InputPhaseHandler, NarrowPhaseHandler) Quad
+
+	//---- Internal methods to execute a phase calculation
+	runInputPhase(InputPhaseHandler, stime.Time) (quad Quad, OutOfBounds []entity.Entity)
+	runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk)
+	runNarrowPhase(NarrowPhaseHandler, stime.Time) Quad
 }
 
 // Guards against unspecified behavior if the maxSize is 1

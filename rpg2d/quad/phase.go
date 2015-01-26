@@ -1,6 +1,9 @@
 package quad
 
-import "github.com/ghthor/engine/rpg2d/entity"
+import (
+	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/sim/stime"
+)
 
 // 1. Input Application Phase - User Defined
 //
@@ -49,7 +52,15 @@ type NarrowPhaseHandler interface {
 	ResolveCollisions(Chunk) Chunk
 }
 
-func (q quadNode) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
+func (q quadNode) RunPhase(at stime.Time, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler) Quad {
+	return q
+}
+
+func (q quadLeaf) RunPhase(at stime.Time, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler) Quad {
+	return q
+}
+
+func (q quadNode) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []entity.Entity) {
 	// TODO Implement this method more efficiently
 	// It may use a lot of memory because of all the
 	// slice creation/appending/copying.
@@ -58,7 +69,7 @@ func (q quadNode) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
 	// TODO Implement concurrently
 	// For each child, recursively descend and run input phase
 	for i, quad := range q.children {
-		quad, oobc := quad.RunInputPhase(p)
+		quad, oobc := quad.runInputPhase(p, at)
 		q.children[i] = quad
 		outOfBounds = append(outOfBounds, oobc...)
 	}
@@ -79,7 +90,7 @@ func (q quadNode) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
 	return quad, outOfBounds
 }
 
-func (q quadLeaf) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
+func (q quadLeaf) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []entity.Entity) {
 	chunk := p.ApplyInputsIn(q.Chunk())
 
 	// Use a var of the interface value
@@ -95,4 +106,18 @@ func (q quadLeaf) RunInputPhase(p InputPhaseHandler) (Quad, []entity.Entity) {
 	}
 
 	return quad, outOfBounds
+}
+
+func (q quadNode) runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk) {
+	return q, nil
+}
+
+func (q quadLeaf) runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk) {
+	return q, nil
+}
+func (q quadNode) runNarrowPhase(NarrowPhaseHandler, stime.Time) Quad {
+	return q
+}
+func (q quadLeaf) runNarrowPhase(NarrowPhaseHandler, stime.Time) Quad {
+	return q
 }
