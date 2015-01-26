@@ -400,6 +400,88 @@ func DescribeBounds(c gospec.Context) {
 					}
 				})
 			}
+
+			// Verify that all the test cases cannot be split if they
+			// have an area of 4, but only a height of 1
+
+			// Take a 2x2 quad
+			//     X X
+			//     X X
+			// and transform it into
+			// X X X X
+			for _, testCase := range cases {
+				b := testCase.bounds
+				b.TopL.X -= 2
+				b.BotR = Cell{b.BotR.X, b.TopL.Y}
+				c.Assume(b.Height(), Equals, 1)
+
+				_, err := b.Quads()
+				c.Assume(err, Not(IsNil))
+
+				c.Expect(err, Equals, ErrBoundsAreTooSmall)
+			}
+
+			// Take a 2x2 quad
+			//     X X
+			//     X X
+			// and transform it into
+			//     X X X X
+			for _, testCase := range cases {
+				b := testCase.bounds
+				b.BotR = Cell{b.BotR.X + 2, b.TopL.Y}
+				c.Assume(b.Height(), Equals, 1)
+
+				_, err := b.Quads()
+				c.Assume(err, Not(IsNil))
+
+				c.Expect(err, Equals, ErrBoundsAreTooSmall)
+			}
+
+			// Take a 2x2 quad
+			//     X X
+			//     X X
+			// and transform it into
+			//   X X X X
+			for _, testCase := range cases {
+				b := testCase.bounds
+				b.TopL.X -= 1
+				b.BotR = Cell{b.BotR.X + 1, b.TopL.Y}
+
+				_, err := b.Quads()
+				c.Assume(err, Not(IsNil))
+
+				c.Expect(err, Equals, ErrBoundsAreTooSmall)
+			}
+
+			// TODO
+			// There are more transform cases,
+			// But for now that should be fine
+
+			// Verify that all the test cases cannot be split if they
+			// have an area of 4, but only a width of 1
+
+			// Take a 2x2 quad
+			//
+			//
+			//     X X
+			//     X X
+			//
+			// and transform it into
+			//     X
+			//     X
+			//     X
+			//     X
+			for _, testCase := range cases {
+				b := testCase.bounds
+				b.TopL.Y += 2
+				b.BotR.X -= 2
+				c.Assume(b.Width(), Equals, 1)
+
+				_, err := b.Quads()
+				c.Assume(err, Not(IsNil))
+
+				c.Expect(err, Equals, ErrBoundsAreTooSmall)
+			}
 		})
 
 		c.Specify("only if the height is greater than 1", func() {
