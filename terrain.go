@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/rpg2d/coord"
 )
 
 type (

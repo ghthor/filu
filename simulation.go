@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ghthor/engine/coord"
+	"github.com/ghthor/engine/rpg2d/coord"
 	gtime "github.com/ghthor/engine/time"
 )
 

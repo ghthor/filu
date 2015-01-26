@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/rpg2d/coord"
 	. "github.com/ghthor/engine/time"
 )
 

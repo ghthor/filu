@@ -3,7 +3,7 @@ package engine
 import (
 	"errors"
 
-	. "github.com/ghthor/engine/coord"
+	. "github.com/ghthor/engine/rpg2d/coord"
 	. "github.com/ghthor/engine/time"
 )
 

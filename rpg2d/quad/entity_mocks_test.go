@@ -3,7 +3,7 @@ package quad_test
 import (
 	"fmt"
 
-	"github.com/ghthor/engine/coord"
+	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 
 	"github.com/ghthor/gospec"

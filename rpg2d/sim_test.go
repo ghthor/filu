@@ -1,8 +1,8 @@
 package rpg2d_test
 
 import (
-	"github.com/ghthor/engine/coord"
 	"github.com/ghthor/engine/rpg2d"
+	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim"

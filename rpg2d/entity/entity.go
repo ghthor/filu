@@ -1,6 +1,6 @@
 package entity
 
-import "github.com/ghthor/engine/coord"
+import "github.com/ghthor/engine/rpg2d/coord"
 
 // A basic entity in the world.
 type Entity interface {
