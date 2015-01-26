@@ -147,6 +147,8 @@ func (q quadLeaf) Bounds() coord.Bounds { return q.bounds }
 func (q quadLeaf) Insert(e entity.Entity) Quad {
 	// If the quad is full it must split
 	if len(q.entities) >= q.maxSize {
+		// Unless it has a width or height of 1
+		// Then is can't split
 		if q.Bounds().Height() > 1 && q.Bounds().Width() > 1 {
 			return q.divide().Insert(e)
 		}
