@@ -25,18 +25,18 @@ func (b Bounds) HasOnEdge(c Cell) (onEdge bool) {
 }
 
 func (b Bounds) Width() int {
-	return b.BotR.X - b.TopL.X + 1
+	return abs(b.BotR.X-b.TopL.X) + 1
 }
 
 func (b Bounds) Height() int {
-	return b.TopL.Y - b.BotR.Y + 1
+	return abs(b.TopL.Y-b.BotR.Y) + 1
 }
 
 func (b Bounds) TopR() Cell { return Cell{b.BotR.X, b.TopL.Y} }
 func (b Bounds) BotL() Cell { return Cell{b.TopL.X, b.BotR.Y} }
 
 func (b Bounds) Area() int {
-	return (b.BotR.X - b.TopL.X + 1) * (b.TopL.Y - b.BotR.Y + 1)
+	return (abs(b.BotR.X-b.TopL.X) + 1) * (abs(b.TopL.Y-b.BotR.Y) + 1)
 }
 
 func (b Bounds) Overlaps(other Bounds) bool {
@@ -47,6 +47,13 @@ func (b Bounds) Overlaps(other Bounds) bool {
 
 	return b.Contains(other.TopR()) || b.Contains(other.BotL()) ||
 		other.Contains(b.TopR()) || other.Contains(b.BotL())
+}
+
+func abs(a int) int {
+	if a < 0 {
+		a = -a
+	}
+	return a
 }
 
 func max(a, b int) int {
