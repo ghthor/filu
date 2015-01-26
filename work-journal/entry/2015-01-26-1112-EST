@@ -1,0 +1,15 @@
+Mon Jan 26 11:12:57 EST 2015
+
+# journal - Work around for deficiencies in my quad tree
+To avoid dealing with the issues related to uneven heights or widths
+I just don't let the user do it. If the H and W are even then the
+quad will always split into sections. As I type this I don't know
+If this actually true. Maybe I should test this. I should test this.
+
+Haha.
+Well I think I'll just leave an idea here for it. I really want
+to move forward with the implementing the phases. I'd like to
+have everything working as it was before, soon, like in a day
+or 2.
+
+Mon Jan 26 11:19:18 EST 2015
