@@ -36,28 +36,32 @@ func DescribeQuad(c gospec.Context) {
 		})
 
 		c.Specify("can be queried by cell", func() {
-			for maxSize := 1; maxSize < 20*20+1; maxSize++ {
+			for maxSize := 2; maxSize < 10*10; maxSize++ {
 				q, err := quad.New(coord.Bounds{
-					coord.Cell{0, 19},
-					coord.Cell{-19, 19},
+					coord.Cell{-5, 5},
+					coord.Cell{4, -4},
 				}, maxSize, nil)
 				c.Assume(err, IsNil)
+				c.Assume(q.Bounds().Width(), Equals, 10)
+				c.Assume(q.Bounds().Height(), Equals, 10)
 
 				id := int64(0)
-				for j := 0; j > -20; j-- {
-					for i := 0; i < 20; i++ {
+				for j := 5; j > -5; j-- {
+					for i := -5; i < 5; i++ {
 						q = q.Insert(MockEntity{id, coord.Cell{i, j}})
 						id++
 					}
 				}
 
 				id = 0
-				for j := 0; j > -20; j-- {
-					for i := 0; i < 20; i++ {
+				for j := 5; j > -5; j-- {
+					for i := -5; i < 5; i++ {
 						c.Expect(q.QueryCell(coord.Cell{i, j})[0].Id(), Equals, id)
 						id++
 					}
 				}
+
+				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 10*10)
 
 				var fn func(q quad.Quad)
 				fn = func(q quad.Quad) {
