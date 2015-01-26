@@ -8,5 +8,5 @@ const (
 	NW Quad = iota
 	NE
 	SE
-	QUAD_SW
+	SW
 )

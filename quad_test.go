@@ -194,7 +194,7 @@ func DescribeQuad(c gospec.Context) {
 
 		treeNode, isAQuadTree = treeNode.quads[NE].(*quadTree)
 		c.Assume(isAQuadTree, IsTrue)
-		c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsTrue)
+		c.Expect(treeNode.quads[SW].Contains(neEntity), IsTrue)
 		c.Expect(treeNode.quads[SE].Contains(entity), IsTrue)
 
 		c.Specify("and removes entities from children", func() {
@@ -217,7 +217,7 @@ func DescribeQuad(c gospec.Context) {
 			treeNode, isAQuadTree = treeNode.quads[NE].(*quadTree)
 			c.Assume(isAQuadTree, IsTrue)
 
-			c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsFalse)
+			c.Expect(treeNode.quads[SW].Contains(neEntity), IsFalse)
 			c.Expect(treeNode.quads[SE].Contains(entity), IsFalse)
 		})
 	})
@@ -347,7 +347,7 @@ func DescribeQuad(c gospec.Context) {
 				world.updatePositions(path.End())
 				c.Expect(len(entity.mi.pathActions), Equals, 0)
 				c.Expect(entity.Cell(), Equals, path.Dest)
-				c.Expect(tree.quads[QUAD_SW].Contains(entity), IsTrue)
+				c.Expect(tree.quads[SW].Contains(entity), IsTrue)
 			})
 		})
 

@@ -367,7 +367,7 @@ func DescribeBounds(c gospec.Context) {
 					quads, err := b.Quads()
 					c.Assume(err, IsNil)
 
-					for quadrant := NW; quadrant <= QUAD_SW; quadrant++ {
+					for quadrant := NW; quadrant <= SW; quadrant++ {
 						q := quads[quadrant]
 						c.Expect(q.Area(), Equals, 1)
 						c.Expect(q.TopL, Equals, q.BotR)
@@ -394,7 +394,7 @@ func DescribeBounds(c gospec.Context) {
 							c.Expect(q.TopR(), Equals, b.TopR())
 						case SE:
 							c.Expect(q.BotR, Equals, b.BotR)
-						case QUAD_SW:
+						case SW:
 							c.Expect(q.BotL(), Equals, b.BotL())
 						}
 					}
