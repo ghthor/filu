@@ -1,4 +1,4 @@
-## [active] [1] BUG Narrow phase collision solving order
+## [inactive] [1] BUG Narrow phase collision solving order
 ### Recursive descent narrow phase collision solver
 I need to build a map of collisions indexed by each entity.
 With this data I can apply this algorithm.
