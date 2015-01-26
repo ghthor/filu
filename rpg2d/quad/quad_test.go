@@ -56,7 +56,10 @@ func DescribeQuad(c gospec.Context) {
 				id = 0
 				for j := 5; j > -5; j-- {
 					for i := -5; i < 5; i++ {
-						c.Expect(q.QueryCell(coord.Cell{i, j})[0].Id(), Equals, id)
+						entities := q.QueryCell(coord.Cell{i, j})
+						c.Assume(len(entities), Equals, 1)
+
+						c.Expect(entities[0].Id(), Equals, id)
 						id++
 					}
 				}
