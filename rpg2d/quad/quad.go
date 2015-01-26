@@ -1,6 +1,7 @@
 package quad
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ghthor/engine/rpg2d/coord"
@@ -31,7 +32,14 @@ type Quad interface {
 	RunInputPhase(InputPhaseHandler) (q Quad, OutOfBounds []entity.Entity)
 }
 
+// Guards against unspecified behavior if the maxSize is 1
+var ErrMaxSizeTooSmall = errors.New("max size must be > 1")
+
 func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, error) {
+	if maxSize < 2 {
+		return nil, ErrMaxSizeTooSmall
+	}
+
 	return quadLeaf{
 		parent:  nil,
 		bounds:  bounds,

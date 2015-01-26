@@ -13,7 +13,7 @@ func DescribeQuadInsert(c gospec.Context) {
 		q, err := quad.New(coord.Bounds{
 			TopL: coord.Cell{-10, 10},
 			BotR: coord.Cell{10, -10},
-		}, 1, nil)
+		}, 2, nil)
 		c.Assume(err, IsNil)
 
 		c.Specify("can insert", func() {

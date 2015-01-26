@@ -13,13 +13,14 @@ func DescribeQuad(c gospec.Context) {
 		q, err := quad.New(coord.Bounds{
 			TopL: coord.Cell{-1000, 1000},
 			BotR: coord.Cell{1000, -1000},
-		}, 1, nil)
+		}, 2, nil)
 		c.Assume(err, IsNil)
 
 		c.Specify("will subdivide", func() {
 			c.Assume(len(q.Children()), Equals, 0)
 			q = q.Insert(MockEntity{0, coord.Cell{0, 0}})
 			q = q.Insert(MockEntity{1, coord.Cell{5, 5}})
+			q = q.Insert(MockEntity{1, coord.Cell{6, 6}})
 			c.Expect(len(q.Children()), Equals, 4)
 		})
 
