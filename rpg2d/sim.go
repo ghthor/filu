@@ -42,10 +42,13 @@ type runningSimulation struct {
 	fps int
 
 	//---- World state
+	now      stime.Time
 	quadTree quad.Quad
 
 	//---- User Settings
 	EntityResolver
+	quad.InputPhaseHandler
+	quad.NarrowPhaseHandler
 
 	//---- Communication
 
@@ -139,6 +142,8 @@ func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
 
 		//---- User Settings
 		EntityResolver:     s.EntityResolver,
+		InputPhaseHandler:  s.InputPhaseHandler,
+		NarrowPhaseHandler: s.NarrowPhaseHandler,
 
 		//---- Communication
 		// All initialized within startLoop()
