@@ -263,6 +263,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			quadTree = runPhase(quadTree, clock.Now())
 			// TODO quadTree to state
 			// TODO send state
+			continue
 		}
 
 		// We're done with cleanup and going to exit
