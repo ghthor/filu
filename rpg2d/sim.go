@@ -26,6 +26,7 @@ type SimulationDef struct {
 	FPS int
 
 	// Initial World State
+	Now      stime.Time
 	QuadTree quad.Quad
 
 	// User defined to resolve an entity from and actor
@@ -38,21 +39,22 @@ type SimulationDef struct {
 	NarrowPhaseHandler quad.NarrowPhaseHandler
 }
 
-// An implementation of engine/sim.RunningSimulation
-type runningSimulation struct {
-	fps int
-
-	//---- World state
+type initialWorldState struct {
 	now      stime.Time
 	quadTree quad.Quad
+}
 
-	//---- User Settings
+type simSettings struct {
+	fps int
+
 	EntityResolver
 	quad.InputPhaseHandler
 	quad.NarrowPhaseHandler
+}
 
+// An implementation of engine/sim.RunningSimulation
+type runningSimulation struct {
 	//---- Communication
-
 	// These channels are used by the public api
 	// to add and remove actors. They are 1way
 	// send only channels. The requests contains
@@ -135,24 +137,24 @@ func (s runningSimulation) Halt() (sim.HaltedSimulation, error) {
 
 // Implement engine/sim.UnstartedSimulation
 func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
-	rs := &runningSimulation{
-		fps: s.FPS,
-
-		//---- World State
+	initialState := initialWorldState{
+		now:      s.Now,
 		quadTree: s.QuadTree,
-
-		//---- User Settings
-		EntityResolver:     s.EntityResolver,
-		InputPhaseHandler:  s.InputPhaseHandler,
-		NarrowPhaseHandler: s.NarrowPhaseHandler,
-
-		//---- Communication
-		// All initialized within startLoop()
 	}
+
+	settings := simSettings{
+		s.FPS,
+
+		s.EntityResolver,
+		s.InputPhaseHandler,
+		s.NarrowPhaseHandler,
+	}
+
+	rs := &runningSimulation{}
 
 	// Starts 2 go routines and returns
 	// The ticker and the engine communication kernel
-	rs.startLoop()
+	rs.startLoop(initialState, settings)
 
 	return rs, nil
 }
@@ -164,9 +166,7 @@ func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
 // This method has a pointer recv because it MUST set the
 // addActor and removeActor communication channels used
 // by the public api to request adding & removing actors
-func (s *runningSimulation) startLoop() {
-	ticker := time.NewTicker(time.Duration(1000/s.fps) * time.Millisecond)
-
+func (s *runningSimulation) startLoop(initialState initialWorldState, settings simSettings) {
 	//---- Create all the communication channels
 
 	// Make the 2way channels that will be used to make
@@ -196,6 +196,26 @@ func (s *runningSimulation) startLoop() {
 	var haltReq <-chan chan<- struct{}
 	haltReq = haltCh
 
+	quadTree := initialState.quadTree
+	clock := stime.Clock(initialState.now)
+
+	//---- User provided actor to entity resolver
+	entityResolver := settings.EntityResolver
+
+	//---- User provided input application phase
+	inputPhase := settings.InputPhaseHandler
+
+	//---- User provided narrow phase
+	narrowPhase := settings.NarrowPhaseHandler
+
+	runPhase := func(q quad.Quad, t stime.Time) quad.Quad {
+		return q.RunPhase(t, inputPhase, narrowPhase)
+	}
+
+	// Start the Clock
+	ticker := time.NewTicker(time.Duration(1000/settings.fps) * time.Millisecond)
+
+	// Start the simulation server
 	go func() {
 		var hasHalted chan<- struct{}
 
@@ -204,7 +224,7 @@ func (s *runningSimulation) startLoop() {
 			// Prioritized select for ticker.C and haltReq
 			select {
 			case <-ticker.C:
-				// TODO Step the simulation forward in time
+				goto tick
 
 			case hasHalted = <-haltReq:
 				break gameLoop
@@ -213,14 +233,14 @@ func (s *runningSimulation) startLoop() {
 
 			select {
 			case <-ticker.C:
-				// TODO Step the simulation forward in time
+				goto tick
 
 			case actor := <-addReq:
 				// a is the new sim.Actor{} to be inserted into the sim
 				a := <-actor.toBeAdded
 
-				e := s.EntityForActor(a)
-				s.quadTree = s.quadTree.Insert(e)
+				e := entityResolver.EntityForActor(a)
+				quadTree = quadTree.Insert(e)
 
 				// signal that the operation was a success
 				actor.wasAdded <- a
@@ -237,6 +257,12 @@ func (s *runningSimulation) startLoop() {
 			case hasHalted = <-haltReq:
 				break gameLoop
 			}
+
+		tick:
+			clock = clock.Tick()
+			quadTree = runPhase(quadTree, clock.Now())
+			// TODO quadTree to state
+			// TODO send state
 		}
 
 		// We're done with cleanup and going to exit
