@@ -8,7 +8,7 @@ import (
 )
 
 // Represents one of the four quad corners
-type Corner int
+type Corner coord.Quad
 
 const (
 	NW Corner = iota
