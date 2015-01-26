@@ -164,19 +164,12 @@ func (q quadLeaf) Insert(e entity.Entity) Quad {
 		q.collidables = append(q.collidables, ce)
 	}
 
+	//fmt.Printf("actual size: %d maxSize: %d\n", len(q.entities), q.maxSize)
+
 	return q
 }
 
 func (q quadLeaf) divide() Quad {
-	// TODO Remove the need for these panics
-	if q.bounds.Width() == 1 {
-		panic("unable to divide quad with width of 1")
-	}
-
-	if q.bounds.Height() == 1 {
-		panic("unable to divide quad with height of 1")
-	}
-
 	qn := quadNode{
 		parent: q.parent,
 		bounds: q.bounds,
