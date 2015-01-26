@@ -8,7 +8,7 @@ It is the game loop.
 
 A simulation has a life cycle. It begins as an
 [UnstartedSimulation](http://godoc.org/github.com/ghthor/engine/sim#UnstartedSimulation).
-An unstarted has only one behavior, it can Begin.
+An unstarted simulation has only one behavior, it can Begin.
 
 Once the simulation has begun, it is a
 [RunningSimulation](http://godoc.org/github.com/ghthor/engine/sim#RunningSimulation).
