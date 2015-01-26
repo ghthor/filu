@@ -10,13 +10,6 @@ import (
 // Represents one of the four quad corners
 type Corner coord.Quad
 
-const (
-	NW Corner = iota
-	NE
-	SE
-	SW
-)
-
 // An interface used to abstract the implementation differences
 // of a node and a leaf.
 type Quad interface {
