@@ -23,8 +23,6 @@ func DescribeQuadInsert(c gospec.Context) {
 				chunk := q.Chunk()
 
 				c.Expect(len(chunk.Entities), Equals, 1)
-				c.Expect(len(chunk.Moveables), Equals, 0)
-				c.Expect(len(chunk.Collidables), Equals, 0)
 
 				c.Specify("and remove it", func() {
 					q = q.Remove(entity)
@@ -32,46 +30,10 @@ func DescribeQuadInsert(c gospec.Context) {
 				})
 			})
 
-			c.Specify("a movableEntity", func() {
-				entity := &MockMobileEntity{}
-				q = q.Insert(entity)
-				chunk := q.Chunk()
-
-				c.Expect(len(chunk.Entities), Equals, 1)
-				c.Expect(len(chunk.Moveables), Equals, 1)
-				c.Expect(len(chunk.Collidables), Equals, 0)
-
-				c.Specify("and remove it", func() {
-					q = q.Remove(entity)
-					chunk = q.Chunk()
-
-					c.Expect(len(chunk.Entities), Equals, 0)
-					c.Expect(len(chunk.Moveables), Equals, 0)
-				})
-			})
-
-			c.Specify("a collidable entity", func() {
-				entity := &MockCollidableEntity{}
-				q = q.Insert(entity)
-				chunk := q.Chunk()
-
-				c.Expect(len(chunk.Entities), Equals, 1)
-				c.Expect(len(chunk.Moveables), Equals, 0)
-				c.Expect(len(chunk.Collidables), Equals, 1)
-
-				c.Specify("and remove it", func() {
-					q = q.Remove(entity)
-					chunk = q.Chunk()
-
-					c.Expect(len(chunk.Entities), Equals, 0)
-					c.Expect(len(chunk.Collidables), Equals, 0)
-				})
-			})
-
 			c.Specify("some entities", func() {
 				e1 := MockEntity{0, coord.Cell{-10, 9}}
-				e2 := MockMobileEntity{2, coord.Cell{5, -1}}
-				e3 := MockCollidableEntity{1, coord.Cell{9, -10}}
+				e2 := MockEntity{2, coord.Cell{5, -1}}
+				e3 := MockEntity{1, coord.Cell{9, -10}}
 
 				q = q.Insert(e1)
 				q = q.Insert(e2)

@@ -67,9 +67,7 @@ func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, erro
 type Chunk struct {
 	Bounds coord.Bounds
 
-	Entities    []entity.Entity
-	Moveables   []entity.Movable
-	Collidables []entity.Collidable
+	Entities []entity.Entity
 }
 
 // A node in the quad tree that will contain 4 children,
@@ -138,8 +136,6 @@ func (q quadNode) Chunk() Chunk {
 	for _, quad := range q.children {
 		cchunk := quad.Chunk()
 		chunk.Entities = append(chunk.Entities, cchunk.Entities...)
-		chunk.Moveables = append(chunk.Moveables, cchunk.Moveables...)
-		chunk.Collidables = append(chunk.Collidables, cchunk.Collidables...)
 	}
 
 	return chunk
@@ -153,9 +149,7 @@ type quadLeaf struct {
 
 	bounds coord.Bounds
 
-	entities    []entity.Entity
-	moveables   []entity.Movable
-	collidables []entity.Collidable
+	entities []entity.Entity
 
 	maxSize int
 }
@@ -177,16 +171,6 @@ func (q quadLeaf) Insert(e entity.Entity) Quad {
 	}
 
 	q.entities = append(q.entities, e)
-
-	// Index Movable Entities
-	if me, canMove := e.(entity.Movable); canMove {
-		q.moveables = append(q.moveables, me)
-	}
-
-	// Index collidable Entities
-	if ce, canCollide := e.(entity.Collidable); canCollide {
-		q.collidables = append(q.collidables, ce)
-	}
 
 	//fmt.Printf("actual size: %d maxSize: %d\n", len(q.entities), q.maxSize)
 
@@ -212,9 +196,7 @@ func (q quadLeaf) divide() Quad {
 			parent: qn,
 			bounds: quads[i],
 
-			entities:    make([]entity.Entity, 0, q.maxSize),
-			moveables:   make([]entity.Movable, 0, q.maxSize),
-			collidables: make([]entity.Collidable, 0, q.maxSize),
+			entities: make([]entity.Entity, 0, q.maxSize),
 
 			maxSize: q.maxSize,
 		}
@@ -235,24 +217,6 @@ func (q quadLeaf) Remove(remove entity.Entity) Quad {
 		if entity.Id() == remove.Id() {
 			q.entities = append(q.entities[:i], q.entities[i+1:]...)
 			break
-		}
-	}
-
-	// Remove Movable Entity
-	if _, canMove := remove.(entity.Movable); canMove {
-		for i, me := range q.moveables {
-			if me.Id() == remove.Id() {
-				q.moveables = append(q.moveables[:i], q.moveables[i+1:]...)
-				break
-			}
-		}
-	}
-
-	if _, canCollide := remove.(entity.Collidable); canCollide {
-		for i, ce := range q.collidables {
-			if ce.Id() == remove.Id() {
-				q.collidables = append(q.collidables[:i], q.collidables[i+1:]...)
-			}
 		}
 	}
 
@@ -293,8 +257,6 @@ func (q quadLeaf) Chunk() Chunk {
 	chunk := Chunk{Bounds: q.bounds}
 
 	chunk.Entities = append(chunk.Entities, q.entities...)
-	chunk.Moveables = append(chunk.Moveables, q.moveables...)
-	chunk.Collidables = append(chunk.Collidables, q.collidables...)
 
 	return chunk
 }
