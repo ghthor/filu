@@ -6,6 +6,7 @@ import (
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim"
+	"github.com/ghthor/engine/sim/stime"
 )
 
 // An interface the user will implement to resolve
