@@ -73,8 +73,8 @@ func DescribeQuad(c gospec.Context) {
 
 		c.Specify("if the quad is a tree", func() {
 			tree := divideLeafIntoTree()
-			c.Assume(tree.quads[QUAD_SE].AABB().Contains(path.Orig), IsTrue)
-			c.Assume(tree.quads[QUAD_SE].AABB().Contains(path.Dest), IsFalse)
+			c.Assume(tree.quads[SE].AABB().Contains(path.Orig), IsTrue)
+			c.Assume(tree.quads[SE].AABB().Contains(path.Dest), IsFalse)
 
 			matches := world.QueryCollidables(path.Orig)
 			c.Expect(len(matches), Equals, 1)
@@ -195,7 +195,7 @@ func DescribeQuad(c gospec.Context) {
 		treeNode, isAQuadTree = treeNode.quads[NE].(*quadTree)
 		c.Assume(isAQuadTree, IsTrue)
 		c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsTrue)
-		c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsTrue)
+		c.Expect(treeNode.quads[SE].Contains(entity), IsTrue)
 
 		c.Specify("and removes entities from children", func() {
 			treeNode, isAQuadTree := qt.(*quadTree)
@@ -218,7 +218,7 @@ func DescribeQuad(c gospec.Context) {
 			c.Assume(isAQuadTree, IsTrue)
 
 			c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsFalse)
-			c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsFalse)
+			c.Expect(treeNode.quads[SE].Contains(entity), IsFalse)
 		})
 	})
 
@@ -337,12 +337,12 @@ func DescribeQuad(c gospec.Context) {
 				tree := divideLeafIntoTree()
 
 				world = world.Insert(entity)
-				c.Assume(tree.quads[QUAD_SE].Contains(entity), IsTrue)
+				c.Assume(tree.quads[SE].Contains(entity), IsTrue)
 
 				world.updatePositions(path.End() - 1)
 				c.Expect(len(entity.mi.pathActions), Equals, 1)
 				c.Expect(entity.Cell(), Equals, path.Orig)
-				c.Expect(tree.quads[QUAD_SE].Contains(entity), IsTrue)
+				c.Expect(tree.quads[SE].Contains(entity), IsTrue)
 
 				world.updatePositions(path.End())
 				c.Expect(len(entity.mi.pathActions), Equals, 0)

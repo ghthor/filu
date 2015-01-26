@@ -392,7 +392,7 @@ func DescribeBounds(c gospec.Context) {
 							c.Expect(q.TopL, Equals, b.TopL)
 						case NE:
 							c.Expect(q.TopR(), Equals, b.TopR())
-						case QUAD_SE:
+						case SE:
 							c.Expect(q.BotR, Equals, b.BotR)
 						case QUAD_SW:
 							c.Expect(q.BotL(), Equals, b.BotL())
