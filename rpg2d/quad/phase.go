@@ -14,15 +14,15 @@ import (
 // The narrow phase should revert any changes to the movement
 // state that cannot happen because of collisions.
 type InputPhaseHandler interface {
-	ApplyInputsIn(Chunk) Chunk
+	ApplyInputsIn(Chunk, stime.Time) Chunk
 }
 
 // Convenience type so input phase handlers can be written
 // as closures or as functions.
-type InputPhaseHandlerFn func(Chunk) Chunk
+type InputPhaseHandlerFn func(Chunk, stime.Time) Chunk
 
-func (f InputPhaseHandlerFn) ApplyInputsIn(c Chunk) Chunk {
-	return f(c)
+func (f InputPhaseHandlerFn) ApplyInputsIn(c Chunk, t stime.Time) Chunk {
+	return f(c, t)
 }
 
 // 2. Broad Phase - Internal
@@ -49,7 +49,7 @@ func (f InputPhaseHandlerFn) ApplyInputsIn(c Chunk) Chunk {
 // return and I need to stop thinking about it for now and
 // just shut the fuck up and write the fucking code.
 type NarrowPhaseHandler interface {
-	ResolveCollisions(Chunk) Chunk
+	ResolveCollisions(Chunk, stime.Time) Chunk
 }
 
 func RunPhasesOn(q Quad, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {
@@ -102,8 +102,8 @@ func (q quadNode) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []ent
 	return quad, outOfBounds
 }
 
-func (q quadLeaf) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []entity.Entity) {
-	chunk := p.ApplyInputsIn(q.Chunk())
+func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+	chunk := p.ApplyInputsIn(q.Chunk(), now)
 
 	// Use a var of the interface value
 	// This enables us to use Remove() method functionally

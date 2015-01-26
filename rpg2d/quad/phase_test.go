@@ -23,7 +23,7 @@ func DescribePhase(c gospec.Context) {
 			q = q.Insert(MockEntity{0, coord.Cell{-10, 9}})
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
 
-			q, outOfBounds := quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk) quad.Chunk {
+			q, outOfBounds := quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk, now stime.Time) quad.Chunk {
 				c.Assume(len(chunk.Entities), Equals, 1)
 
 				// Move the entity out of bounds
@@ -40,7 +40,7 @@ func DescribePhase(c gospec.Context) {
 			q = q.Insert(MockEntity{1, coord.Cell{9, -10}})
 			q = q.Insert(MockEntity{2, coord.Cell{5, -1}})
 
-			q, outOfBounds = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk) quad.Chunk {
+			q, outOfBounds = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk, now stime.Time) quad.Chunk {
 				// Move the entity out of bounds
 				for i, e := range chunk.Entities {
 					if e.Id() == 1 {
