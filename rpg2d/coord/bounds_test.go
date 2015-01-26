@@ -474,7 +474,7 @@ func DescribeBounds(c gospec.Context) {
 			for _, testCase := range cases {
 				b := testCase.bounds
 				b.TopL.Y += 2
-				b.BotR.X -= 2
+				b.BotR.X = b.TopL.X
 				c.Assume(b.Width(), Equals, 1)
 
 				_, err := b.Quads()
