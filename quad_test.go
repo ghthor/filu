@@ -180,7 +180,7 @@ func DescribeQuad(c gospec.Context) {
 		treeNode, isAQuadTree := qt.(*quadTree)
 		c.Assume(isAQuadTree, IsTrue)
 
-		c.Expect(treeNode.quads[QUAD_NW].Contains(nwEntity), IsTrue)
+		c.Expect(treeNode.quads[NW].Contains(nwEntity), IsTrue)
 		c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsTrue)
 
 		// Subtree divides
@@ -202,7 +202,7 @@ func DescribeQuad(c gospec.Context) {
 			c.Assume(isAQuadTree, IsTrue)
 
 			qt.Remove(nwEntity)
-			c.Expect(treeNode.quads[QUAD_NW].Contains(nwEntity), IsFalse)
+			c.Expect(treeNode.quads[NW].Contains(nwEntity), IsFalse)
 			c.Expect(qt.Contains(nwEntity), IsFalse)
 
 			qt.Remove(neEntity)

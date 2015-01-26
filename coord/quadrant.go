@@ -5,7 +5,7 @@ package coord
 type Quad int
 
 const (
-	QUAD_NW Quad = iota
+	NW Quad = iota
 	QUAD_NE
 	QUAD_SE
 	QUAD_SW

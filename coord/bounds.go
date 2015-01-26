@@ -130,7 +130,7 @@ func (b Bounds) Quads() ([4]Bounds, error) {
 		Cell{nw.BotR.X, b.BotR.Y},
 	}
 
-	bounds[QUAD_NW] = nw
+	bounds[NW] = nw
 	bounds[QUAD_NE] = ne
 	bounds[QUAD_SE] = se
 	bounds[QUAD_SW] = sw
