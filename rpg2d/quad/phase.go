@@ -52,12 +52,20 @@ type NarrowPhaseHandler interface {
 	ResolveCollisions(Chunk) Chunk
 }
 
-func (q quadNode) RunPhase(at stime.Time, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler) Quad {
-	return q
+func RunPhasesOn(q Quad, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {
+	return nil
 }
 
-func (q quadLeaf) RunPhase(at stime.Time, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler) Quad {
-	return q
+func RunInputPhaseOn(q Quad, inputPhase InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+	q, entities := q.runInputPhase(inputPhase, now)
+	return q, entities
+}
+
+func RunBroadPhaseOn(q Quad, now stime.Time) (chunksOfInterest []Chunk) {
+	return nil
+}
+
+func RunNarrowPhaseOn(q Quad, narrowPhase NarrowPhaseHandler, now stime.Time) {
 }
 
 func (q quadNode) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []entity.Entity) {

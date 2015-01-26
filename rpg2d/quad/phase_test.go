@@ -3,6 +3,7 @@ package quad_test
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/quad"
+	"github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
@@ -22,14 +23,14 @@ func DescribePhase(c gospec.Context) {
 			q = q.Insert(MockEntity{0, coord.Cell{-10, 9}})
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
 
-			q, outOfBounds := q.RunInputPhase(quad.InputPhaseHandlerFn(func(chunk quad.Chunk) quad.Chunk {
+			q, outOfBounds := quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk) quad.Chunk {
 				c.Assume(len(chunk.Entities), Equals, 1)
 
 				// Move the entity out of bounds
 				chunk.Entities[0] = MockEntity{0, coord.Cell{-11, 9}}
 
 				return chunk
-			}))
+			}), stime.Time(0))
 
 			c.Expect(len(outOfBounds), Equals, 1)
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 0)
@@ -39,7 +40,7 @@ func DescribePhase(c gospec.Context) {
 			q = q.Insert(MockEntity{1, coord.Cell{9, -10}})
 			q = q.Insert(MockEntity{2, coord.Cell{5, -1}})
 
-			q, outOfBounds = q.RunInputPhase(quad.InputPhaseHandlerFn(func(chunk quad.Chunk) quad.Chunk {
+			q, outOfBounds = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk) quad.Chunk {
 				// Move the entity out of bounds
 				for i, e := range chunk.Entities {
 					if e.Id() == 1 {
@@ -48,7 +49,7 @@ func DescribePhase(c gospec.Context) {
 				}
 
 				return chunk
-			}))
+			}), stime.Time(0))
 
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
 			c.Expect(q.QueryCell(coord.Cell{-10, 9})[0].Id(), Equals, int64(0))

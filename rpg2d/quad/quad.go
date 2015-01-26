@@ -29,8 +29,6 @@ type Quad interface {
 
 	Chunk() Chunk
 
-	RunPhase(stime.Time, InputPhaseHandler, NarrowPhaseHandler) Quad
-
 	//---- Internal methods to execute a phase calculation
 	runInputPhase(InputPhaseHandler, stime.Time) (quad Quad, OutOfBounds []entity.Entity)
 	runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk)
