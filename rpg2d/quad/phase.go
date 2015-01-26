@@ -57,8 +57,7 @@ func RunPhasesOn(q Quad, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHa
 }
 
 func RunInputPhaseOn(q Quad, inputPhase InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
-	q, entities := q.runInputPhase(inputPhase, now)
-	return q, entities
+	return q.runInputPhase(inputPhase, now)
 }
 
 func RunBroadPhaseOn(q Quad, now stime.Time) (chunksOfInterest []Chunk) {
