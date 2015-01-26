@@ -222,7 +222,7 @@ CT_HEAD_TO_HEAD_TIMESPAN:
 		// But for now, this will be sufficent for someone with some
 		// experience in linear algerbra to understand this equation.
 		// See for more info.
-		// https://github.com/ghthor/engine/blob/master/design-notes/math.jpg
+		// https://github.com/ghthor/engine/blob/master/work-journal/design-notes/math.jpg
 		start = stime.Time(math.Floor((at*bs + bt*as + as*bs) / (bs + as)))
 
 		// TODO Check if this floating point work around hack can be avoided or done differently
