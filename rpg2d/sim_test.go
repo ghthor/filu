@@ -6,6 +6,7 @@ import (
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim"
+	"github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
@@ -35,6 +36,18 @@ func (mockEntityResolver) EntityForActor(a sim.Actor) entity.Entity {
 	return a.(entity.Entity)
 }
 
+type mockInputPhase struct{}
+
+func (mockInputPhase) ApplyInputsIn(c quad.Chunk, now stime.Time) quad.Chunk {
+	return c
+}
+
+type mockNarrowPhase struct{}
+
+func (mockNarrowPhase) ResolveCollisions(c quad.Chunk, now stime.Time) quad.Chunk {
+	return c
+}
+
 func DescribeASimulation(c gospec.Context) {
 	quad, err := quad.New(coord.Bounds{
 		TopL: coord.Cell{-1000, 999},
@@ -47,7 +60,9 @@ func DescribeASimulation(c gospec.Context) {
 
 		QuadTree: quad,
 
-		EntityResolver: mockEntityResolver{},
+		EntityResolver:     mockEntityResolver{},
+		InputPhaseHandler:  mockInputPhase{},
+		NarrowPhaseHandler: mockNarrowPhase{},
 	}
 
 	c.Specify("a simulation can be started", func() {

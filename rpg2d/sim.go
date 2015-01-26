@@ -209,7 +209,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	narrowPhase := settings.NarrowPhaseHandler
 
 	runPhase := func(q quad.Quad, t stime.Time) quad.Quad {
-		return q.RunPhase(t, inputPhase, narrowPhase)
+		return quad.RunPhasesOn(q, inputPhase, narrowPhase, t)
 	}
 
 	// Start the Clock
