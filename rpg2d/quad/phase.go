@@ -53,18 +53,23 @@ type NarrowPhaseHandler interface {
 }
 
 func RunPhasesOn(q Quad, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {
-	return nil
+	q, _ = q.runInputPhase(inputPhase, now)
+	q, chunksToSolve := q.runBroadPhase(now)
+	q = q.runNarrowPhase(narrowPhase, chunksToSolve, now)
+
+	return q
 }
 
 func RunInputPhaseOn(q Quad, inputPhase InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
 	return q.runInputPhase(inputPhase, now)
 }
 
-func RunBroadPhaseOn(q Quad, now stime.Time) (chunksOfInterest []Chunk) {
-	return nil
+func RunBroadPhaseOn(q Quad, now stime.Time) (quad Quad, chunksOfInterest []Chunk) {
+	return q.runBroadPhase(now)
 }
 
-func RunNarrowPhaseOn(q Quad, narrowPhase NarrowPhaseHandler, now stime.Time) {
+func RunNarrowPhaseOn(q Quad, chunksToSolve []Chunk, narrowPhase NarrowPhaseHandler, now stime.Time) []Chunk {
+	return nil
 }
 
 func (q quadNode) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []entity.Entity) {
@@ -115,16 +120,18 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []ent
 	return quad, outOfBounds
 }
 
-func (q quadNode) runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk) {
+func (q quadNode) runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk) {
 	return q, nil
 }
 
-func (q quadLeaf) runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk) {
+func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk) {
 	return q, nil
 }
-func (q quadNode) runNarrowPhase(NarrowPhaseHandler, stime.Time) Quad {
+
+func (q quadNode) runNarrowPhase(narrowPhase NarrowPhaseHandler, chunksToSolve []Chunk, now stime.Time) Quad {
 	return q
 }
-func (q quadLeaf) runNarrowPhase(NarrowPhaseHandler, stime.Time) Quad {
+
+func (q quadLeaf) runNarrowPhase(narrowPhase NarrowPhaseHandler, chunksToSolve []Chunk, now stime.Time) Quad {
 	return q
 }

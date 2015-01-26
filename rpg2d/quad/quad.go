@@ -31,8 +31,8 @@ type Quad interface {
 
 	//---- Internal methods to execute a phase calculation
 	runInputPhase(InputPhaseHandler, stime.Time) (quad Quad, OutOfBounds []entity.Entity)
-	runBroadPhase(InputPhaseHandler, stime.Time) (quad Quad, chunksOfActivity []Chunk)
-	runNarrowPhase(NarrowPhaseHandler, stime.Time) Quad
+	runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk)
+	runNarrowPhase(NarrowPhaseHandler, []Chunk, stime.Time) Quad
 }
 
 // Guards against unspecified behavior if the maxSize is 1
