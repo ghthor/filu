@@ -12,20 +12,7 @@ type Actor interface {
 
 	// An actor provides a connection the simulation
 	// will read input from and write world state to.
-	Conn() ActorConn
-}
-
-// An ActorConn is the interface to the network
-// socket that the simulation will use.
-type ActorConn interface {
-	// An actor can provide an input. This will
-	// be called ONCE per frame per actor.
-	// TODO string type may change, but for now it is fine
-	ReadInput() (string, error)
-
-	// An actor will receive the state of the world
-	// after each calculation.
-	StateWriter
+	StateWriter() StateWriter
 }
 
 // A StateWriter can receive the state of the simulation.

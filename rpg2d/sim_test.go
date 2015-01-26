@@ -14,8 +14,8 @@ import (
 type mockActor struct{}
 
 // Implement sim.Actor
-func (mockActor) Id() int64           { return 0 }
-func (mockActor) Conn() sim.ActorConn { return nil }
+func (mockActor) Id() int64                    { return 0 }
+func (mockActor) StateWriter() sim.StateWriter { return nil }
 
 // Implement entity.Entity
 func (mockActor) Cell() coord.Cell {
