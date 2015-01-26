@@ -131,7 +131,7 @@ func (b Bounds) Quads() ([4]Bounds, error) {
 	}
 
 	bounds[NW] = nw
-	bounds[QUAD_NE] = ne
+	bounds[NE] = ne
 	bounds[QUAD_SE] = se
 	bounds[QUAD_SW] = sw
 

@@ -6,7 +6,7 @@ type Quad int
 
 const (
 	NW Quad = iota
-	QUAD_NE
+	NE
 	QUAD_SE
 	QUAD_SW
 )

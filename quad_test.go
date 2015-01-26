@@ -181,7 +181,7 @@ func DescribeQuad(c gospec.Context) {
 		c.Assume(isAQuadTree, IsTrue)
 
 		c.Expect(treeNode.quads[NW].Contains(nwEntity), IsTrue)
-		c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsTrue)
+		c.Expect(treeNode.quads[NE].Contains(neEntity), IsTrue)
 
 		// Subtree divides
 		entity := MockEntity{3, Cell{999, 2}}
@@ -189,10 +189,10 @@ func DescribeQuad(c gospec.Context) {
 
 		treeNode, isAQuadTree = qt.(*quadTree)
 		c.Assume(isAQuadTree, IsTrue)
-		c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsTrue)
-		c.Expect(treeNode.quads[QUAD_NE].Contains(entity), IsTrue)
+		c.Expect(treeNode.quads[NE].Contains(neEntity), IsTrue)
+		c.Expect(treeNode.quads[NE].Contains(entity), IsTrue)
 
-		treeNode, isAQuadTree = treeNode.quads[QUAD_NE].(*quadTree)
+		treeNode, isAQuadTree = treeNode.quads[NE].(*quadTree)
 		c.Assume(isAQuadTree, IsTrue)
 		c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsTrue)
 		c.Expect(treeNode.quads[QUAD_SE].Contains(entity), IsTrue)
@@ -211,10 +211,10 @@ func DescribeQuad(c gospec.Context) {
 			treeNode, isAQuadTree = qt.(*quadTree)
 			c.Assume(isAQuadTree, IsTrue)
 
-			c.Expect(treeNode.quads[QUAD_NE].Contains(neEntity), IsFalse)
-			c.Expect(treeNode.quads[QUAD_NE].Contains(entity), IsFalse)
+			c.Expect(treeNode.quads[NE].Contains(neEntity), IsFalse)
+			c.Expect(treeNode.quads[NE].Contains(entity), IsFalse)
 
-			treeNode, isAQuadTree = treeNode.quads[QUAD_NE].(*quadTree)
+			treeNode, isAQuadTree = treeNode.quads[NE].(*quadTree)
 			c.Assume(isAQuadTree, IsTrue)
 
 			c.Expect(treeNode.quads[QUAD_SW].Contains(neEntity), IsFalse)

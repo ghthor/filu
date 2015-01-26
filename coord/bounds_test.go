@@ -390,7 +390,7 @@ func DescribeBounds(c gospec.Context) {
 						switch quadrant {
 						case NW:
 							c.Expect(q.TopL, Equals, b.TopL)
-						case QUAD_NE:
+						case NE:
 							c.Expect(q.TopR(), Equals, b.TopR())
 						case QUAD_SE:
 							c.Expect(q.BotR, Equals, b.BotR)
