@@ -37,26 +37,26 @@ func DescribeQuad(c gospec.Context) {
 		})
 
 		c.Specify("can be queried by cell", func() {
-			for maxSize := 2; maxSize < 10*10; maxSize++ {
+			for maxSize := 2; maxSize < 8*8; maxSize++ {
 				q, err := quad.New(coord.Bounds{
-					coord.Cell{-5, 5},
-					coord.Cell{4, -4},
+					coord.Cell{-4, 4},
+					coord.Cell{3, -3},
 				}, maxSize, nil)
 				c.Assume(err, IsNil)
-				c.Assume(q.Bounds().Width(), Equals, 10)
-				c.Assume(q.Bounds().Height(), Equals, 10)
+				c.Assume(q.Bounds().Width(), Equals, 8)
+				c.Assume(q.Bounds().Height(), Equals, 8)
 
 				id := int64(0)
-				for j := 5; j > -5; j-- {
-					for i := -5; i < 5; i++ {
+				for j := 4; j > -4; j-- {
+					for i := -4; i < 4; i++ {
 						q = q.Insert(MockEntity{id, coord.Cell{i, j}})
 						id++
 					}
 				}
 
 				id = 0
-				for j := 5; j > -5; j-- {
-					for i := -5; i < 5; i++ {
+				for j := 4; j > -4; j-- {
+					for i := -4; i < 4; i++ {
 						entities := q.QueryCell(coord.Cell{i, j})
 						c.Assume(len(entities), Equals, 1)
 
@@ -65,7 +65,7 @@ func DescribeQuad(c gospec.Context) {
 					}
 				}
 
-				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 10*10)
+				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 8*8)
 
 				var fn func(q quad.Quad)
 				fn = func(q quad.Quad) {

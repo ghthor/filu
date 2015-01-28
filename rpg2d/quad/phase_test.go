@@ -13,7 +13,7 @@ func DescribePhase(c gospec.Context) {
 	q, err := quad.New(coord.Bounds{
 		TopL: coord.Cell{-10, 9},
 		BotR: coord.Cell{9, -10},
-	}, 2, nil)
+	}, 4, nil)
 	c.Assume(err, IsNil)
 
 	c.Specify("the input phase", func() {
