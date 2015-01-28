@@ -131,6 +131,8 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, chunksOfActivity []C
 		chunks = append(chunks, chunksOfActivity...)
 	}
 
+	// TODO Join chunks that are overlapping
+
 	return q, chunks
 }
 
@@ -208,6 +210,8 @@ e2c = %v
 	for _, cptr := range chunkPtrs {
 		chunks = append(chunks, *cptr)
 	}
+
+	// TODO Combine bounds of all entities to from bounds for each chunk
 
 	return q, chunks
 }
