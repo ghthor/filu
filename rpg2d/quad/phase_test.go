@@ -2,6 +2,7 @@ package quad_test
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim/stime"
 
@@ -63,6 +64,75 @@ func DescribePhase(c gospec.Context) {
 
 	c.Specify("the broad phase", func() {
 		c.Specify("will create chunks of interest", func() {
+			type testCase struct {
+				entities       []entity.Entity
+				expectedChunks []quad.Chunk
+			}
+
+			cell := func(x, y int) coord.Cell {
+				return coord.Cell{x, y}
+			}
+
+			bounds := func(tl, br coord.Cell) coord.Bounds {
+				return coord.Bounds{tl, br}
+			}
+
+			chunk := func(e []entity.Entity) quad.Chunk {
+				return quad.Chunk{Entities: e}
+			}
+
+			entities := []entity.Entity{
+				&MockEntityWithBounds{
+					0,
+					cell(-5, 5),
+					bounds(cell(-5, 5), cell(-4, 5)),
+				},
+				&MockEntityWithBounds{
+					1,
+					cell(-5, 6),
+					bounds(cell(-4, 6), cell(-4, 5)),
+				},
+				&MockEntityWithBounds{
+					2,
+					cell(5, 5),
+					bounds(cell(5, 5), cell(6, 5)),
+				},
+				&MockEntityWithBounds{
+					3,
+					cell(6, 5),
+					bounds(cell(6, 5), cell(6, 5)),
+				},
+				&MockEntityWithBounds{
+					4,
+					cell(6, 4),
+					bounds(cell(5, 5), cell(6, 4)),
+				}}
+
+			chunks := []quad.Chunk{
+				chunk(entities[0:2]),
+				chunk(entities[2:4]),
+			}
+
+			testCases := []testCase{{
+				entities[0:2],
+				chunks[0:1],
+			}, {
+				entities[0:4],
+				chunks[0:2],
+			}}
+
+			for _, testCase := range testCases {
+				for _, e := range testCase.entities {
+					q = q.Insert(e)
+				}
+
+				var actualChunks []quad.Chunk
+
+				q, actualChunks = quad.RunBroadPhaseOn(q, stime.Time(0))
+				c.Expect(len(actualChunks), Equals, len(testCase.expectedChunks))
+
+				c.Expect(actualChunks, ContainsAll, testCase.expectedChunks)
+			}
 		})
 	})
 

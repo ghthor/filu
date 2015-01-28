@@ -1,6 +1,8 @@
 package quad
 
 import (
+	"fmt"
+
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/sim/stime"
 )
@@ -120,12 +122,94 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []en
 	return quad, outOfBounds
 }
 
-func (q quadNode) runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk) {
-	return q, nil
+func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, chunksOfActivity []Chunk) {
+	var chunks []Chunk
+
+	for i, cq := range q.children {
+		cq, chunksOfActivity := cq.runBroadPhase(now)
+		q.children[i] = cq
+		chunks = append(chunks, chunksOfActivity...)
+	}
+
+	return q, chunks
 }
 
 func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk) {
-	return q, nil
+	// A map of the chunks generated thus far
+	chunkIndex := make(map[entity.Entity]*Chunk, len(q.entities))
+	chunkPtrs := make([]*Chunk, 0, len(q.entities))
+
+	for _, e1 := range q.entities {
+		for _, e2 := range q.entities {
+			if e1 == e2 {
+				continue
+			}
+
+			if !e1.Bounds().Overlaps(e2.Bounds()) {
+				continue
+			}
+
+			// We have 2 entities with overlapping bounds.
+			// Are either of them indexed in the chunks map?
+			e1c, e1cExists := chunkIndex[e1]
+			e2c, e2cExists := chunkIndex[e2]
+
+			switch {
+
+			case (e1cExists && !e2cExists):
+				// e1 exists in a chunk already
+				// add e2 to that chunk
+				e1c.Entities = append(e1c.Entities, e2)
+
+				// set e2's chunk to e1's chunk in the chunks index.
+				chunkIndex[e2] = e1c
+
+			case (!e1cExists && e2cExists):
+				// e2 exists in a chunk already
+				// add e1 to that chunk
+				e2c.Entities = append(e2c.Entities, e1)
+
+				// set e1's chunk to e1's chunk in the index
+				chunkIndex[e1] = e2c
+			case !e1cExists && !e2cExists:
+				// neither e1 or e2 have been assigned to a chunk
+				// create a new chunk with containing e1 and e2
+				ch := &Chunk{Entities: []entity.Entity{e1, e2}}
+
+				// set e1 and e2's chunk in the index
+				chunkIndex[e1] = ch
+				chunkIndex[e2] = ch
+
+				// add chunk into the array of chunks
+				chunkPtrs = append(chunkPtrs, ch)
+
+			case (e1cExists && e2cExists) && (e1c != e2c):
+				// both entities exist in chunks
+				// but those chunks are different
+
+				// merge the chunks
+				e1c.Entities = append(e1c.Entities, e2c.Entities...)
+				chunkIndex[e2] = e1c
+
+			case (e1cExists && e2cExists) && (e1c == e2c):
+			// both entities exist in the same chunk already.
+			// do nothing
+
+			default:
+				panic(fmt.Sprintf(`unexpected index state during broad phase
+e1c = %v
+e2c = %v
+`, e1c, e2c))
+			}
+		}
+	}
+
+	chunks := make([]Chunk, 0, len(chunkPtrs))
+	for _, cptr := range chunkPtrs {
+		chunks = append(chunks, *cptr)
+	}
+
+	return q, chunks
 }
 
 func (q quadNode) runNarrowPhase(narrowPhase NarrowPhaseHandler, chunksToSolve []Chunk, now stime.Time) Quad {
