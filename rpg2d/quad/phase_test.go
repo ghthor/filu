@@ -69,17 +69,9 @@ func DescribePhase(c gospec.Context) {
 				expectedChunks []quad.Chunk
 			}
 
-			cell := func(x, y int) coord.Cell {
-				return coord.Cell{x, y}
-			}
-
-			bounds := func(tl, br coord.Cell) coord.Bounds {
-				return coord.Bounds{tl, br}
-			}
-
-			chunk := func(e []entity.Entity) quad.Chunk {
-				return quad.Chunk{Entities: e}
-			}
+			cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+			bounds := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
+			chunk := func(e []entity.Entity) quad.Chunk { return quad.Chunk{Entities: e} }
 
 			entities := []entity.Entity{
 				&MockEntityWithBounds{
