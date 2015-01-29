@@ -50,8 +50,8 @@ func (mockNarrowPhase) ResolveCollisions(c quad.Chunk, now stime.Time) quad.Chun
 
 func DescribeASimulation(c gospec.Context) {
 	quad, err := quad.New(coord.Bounds{
-		TopL: coord.Cell{-1000, 999},
-		BotR: coord.Cell{999, -1000},
+		TopL: coord.Cell{-1024, 1024},
+		BotR: coord.Cell{1023, -1023},
 	}, 10, nil)
 
 	c.Assume(err, IsNil)
