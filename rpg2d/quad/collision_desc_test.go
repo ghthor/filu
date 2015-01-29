@@ -74,20 +74,20 @@ func DescribeCollisionGroup(c gospec.Context) {
 		}
 	}(entities)
 
-	cgroups := func(c []quad.Collision) []quad.CollisionGroup {
-		cg := func(collisions ...quad.Collision) quad.CollisionGroup {
-			var cg quad.CollisionGroup
+	newcg := func(collisions ...quad.Collision) quad.CollisionGroup {
+		var cg quad.CollisionGroup
 
-			for _, c := range collisions {
-				cg = cg.AddCollision(c)
-			}
-
-			return cg
+		for _, c := range collisions {
+			cg = cg.AddCollision(c)
 		}
 
+		return cg
+	}
+
+	cgroups := func(c []quad.Collision) []quad.CollisionGroup {
 		return []quad.CollisionGroup{
-			cg(c[:3]...),
-			cg(c[3]),
+			newcg(c[:3]...),
+			newcg(c[3]),
 		}
 	}(collisions)
 
@@ -98,6 +98,30 @@ func DescribeCollisionGroup(c gospec.Context) {
 	c.Assume(len(cgroups[1].Collisions), Equals, 1)
 
 	c.Specify("a collision group", func() {
+		c.Specify("can be compared for equality", func() {
+			cg0equals := func(c []quad.Collision) []quad.CollisionGroup {
+				return []quad.CollisionGroup{
+					newcg(c[2], c[0], c[1]),
+					newcg(c[1], c[2], c[0]),
+				}
+			}(collisions)
+
+			cg0notequals := func(c []quad.Collision) []quad.CollisionGroup {
+				return []quad.CollisionGroup{
+					newcg(c[0], c[1]),
+				}
+			}(collisions)
+
+			for _, cg0 := range cg0equals {
+				c.Expect(cg0, Equals, cgroups[0])
+			}
+
+			for _, cg0 := range cg0notequals {
+				c.Expect(cg0, Not(Equals), cgroups[0])
+			}
+
+		})
+
 		c.Specify("is a group of unique collisions", func() {
 			for _, cg := range cgroups {
 				for i, c1 := range cg.Collisions {
