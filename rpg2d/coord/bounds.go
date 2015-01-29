@@ -81,6 +81,26 @@ func (b Bounds) Intersection(other Bounds) (Bounds, error) {
 	}, nil
 }
 
+func (b Bounds) Join(with Bounds) Bounds {
+	if b.IsInverted() {
+		b = b.Invert()
+	}
+
+	if with.IsInverted() {
+		with = with.Invert()
+	}
+
+	return Bounds{
+		TopL: Cell{
+			X: min(b.TopL.X, with.TopL.X),
+			Y: max(b.TopL.Y, with.TopL.Y),
+		},
+		BotR: Cell{
+			X: max(b.BotR.X, with.BotR.X),
+			Y: min(b.BotR.Y, with.BotR.Y),
+		}}
+}
+
 func (b Bounds) Expand(mag int) Bounds {
 	b.TopL = b.TopL.Add(-mag, mag)
 	b.BotR = b.BotR.Add(mag, -mag)

@@ -197,6 +197,50 @@ func DescribeBounds(c gospec.Context) {
 		})
 	})
 
+	c.Specify("can be joined together", func() {
+		type testCase struct {
+			spec   string
+			bounds []Bounds
+			joined Bounds
+		}
+
+		testCases := func() []testCase {
+			c := func(x, y int) Cell { return Cell{x, y} }
+			b := func(tl, br Cell) Bounds { return Bounds{tl, br} }
+
+			return []testCase{{
+				"when 2 bounds are overlaping",
+				[]Bounds{{
+					c(5, 5), c(6, 4),
+				}, {
+					c(4, 6), c(5, 5),
+				}},
+				b(c(4, 6), c(6, 4)),
+			}, {
+				"when 3 bounds are overlapping",
+				[]Bounds{{
+					c(-3, 5), c(-2, -5),
+				}, {
+					c(-5, 2), c(5, -2),
+				}, {
+					c(1, -1), c(2, -3),
+				}},
+				b(c(-5, 5), c(5, -5)),
+			}}
+		}()
+
+		for _, testCase := range testCases {
+			c.Specify(testCase.spec, func() {
+				joined := testCase.bounds[0]
+				for _, b := range testCase.bounds {
+					joined = joined.Join(b)
+				}
+
+				c.Expect(joined, Equals, testCase.joined)
+			})
+		}
+	})
+
 	c.Specify("flip topleft and bottomright if they are inverted", func() {
 		b = Bounds{
 			Cell{0, 0},
