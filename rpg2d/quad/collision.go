@@ -5,16 +5,20 @@ import (
 	"github.com/ghthor/engine/rpg2d/entity"
 )
 
-// A collisions between 2 entities because the
-// entities bounds are overlapping.
+// A collision between 2 entities because the
+// entities bounds are overlapping. Intended to
+// be solved by the user defined NarrowPhaseHandler.
 type Collision struct {
 	A, B entity.Entity
 }
 
+// The bounds of A and B joined together.
 func (c Collision) Bounds() coord.Bounds {
 	return coord.JoinBounds(c.A.Bounds(), c.B.Bounds())
 }
 
+// Compares to Collisions and returns if
+// they are representing the same collision.
 func (c Collision) IsSameAs(oc Collision) bool {
 	switch {
 	case c.A == oc.A && c.B == oc.B:
@@ -30,29 +34,53 @@ func (c Collision) IsSameAs(oc Collision) bool {
 // may have an effect on the others. A dependency
 // tree should be created by the user to resolve
 // the collisions in the correct order.
-type CollisionGroup interface {
-	Bounds() coord.Bounds
-	Collisions() []Collision
+type CollisionGroup struct {
+	// A slice of the all the entities that are in
+	// the collisions of the group.
+	Entities []entity.Entity
+
+	// A slice of all the collisions in the group.
+	Collisions []Collision
 }
 
-// None of these should EVER reach the narrow phase.
-// They are returned from the quadLeaf during the
-// broad phase and they should be destroyed by the
-// quadNode's broad phase if they aren't merged
-// with an actuall collision group.
-type singleEntity struct {
-	entity.Entity
+func (cg CollisionGroup) Bounds() coord.Bounds {
+	bounds := make([]coord.Bounds, 0, len(cg.Collisions))
+	for _, c := range cg.Collisions {
+		bounds = append(bounds, c.Bounds())
+	}
+
+	return coord.JoinBounds(bounds...)
 }
 
-func (singleEntity) Collisions() []Collision { return nil }
+// Adds a collision to the group. Also adds the
+// entities from the collision to the entities slice.
+// Filters out collisions it already has and entities
+// that are already in the entities slice.
+func (cg CollisionGroup) AddCollision(c Collision) CollisionGroup {
+	for _, cc := range cg.Collisions {
+		if c.IsSameAs(cc) {
+			return cg
+		}
+	}
 
-type collisionGroup struct {
-	collisions []Collision
-}
+	cg.Collisions = append(cg.Collisions, c)
 
-// Merge 2 collision groups into a single group.
-// Doesn't verify that the 2 collision groups should me
-// merged. Only used during internal broad phase.
-func mergeCollisionGroups(a, b CollisionGroup) CollisionGroup {
-	return a
+	a, b := c.A, c.B
+
+	for _, e := range cg.Entities {
+		if a == e {
+			goto check_B_Exists
+		}
+	}
+	cg.Entities = append(cg.Entities, a)
+
+check_B_Exists:
+	for _, e := range cg.Entities {
+		if b == e {
+			return cg
+		}
+	}
+	cg.Entities = append(cg.Entities, b)
+
+	return cg
 }
