@@ -226,6 +226,16 @@ func DescribeBounds(c gospec.Context) {
 					c(1, -1), c(2, -3),
 				}},
 				b(c(-5, 5), c(5, -5)),
+			}, {
+				"when 3 bounds are not overlapping",
+				[]Bounds{{
+					c(-3, 5), c(-2, 0),
+				}, {
+					c(-5, -2), c(5, -2),
+				}, {
+					c(1, -4), c(2, -5),
+				}},
+				b(c(-5, 5), c(5, -5)),
 			}}
 		}()
 
