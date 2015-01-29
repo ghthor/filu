@@ -109,6 +109,14 @@ func (b Bounds) JoinAll(bounds ...Bounds) Bounds {
 	return b
 }
 
+func JoinBounds(bounds ...Bounds) Bounds {
+	if len(bounds) == 1 {
+		return bounds[0]
+	}
+
+	return bounds[0].JoinAll(bounds[1:]...)
+}
+
 func (b Bounds) Expand(mag int) Bounds {
 	b.TopL = b.TopL.Add(-mag, mag)
 	b.BotR = b.BotR.Add(mag, -mag)

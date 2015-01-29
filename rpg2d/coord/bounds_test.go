@@ -241,8 +241,7 @@ func DescribeBounds(c gospec.Context) {
 
 		for _, testCase := range testCases {
 			c.Specify(testCase.spec, func() {
-				b := testCase.bounds
-				c.Expect(b[0].JoinAll(b[1:]...), Equals, testCase.joined)
+				c.Expect(JoinBounds(testCase.bounds...), Equals, testCase.joined)
 			})
 		}
 	})
