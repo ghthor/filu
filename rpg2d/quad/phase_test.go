@@ -65,97 +65,10 @@ func DescribePhase(c gospec.Context) {
 	})
 
 	c.Specify("the broad phase", func() {
-		c.Specify("will create chunks of interest", func() {
+		c.Specify("will create collision groups", func() {
 			type testCase struct {
-				entities       []entity.Entity
-				expectedChunks []quad.Chunk
-			}
-
-			newTestCase := func(chunks []quad.Chunk) testCase {
-				var entities []entity.Entity
-
-				for _, chunk := range chunks {
-					entities = append(entities, chunk.Entities...)
-				}
-
-				return testCase{
-					entities,
-					chunks,
-				}
-			}
-
-			testCases := func() []testCase {
-				cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
-				b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
-
-				chunks := []quad.Chunk{{
-					Entities: []entity.Entity{
-						&MockEntityWithBounds{
-							0,
-							cell(-5, 5),
-							b(cell(-6, 5), cell(-5, 5)),
-						},
-						&MockEntityWithBounds{
-							1,
-							cell(-6, 6),
-							b(cell(-6, 6), cell(-6, 5)),
-						},
-					},
-					Bounds: b(cell(-6, 6), cell(-5, 5)),
-				}, {
-					Entities: []entity.Entity{
-						&MockEntityWithBounds{
-							2,
-							cell(5, 5),
-							b(cell(5, 5), cell(6, 5)),
-						},
-						&MockEntityWithBounds{
-							3,
-							cell(6, 5),
-							b(cell(6, 5), cell(6, 5)),
-						},
-						&MockEntityWithBounds{
-							4,
-							cell(6, 4),
-							b(cell(6, 5), cell(6, 4)),
-						},
-					},
-					Bounds: b(cell(5, 5), cell(6, 4)),
-				}}
-
-				for _, chunk := range chunks {
-					for _, e := range chunk.Entities {
-						c.Assume(e.Bounds().Contains(e.Cell()), IsTrue)
-					}
-				}
-
-				return []testCase{
-					newTestCase(chunks[0:1]),
-					newTestCase(chunks[1:2]),
-				}
-			}()
-
-			makeQuad := func(entities []entity.Entity) quad.Quad {
-				q, err := quad.New(coord.Bounds{
-					coord.Cell{-16, 16},
-					coord.Cell{15, -15},
-				}, 4, nil)
-				c.Assume(err, IsNil)
-
-				for _, e := range entities {
-					q = q.Insert(e)
-				}
-
-				return q
-			}
-
-			for _, testCase := range testCases {
-				q := makeQuad(testCase.entities)
-				var actualChunks []quad.Chunk
-
-				q, actualChunks = quad.RunBroadPhaseOn(q, stime.Time(0))
-				c.Expect(len(actualChunks), Equals, len(testCase.expectedChunks))
-				c.Expect(actualChunks, ContainsExactly, testCase.expectedChunks)
+				entities []entity.Entity
+				cgroups  []quad.CollisionGroup
 			}
 		})
 	})
