@@ -199,8 +199,9 @@ func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk
 				chunkIndex[e2] = e1c
 
 			case (e1cExists && e2cExists) && (e1c == e2c):
-			// both entities exist in the same chunk already.
-			// do nothing
+				// both entities exist in the same chunk already.
+				// do nothing
+				continue
 
 			default:
 				panic(fmt.Sprintf(`unexpected index state during broad phase
