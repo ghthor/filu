@@ -1,0 +1,9 @@
+Thu Jan 29 10:27:51 EST 2015
+
+# journal - Finishing the broad phase today
+Will start with implementing collision groups.
+It will make the test expectations a little more of
+a pain in the ass. But it's just something I'll have
+to deal with. Maybe it will even look nicer.
+
+Thu Jan 29 10:30:47 EST 2015
