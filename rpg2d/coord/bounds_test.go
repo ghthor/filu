@@ -209,6 +209,20 @@ func DescribeBounds(c gospec.Context) {
 			b := func(tl, br Cell) Bounds { return Bounds{tl, br} }
 
 			return []testCase{{
+				"with only itself",
+				[]Bounds{{
+					c(1, 1), c(2, 2),
+				}},
+				b(c(1, 1), c(2, 2)),
+			}, {
+				"with another equal bounds",
+				[]Bounds{{
+					c(1, 1), c(2, 2),
+				}, {
+					c(1, 1), c(2, 2),
+				}},
+				b(c(1, 1), c(2, 2)),
+			}, {
 				"when 2 bounds are overlaping",
 				[]Bounds{{
 					c(5, 5), c(6, 4),
