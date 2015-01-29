@@ -3,6 +3,7 @@ package quad
 import (
 	"fmt"
 
+	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/sim/stime"
 )
@@ -137,6 +138,10 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, chunksOfActivity []C
 }
 
 func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, chunksOfActivity []Chunk) {
+	if !(len(q.entities) > 0) {
+		return q, nil
+	}
+
 	// A map of the chunks generated thus far
 	chunkIndex := make(map[entity.Entity]*Chunk, len(q.entities))
 	chunkPtrs := make([]*Chunk, 0, len(q.entities))
@@ -206,12 +211,27 @@ e2c = %v
 		}
 	}
 
+	// Convert the chunk pointers to values
 	chunks := make([]Chunk, 0, len(chunkPtrs))
 	for _, cptr := range chunkPtrs {
 		chunks = append(chunks, *cptr)
 	}
 
-	// TODO Combine bounds of all entities to from bounds for each chunk
+	// Combine bounds of all entities to from bounds for each chunk
+	for i, c := range chunks {
+		if len(c.Entities) == 1 {
+			chunks[i].Bounds = c.Entities[0].Bounds()
+			continue
+		}
+
+		bounds := make([]coord.Bounds, 0, len(c.Entities))
+
+		for _, e := range c.Entities {
+			bounds = append(bounds, e.Bounds())
+		}
+
+		chunks[i].Bounds = coord.JoinBounds(bounds...)
+	}
 
 	return q, chunks
 }

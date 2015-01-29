@@ -85,41 +85,49 @@ func DescribePhase(c gospec.Context) {
 			}
 
 			testCases := func() []testCase {
-				c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+				cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 				b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
 
 				chunks := []quad.Chunk{{
 					Entities: []entity.Entity{
 						&MockEntityWithBounds{
 							0,
-							c(-5, 5),
-							b(c(-5, 5), c(-4, 5)),
+							cell(-5, 5),
+							b(cell(-6, 5), cell(-5, 5)),
 						},
 						&MockEntityWithBounds{
 							1,
-							c(-5, 6),
-							b(c(-4, 6), c(-4, 5)),
+							cell(-6, 6),
+							b(cell(-6, 6), cell(-6, 5)),
 						},
 					},
+					Bounds: b(cell(-6, 6), cell(-5, 5)),
 				}, {
 					Entities: []entity.Entity{
 						&MockEntityWithBounds{
 							2,
-							c(5, 5),
-							b(c(5, 5), c(6, 5)),
+							cell(5, 5),
+							b(cell(5, 5), cell(6, 5)),
 						},
 						&MockEntityWithBounds{
 							3,
-							c(6, 5),
-							b(c(6, 5), c(6, 5)),
+							cell(6, 5),
+							b(cell(6, 5), cell(6, 5)),
 						},
 						&MockEntityWithBounds{
 							4,
-							c(6, 4),
-							b(c(5, 5), c(6, 4)),
+							cell(6, 4),
+							b(cell(6, 5), cell(6, 4)),
 						},
 					},
+					Bounds: b(cell(5, 5), cell(6, 4)),
 				}}
+
+				for _, chunk := range chunks {
+					for _, e := range chunk.Entities {
+						c.Assume(e.Bounds().Contains(e.Cell()), IsTrue)
+					}
+				}
 
 				return []testCase{
 					newTestCase(chunks[0:1]),
