@@ -12,8 +12,8 @@ import (
 
 func DescribePhase(c gospec.Context) {
 	q, err := quad.New(coord.Bounds{
-		TopL: coord.Cell{-10, 9},
-		BotR: coord.Cell{9, -10},
+		TopL: coord.Cell{-16, 16},
+		BotR: coord.Cell{15, -15},
 	}, 4, nil)
 	c.Assume(err, IsNil)
 
@@ -21,14 +21,14 @@ func DescribePhase(c gospec.Context) {
 		c.Specify("will remove any entites that move out of bounds", func() {
 
 			// A Single Entity
-			q = q.Insert(MockEntity{0, coord.Cell{-10, 9}})
+			q = q.Insert(MockEntity{0, coord.Cell{-16, 16}})
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
 
 			q, outOfBounds := quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk, now stime.Time) quad.Chunk {
 				c.Assume(len(chunk.Entities), Equals, 1)
 
 				// Move the entity out of bounds
-				chunk.Entities[0] = MockEntity{0, coord.Cell{-11, 9}}
+				chunk.Entities[0] = MockEntity{0, coord.Cell{-17, 16}}
 
 				return chunk
 			}), stime.Time(0))
@@ -37,27 +37,29 @@ func DescribePhase(c gospec.Context) {
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 0)
 
 			// Multiple entities
-			q = q.Insert(MockEntity{0, coord.Cell{-10, 9}})
-			q = q.Insert(MockEntity{1, coord.Cell{9, -10}})
-			q = q.Insert(MockEntity{2, coord.Cell{5, -1}})
+			q = q.Insert(MockEntity{0, coord.Cell{-16, 16}})
+			q = q.Insert(MockEntity{1, coord.Cell{15, -15}})
+			q = q.Insert(MockEntity{2, coord.Cell{-1, 1}})
+			q = q.Insert(MockEntity{3, coord.Cell{0, 0}})
 
 			q, outOfBounds = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk, now stime.Time) quad.Chunk {
 				// Move the entity out of bounds
 				for i, e := range chunk.Entities {
 					if e.Id() == 1 {
-						chunk.Entities[i] = MockEntity{1, coord.Cell{10, -10}}
+						chunk.Entities[i] = MockEntity{1, coord.Cell{16, -15}}
 					}
 				}
 
 				return chunk
 			}), stime.Time(0))
 
-			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
-			c.Expect(q.QueryCell(coord.Cell{-10, 9})[0].Id(), Equals, int64(0))
-			c.Expect(q.QueryCell(coord.Cell{5, -1})[0].Id(), Equals, int64(2))
-
+			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 3)
 			c.Expect(len(outOfBounds), Equals, 1)
+
+			c.Expect(q.QueryCell(coord.Cell{-16, 16})[0].Id(), Equals, int64(0))
 			c.Expect(outOfBounds[0].Id(), Equals, int64(1))
+			c.Expect(q.QueryCell(coord.Cell{-1, 1})[0].Id(), Equals, int64(2))
+			c.Expect(q.QueryCell(coord.Cell{0, 0})[0].Id(), Equals, int64(3))
 
 		})
 	})

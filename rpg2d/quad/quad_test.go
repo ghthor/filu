@@ -11,10 +11,50 @@ import (
 func DescribeQuad(c gospec.Context) {
 	c.Specify("a quad tree", func() {
 		q, err := quad.New(coord.Bounds{
-			TopL: coord.Cell{-1000, 999},
-			BotR: coord.Cell{999, -1000},
+			TopL: coord.Cell{-1024, 1024},
+			BotR: coord.Cell{1023, -1023},
 		}, 2, nil)
 		c.Assume(err, IsNil)
+
+		c.Specify("must have a bounds with", func() {
+			green := []int{2, 4, 8, 16, 32, 64, 128, 256}
+			red := []int{6, 10, 12, 20, 24, 28, 36}
+
+			c.Specify("a height that is a power of 2", func() {
+				makeQuad := func(height int) error {
+					_, err := quad.New(coord.Bounds{
+						coord.Cell{0, height - 1},
+						coord.Cell{31, 0},
+					}, 2, nil)
+					return err
+				}
+
+				for _, v := range green {
+					c.Expect(makeQuad(v), IsNil)
+				}
+
+				for _, v := range red {
+					c.Expect(makeQuad(v), Equals, quad.ErrBoundsHeightMustBePowerOf2)
+				}
+			})
+
+			c.Specify("width that is a power of 2", func() {
+				makeQuad := func(width int) error {
+					_, err := quad.New(coord.Bounds{
+						coord.Cell{0, 31},
+						coord.Cell{width - 1, 0},
+					}, 2, nil)
+					return err
+				}
+				for _, v := range green {
+					c.Expect(makeQuad(v), IsNil)
+				}
+
+				for _, v := range red {
+					c.Expect(makeQuad(v), Equals, quad.ErrBoundsWidthMustBePowerOf2)
+				}
+			})
+		})
 
 		c.Specify("will subdivide", func() {
 			c.Assume(len(q.Children()), Equals, 0)
