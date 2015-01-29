@@ -1,5 +1,2 @@
-## [active] [3] Specify recursive quad splitting
-I can't say for certain that my bounds is splitting
-into equal sized quads right now. I mean, in theory it
-is if the width and height of the origin bounds is even.
-But I should specify it explicitly.
+## [complete] [3] Specify recursive quad splitting
+Solved this by by forcing width/height to be a power 2.
