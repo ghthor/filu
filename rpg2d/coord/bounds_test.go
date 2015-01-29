@@ -241,12 +241,8 @@ func DescribeBounds(c gospec.Context) {
 
 		for _, testCase := range testCases {
 			c.Specify(testCase.spec, func() {
-				joined := testCase.bounds[0]
-				for _, b := range testCase.bounds {
-					joined = joined.Join(b)
-				}
-
-				c.Expect(joined, Equals, testCase.joined)
+				b := testCase.bounds
+				c.Expect(b[0].JoinAll(b[1:]...), Equals, testCase.joined)
 			})
 		}
 	})
