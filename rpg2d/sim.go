@@ -208,7 +208,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	//---- User provided narrow phase
 	narrowPhase := settings.NarrowPhaseHandler
 
-	runFrame := func(q quad.Quad, t stime.Time) quad.Quad {
+	runTick := func(q quad.Quad, t stime.Time) quad.Quad {
 		return quad.RunPhasesOn(q, inputPhase, narrowPhase, t)
 	}
 
@@ -260,7 +260,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 
 		tick:
 			clock = clock.Tick()
-			quadTree = runFrame(quadTree, clock.Now())
+			quadTree = runTick(quadTree, clock.Now())
 			// TODO quadTree to state
 			// TODO send state
 			continue
