@@ -113,6 +113,26 @@ func DescribeCollisionGroup(c gospec.Context) {
 			}
 		})
 
+		c.Specify("will not add a collision it already has", func() {
+			cg := cgroups[0]
+
+			cg = cg.AddCollision(collisions[0])
+			c.Expect(len(cg.Entities), Equals, 3)
+			c.Expect(len(cg.Collisions), Equals, 3)
+
+			cg = cg.AddCollision(quad.Collision{collisions[0].B, collisions[0].A})
+			c.Expect(len(cg.Entities), Equals, 3)
+			c.Expect(len(cg.Collisions), Equals, 3)
+
+			cg = cg.AddCollision(quad.Collision{
+				MockEntityWithBounds{id: 10},
+				MockEntityWithBounds{id: 20},
+			})
+
+			c.Expect(len(cg.Entities), Equals, 5)
+			c.Expect(len(cg.Collisions), Equals, 4)
+		})
+
 		c.Specify("has a list of the entities involved in the group", func() {
 			for _, cg := range cgroups {
 				for _, collision := range cg.Collisions {
