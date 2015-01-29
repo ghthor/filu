@@ -71,61 +71,83 @@ func DescribePhase(c gospec.Context) {
 				expectedChunks []quad.Chunk
 			}
 
-			cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
-			bounds := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
-			chunk := func(e []entity.Entity) quad.Chunk { return quad.Chunk{Entities: e} }
+			newTestCase := func(chunks []quad.Chunk) testCase {
+				var entities []entity.Entity
 
-			entities := []entity.Entity{
-				&MockEntityWithBounds{
-					0,
-					cell(-5, 5),
-					bounds(cell(-5, 5), cell(-4, 5)),
-				},
-				&MockEntityWithBounds{
-					1,
-					cell(-5, 6),
-					bounds(cell(-4, 6), cell(-4, 5)),
-				},
-				&MockEntityWithBounds{
-					2,
-					cell(5, 5),
-					bounds(cell(5, 5), cell(6, 5)),
-				},
-				&MockEntityWithBounds{
-					3,
-					cell(6, 5),
-					bounds(cell(6, 5), cell(6, 5)),
-				},
-				&MockEntityWithBounds{
-					4,
-					cell(6, 4),
-					bounds(cell(5, 5), cell(6, 4)),
-				}}
+				for _, chunk := range chunks {
+					entities = append(entities, chunk.Entities...)
+				}
 
-			chunks := []quad.Chunk{
-				chunk(entities[0:2]),
-				chunk(entities[2:4]),
+				return testCase{
+					entities,
+					chunks,
+				}
 			}
 
-			testCases := []testCase{{
-				entities[0:2],
-				chunks[0:1],
-			}, {
-				entities[0:4],
-				chunks[0:2],
-			}}
+			testCases := func() []testCase {
+				c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+				b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
 
-			for _, testCase := range testCases {
-				for _, e := range testCase.entities {
+				chunks := []quad.Chunk{{
+					Entities: []entity.Entity{
+						&MockEntityWithBounds{
+							0,
+							c(-5, 5),
+							b(c(-5, 5), c(-4, 5)),
+						},
+						&MockEntityWithBounds{
+							1,
+							c(-5, 6),
+							b(c(-4, 6), c(-4, 5)),
+						},
+					},
+				}, {
+					Entities: []entity.Entity{
+						&MockEntityWithBounds{
+							2,
+							c(5, 5),
+							b(c(5, 5), c(6, 5)),
+						},
+						&MockEntityWithBounds{
+							3,
+							c(6, 5),
+							b(c(6, 5), c(6, 5)),
+						},
+						&MockEntityWithBounds{
+							4,
+							c(6, 4),
+							b(c(5, 5), c(6, 4)),
+						},
+					},
+				}}
+
+				return []testCase{
+					newTestCase(chunks[0:1]),
+					newTestCase(chunks[1:2]),
+				}
+			}()
+
+			makeQuad := func(entities []entity.Entity) quad.Quad {
+				q, err := quad.New(coord.Bounds{
+					coord.Cell{-16, 16},
+					coord.Cell{15, -15},
+				}, 4, nil)
+				c.Assume(err, IsNil)
+
+				for _, e := range entities {
 					q = q.Insert(e)
 				}
 
+				return q
+			}
+
+			for _, testCase := range testCases {
+				q := makeQuad(testCase.entities)
 				var actualChunks []quad.Chunk
 
 				q, actualChunks = quad.RunBroadPhaseOn(q, stime.Time(0))
 				c.Expect(len(actualChunks), Equals, len(testCase.expectedChunks))
-
-				c.Expect(actualChunks, ContainsAll, testCase.expectedChunks)
+				c.Expect(actualChunks, ContainsExactly, testCase.expectedChunks)
 			}
 		})
 	})
