@@ -12,29 +12,38 @@ import (
 func DescribeChunkMatching(c gospec.Context) {
 	c.Specify("a chunk", func() {
 		c.Specify("will be equal to another chunk", func() {
+			cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+			bnds := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
+
 			entities := []entity.Entity{
-				&MockEntity{0, coord.Cell{0, 0}},
-				&MockEntity{1, coord.Cell{1, 1}},
-				&MockEntity{2, coord.Cell{2, 2}},
-				&MockEntity{3, coord.Cell{3, 3}},
-				&MockEntity{4, coord.Cell{4, 4}},
-				&MockEntity{5, coord.Cell{5, 5}},
+				&MockEntity{0, cell(0, 0)},
+				&MockEntity{1, cell(1, 1)},
+				&MockEntity{2, cell(2, 2)},
+				&MockEntity{3, cell(3, 3)},
+				&MockEntity{4, cell(4, 4)},
+				&MockEntity{5, cell(5, 5)},
 			}
 
 			chunks := []quad.Chunk{{
+				Bounds:   bnds(cell(0, 5), cell(5, 0)),
 				Entities: entities[0:],
 			}, {
+				Bounds:   bnds(cell(0, 1), cell(1, 0)),
 				Entities: entities[0:2],
 			}, {
+				Bounds:   bnds(cell(1, 3), cell(3, 1)),
 				Entities: entities[1:4],
 			}}
 
 			c.Specify("if it contains the same entities", func() {
 				expectedChunks := []quad.Chunk{{
+					Bounds:   bnds(cell(0, 5), cell(5, 0)),
 					Entities: entities[0:],
 				}, {
+					Bounds:   bnds(cell(0, 1), cell(1, 0)),
 					Entities: entities[0:2],
 				}, {
+					Bounds:   bnds(cell(1, 3), cell(3, 1)),
 					Entities: entities[1:4],
 				}}
 

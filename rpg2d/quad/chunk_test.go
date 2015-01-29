@@ -4,7 +4,9 @@ package quad
 func (c Chunk) Equals(other interface{}) bool {
 	switch oc := other.(type) {
 	case Chunk:
-		return chunksContainSameEntities(c, oc)
+		if c.Bounds == oc.Bounds {
+			return chunksContainSameEntities(c, oc)
+		}
 	default:
 	}
 
