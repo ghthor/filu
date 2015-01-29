@@ -12,6 +12,7 @@ func TestUnitSpecs(t *testing.T) {
 	r.AddSpec(DescribeMockEntities)
 	r.AddSpec(DescribeChunkMatching)
 
+	r.AddSpec(DescribeCollision)
 	r.AddSpec(DescribeQuad)
 	r.AddSpec(DescribeQuadInsert)
 

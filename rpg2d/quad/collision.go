@@ -5,13 +5,25 @@ import (
 	"github.com/ghthor/engine/rpg2d/entity"
 )
 
-// A collisions between 2 entities beacuse the
+// A collisions between 2 entities because the
 // entities bounds are overlapping.
-type Collision interface {
-	Bounds() coord.Bounds
-	A() entity.Entity
-	B() entity.Entity
-	IsSameAs(Collision) bool
+type Collision struct {
+	A, B entity.Entity
+}
+
+func (c Collision) Bounds() coord.Bounds {
+	return coord.JoinBounds(c.A.Bounds(), c.B.Bounds())
+}
+
+func (c Collision) IsSameAs(oc Collision) bool {
+	switch {
+	case c.A == oc.A && c.B == oc.B:
+		fallthrough
+	case c.A == oc.B && c.B == oc.A:
+		return true
+	}
+
+	return false
 }
 
 // A group of collisions where each collision
