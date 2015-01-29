@@ -1,0 +1,36 @@
+Thu Jan 29 00:32:49 EST 2015
+
+# journal - Productive day | Getting closer to playable
+Got a decent amount done today.
+Implemented Join for Bounds.
+Mostly implemented the broad phase,
+have a few things to finish up concerning it tomorrow.
+
+Was happy with closures to alias, 
+coord.Cell and coord.Bounds to c() and b().
+Improved the test code's brevity to a certain degree.
+
+Casey didn't like the term Chunk.
+He suggested collision group, and hes right.
+While working on the code that generates the chunks
+I ran into some fuzzy details.
+Currently the chunk generation isn't checking for
+existence in the chunk.Entities array when it add's
+an entity. This is a bad mistake that I'll need to fix.
+
+My plan currently is to implement collision group
+and make array of Collisions instead of entities.
+This will be more useful to the narrow phase anyway.
+If I don't make these here that the narrow phase will
+be making them, which isn't all that bad. But in the
+long run I think it would be a section of code that
+should be inside engine.
+
+I'm going to cut this entry here,
+I fucked up and somehow closed the terminal tab
+I was writing it in and lost the execution of journal.
+
+I have to manually commit this enty, no big deal,
+just can't edit any ideas
+
+Thu Jan 29 00:43:49 EST 2015
