@@ -170,6 +170,54 @@ func DescribePhase(c gospec.Context) {
 			c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[0:5])
 			c.Assume(cgroups[2].Entities, ContainsAll, entities[5:11])
 			c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[11:])
+
+			type testCase struct {
+				entities []entity.Entity
+				cgroups  []quad.CollisionGroup
+			}
+
+			testCases := func(cg []quad.CollisionGroup) []testCase {
+				tc := func(cgroups ...quad.CollisionGroup) testCase {
+					var entities []entity.Entity
+					for _, cg := range cgroups {
+						entities = append(entities, cg.Entities...)
+					}
+
+					return testCase{entities, cgroups}
+				}
+				return []testCase{
+					tc(cg[0]),
+					tc(cg[0:2]...),
+					tc(cg[1]),
+					tc(cg[1:3]...),
+					tc(cg[2]),
+					tc(cg...),
+				}
+			}(cgroups)
+
+			makeQuad := func(entities []entity.Entity) quad.Quad {
+				q, err := quad.New(coord.Bounds{
+					coord.Cell{-8, 8},
+					coord.Cell{7, -7},
+				}, 4, nil)
+				c.Assume(err, IsNil)
+
+				for _, e := range entities {
+					q = q.Insert(e)
+				}
+
+				return q
+			}
+
+			for _, testCase := range testCases {
+				q := makeQuad(testCase.entities)
+
+				var cgroups []*quad.CollisionGroup
+				q, cgroups, _, _ = quad.RunBroadPhaseOn(q, stime.Time(0))
+
+				c.Expect(len(cgroups), Equals, len(testCase.cgroups))
+				c.Expect(cgroups, ContainsAll, testCase.cgroups)
+			}
 		})
 	})
 

@@ -31,8 +31,8 @@ type Quad interface {
 
 	//---- Internal methods to execute a phase calculation
 	runInputPhase(InputPhaseHandler, stime.Time) (quad Quad, OutOfBounds []entity.Entity)
-	runBroadPhase(stime.Time) (quad Quad, cgroup []CollisionGroup)
-	runNarrowPhase(NarrowPhaseHandler, []CollisionGroup, stime.Time) Quad
+	runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
+	runNarrowPhase(NarrowPhaseHandler, []*CollisionGroup, stime.Time) Quad
 }
 
 // Guards against unspecified behavior if the maxSize is 1
@@ -243,9 +243,13 @@ func (q quadLeaf) QueryCell(c coord.Cell) []entity.Entity {
 }
 
 func (q quadLeaf) QueryBounds(b coord.Bounds) []entity.Entity {
+	if !q.Bounds().Overlaps(b) {
+		return nil
+	}
+
 	entities := make([]entity.Entity, 0, q.maxSize)
 	for _, e := range q.entities {
-		if b.Contains(e.Cell()) {
+		if b.Overlaps(e.Bounds()) {
 			entities = append(entities, e)
 		}
 	}

@@ -84,3 +84,9 @@ check_B_Exists:
 
 	return cg
 }
+
+// An entity may ONLY be assigned to 1 collision group.
+// If an entity has collisions that are in seperate collision
+// groups, those groups must be merged. This rules make the
+// collision group index possible.
+type CollisionGroupIndex map[entity.Entity]*CollisionGroup

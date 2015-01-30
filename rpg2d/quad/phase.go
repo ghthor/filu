@@ -1,6 +1,8 @@
 package quad
 
 import (
+	"fmt"
+
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/sim/stime"
 )
@@ -54,8 +56,8 @@ type NarrowPhaseHandler interface {
 
 func RunPhasesOn(q Quad, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {
 	q, _ = q.runInputPhase(inputPhase, now)
-	q, chunksToSolve := q.runBroadPhase(now)
-	q = q.runNarrowPhase(narrowPhase, chunksToSolve, now)
+	q, cgroups, _, _ := q.runBroadPhase(now)
+	q = q.runNarrowPhase(narrowPhase, cgroups, now)
 
 	return q
 }
@@ -64,12 +66,12 @@ func RunInputPhaseOn(q Quad, inputPhase InputPhaseHandler, now stime.Time) (Quad
 	return q.runInputPhase(inputPhase, now)
 }
 
-func RunBroadPhaseOn(q Quad, now stime.Time) (quad Quad, cgroup []CollisionGroup) {
+func RunBroadPhaseOn(q Quad, now stime.Time) (quad Quad, cgroup []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 	return q.runBroadPhase(now)
 }
 
-func RunNarrowPhaseOn(q Quad, chunksToSolve []Chunk, narrowPhase NarrowPhaseHandler, now stime.Time) []Chunk {
-	return nil
+func RunNarrowPhaseOn(q Quad, cgroups []*CollisionGroup, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {
+	return q.runNarrowPhase(narrowPhase, cgroups, now)
 }
 
 func (q quadNode) runInputPhase(p InputPhaseHandler, at stime.Time) (Quad, []entity.Entity) {
@@ -120,32 +122,266 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []en
 	return quad, outOfBounds
 }
 
-func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroup []CollisionGroup) {
-	var cgrps []CollisionGroup
-
+func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 	for i, cq := range q.children {
-		cq, cgroup := cq.runBroadPhase(now)
+		cq, cgrps, s, u := cq.runBroadPhase(now)
 		q.children[i] = cq
-		cgrps = append(cgrps, cgroup...)
+
+		// TODO Rip this out into a method of collision group index.
+		// Join solved collision group index
+		if solved == nil {
+			solved = s
+		} else {
+			for e, cg := range s {
+				solved[e] = cg
+			}
+		}
+
+		// Join unsolved collision group index
+		if unsolved == nil {
+			unsolved = u
+		} else {
+			for e, cg := range u {
+				unsolved[e] = cg
+			}
+		}
+
+		// Join array of collision groups
+		cgroups = append(cgroups, cgrps...)
 	}
 
-	// TODO Join cgroups that are overlapping
+	// For each entity in the unsolved array
+	// try to solve it by querying the children
+	for e1, e1cg := range unsolved {
+		if b, _ := q.Bounds().Intersection(e1.Bounds()); b != e1.Bounds() {
+			// The entities bounds extend beyond the quad tree's bounds
+			// and therefore we can't solve this entity here either
+			// and will bubble to our parent
+			// TODO Specify that this behavior works as expected near the
+			// edges of the entire quad tree's bounds.
+			continue
+		}
 
-	return q, cgrps
+		// Query for any overlapping entities
+		overlappingEntities := q.QueryBounds(e1.Bounds())
+
+		if len(overlappingEntities) == 0 {
+			// It doesn't collide with anything else outside
+			// of it's quad container.
+			// Remove from the unsolved index
+			delete(unsolved, e1)
+			continue
+		}
+
+		for _, e2 := range overlappingEntities {
+			e2cg, e2cgExist := solved[e2]
+
+			// ignore self
+			if e1 == e2 {
+				continue
+			}
+
+			switch {
+			case e1cg == e2cg:
+				// e1 and e2 exist in the same collision group
+				// NOTE this means e2 is from the same quad as
+				// e1 so we can do nothing because there should be
+				// a collision already.
+
+			case e1cg != nil && e2cgExist && e1cg != e2cg:
+				// e1 exists in a collision group
+				// e2 exists in a collision group
+				// The collision groups are different
+
+				// merge the collision groups into e1's collision group
+				cg := e1cg
+
+				for _, c := range e2cg.Collisions {
+					*cg = cg.AddCollision(c)
+				}
+
+				// create a collision for e1 & e2
+				// add it to the collision group
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+				// set e2's new collision group
+				solved[e2] = cg
+
+				// remove e2's collision group from the array
+				for i, cg := range cgroups {
+					if cg == e2cg {
+						cgroups = append(cgroups[:i], cgroups[i+1:]...)
+						break
+					}
+				}
+
+			case e1cg != nil && !e2cgExist:
+				// e1 exists in a collision group
+				// e2 doesn't exist in a collision group
+				cg := e1cg
+
+				// create a new collision of e1 & e2
+				// add it to e1's collision group
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+				// and set e2's collision group
+				solved[e2] = cg
+
+			case e1cg == nil && !e2cgExist:
+				// e1 is NOT in a collision group
+				// e2 is NOT in a collision group
+
+				// create a new collision group
+				// and add a collision for e1 & e2
+				cg := CollisionGroup{}.AddCollision(Collision{e1, e2})
+
+				// add this new collision group to the array of collision groups
+				cgroups = append(cgroups, &cg)
+
+				// set e1 & e2's new collision group
+				solved[e1] = &cg
+				solved[e2] = &cg
+
+				// NOTE I don't know if this is necessary
+				unsolved[e1] = &cg
+
+			case e1cg == nil && e2cgExist:
+				// e1 is NOT in a collision group
+				// e2 is in a collision group
+
+				// add a collision for e1 & e2 to e2's collision group
+				cg := e2cg
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+				// set e1's collision group
+				solved[e1] = cg
+				unsolved[e1] = cg
+
+			default:
+				panic("unexpected index state when solving bubbled entities")
+			}
+		}
+	}
+
+	return q, cgroups, solved, unsolved
 }
 
-func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, cgroup []CollisionGroup) {
+func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 	if !(len(q.entities) > 0) {
-		return q, nil
+		return q, nil, nil, nil
 	}
 
-	return q, nil
+	cgindex := make(map[entity.Entity]*CollisionGroup, len(q.entities))
+	cgroups = make([]*CollisionGroup, 0, len(q.entities))
+
+	for _, e1 := range q.entities {
+		for _, e2 := range q.entities {
+			// Check for self
+			if e1 == e2 {
+				continue
+			}
+
+			// Check for overlap
+			if !e1.Bounds().Overlaps(e2.Bounds()) {
+				continue
+			}
+
+			e1cg, e1cgExists := cgindex[e1]
+			e2cg, e2cgExists := cgindex[e2]
+
+			switch {
+			case e1cgExists && !e2cgExists:
+				// e1 exists in a collision group already
+				// create a collision and add it to e1's group
+				c := Collision{e1, e2}
+				*e1cg = e1cg.AddCollision(c)
+
+				cgindex[e1] = e1cg
+				cgindex[e2] = e1cg
+
+			case !e1cgExists && e2cgExists:
+				// e2 exists in a collision group already
+				// create a collision and add it to e2's group
+				c := Collision{e1, e2}
+				*e2cg = e2cg.AddCollision(c)
+
+				cgindex[e1] = e2cg
+				cgindex[e2] = e2cg
+
+			case !e1cgExists && !e2cgExists:
+				// neither e1 or e2 have been assigned to a collision group
+				// create a new collision group
+				cg := &CollisionGroup{
+					make([]entity.Entity, 0, 2),
+					make([]Collision, 0, 1),
+				}
+
+				// add a collision between e1 and e2
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+				// set the cgroup in the cgroup index
+				cgindex[e1] = cg
+				cgindex[e2] = cg
+
+				// set the cgroup for e1cg incase it needs
+				// to be added to the unsolvables array
+				e1cg = cg
+
+				// append the cgroup to the array of cgroups
+				cgroups = append(cgroups, cg)
+
+			case (e1cgExists && e2cgExists) && (e1cg != e2cg):
+				// both entities exist in a collision group
+				// but those collision groups are different
+				cg := e1cg
+
+				// merge the collision groups
+				for _, c := range e2cg.Collisions {
+					*cg = cg.AddCollision(c)
+				}
+
+				// add a collision for e1 && e2
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+			case (e1cgExists && e2cgExists) && (e1cg == e2cg):
+				// both entities exist in the same collision group already
+				// Add a collision for e1 && e2
+				cg := e1cg
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+			default:
+				panic(fmt.Sprintf(`unexpected index state during broad phase
+e1cg = %v
+e2cg = %v
+`, e1cg, e2cg))
+			}
+		}
+	}
+
+	// Solved entities are in the cgindex
+	solved = cgindex
+	// Build a collision group index for the unsolvable entities
+	unsolved = make(map[entity.Entity]*CollisionGroup)
+
+	// If the bounds of the entity extend beyond the quad leaf's
+	// bounds, it is passed to the parent with the collision
+	// group the entity belongs to
+	for _, e := range q.entities {
+		// If entities bounds extend past quad's bounds the
+		// intersection of the 2 will be different than
+		// the entities bounds.
+		if b, _ := e.Bounds().Intersection(q.Bounds()); b != e.Bounds() {
+			unsolved[e] = cgindex[e]
+		}
+	}
+
+	return q, cgroups, cgindex, unsolved
 }
 
-func (q quadNode) runNarrowPhase(narrowPhase NarrowPhaseHandler, cgrpsToSolve []CollisionGroup, now stime.Time) Quad {
+func (q quadNode) runNarrowPhase(narrowPhase NarrowPhaseHandler, cgrpsToSolve []*CollisionGroup, now stime.Time) Quad {
 	return q
 }
 
-func (q quadLeaf) runNarrowPhase(narrowPhase NarrowPhaseHandler, cgrpsToSolve []CollisionGroup, now stime.Time) Quad {
+func (q quadLeaf) runNarrowPhase(narrowPhase NarrowPhaseHandler, cgrpsToSolve []*CollisionGroup, now stime.Time) Quad {
 	return q
 }
