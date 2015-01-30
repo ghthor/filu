@@ -230,7 +230,7 @@ func (q quadLeaf) Remove(remove entity.Entity) Quad {
 func (q quadLeaf) QueryCell(c coord.Cell) []entity.Entity {
 	entities := make([]entity.Entity, 0, 1)
 	for _, e := range q.entities {
-		if e.Cell() == c {
+		if e.Bounds().Contains(c) {
 			entities = append(entities, e)
 		}
 	}
