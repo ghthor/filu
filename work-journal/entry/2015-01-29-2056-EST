@@ -1,0 +1,16 @@
+Thu Jan 29 20:56:26 EST 2015
+
+# journal - Broad phase is almost complete
+Really glad that I sat down with Maia today and explained some of the engine.
+Was a really great help having to explain the problem to get me oriented in
+the write direction. I need to add some more test cases to hit some more of
+the case statements in the quad node broad phase implementation.
+
+There are also a few cases in the quad leaf implementation that are not
+hit as well. Once I hit those I can say the broad phase is complete.
+
+When the broad phase is complete I can move into the user space implementation
+of the input and movement phase and the narrow phase. The next few days should
+be very exciting.
+
+Thu Jan 29 21:00:15 EST 2015
