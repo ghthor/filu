@@ -16,6 +16,15 @@ type Collision struct {
 // collisions an entity is involved in.
 type CollisionIndex map[entity.Entity][]Collision
 
+func (i CollisionIndex) add(collisions []Collision) CollisionIndex {
+	for _, c := range collisions {
+		a, b := c.A, c.B
+		i[a] = append(i[a], c)
+		i[b] = append(i[b], c)
+	}
+	return i
+}
+
 // The bounds of A and B joined together.
 func (c Collision) Bounds() coord.Bounds {
 	return coord.JoinBounds(c.A.Bounds(), c.B.Bounds())
@@ -54,6 +63,11 @@ func (cg CollisionGroup) Bounds() coord.Bounds {
 	}
 
 	return coord.JoinBounds(bounds...)
+}
+
+func (cg CollisionGroup) CollisionIndex() CollisionIndex {
+	index := make(CollisionIndex, len(cg.Entities))
+	return index.add(cg.Collisions)
 }
 
 // Adds a collision to the group. Also adds the

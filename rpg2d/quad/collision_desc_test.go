@@ -127,6 +127,29 @@ func DescribeCollisionGroup(c gospec.Context) {
 		}
 	}(entities)
 
+	cindexs := func(e []MockEntityWithBounds, c []quad.Collision) []quad.CollisionIndex {
+		return []quad.CollisionIndex{
+			{ // Collision Group 0 Index
+				e[0]: []quad.Collision{
+					c[0], c[1],
+				},
+
+				e[1]: []quad.Collision{
+					c[0], c[2],
+				},
+
+				e[2]: []quad.Collision{
+					c[1], c[2],
+				},
+			},
+
+			{ // Collision Group 1 Index
+				e[3]: []quad.Collision{c[3]},
+				e[4]: []quad.Collision{c[3]},
+			},
+		}
+	}(entities, collisions)
+
 	newcg := func(collisions ...quad.Collision) quad.CollisionGroup {
 		var cg quad.CollisionGroup
 
@@ -235,6 +258,12 @@ func DescribeCollisionGroup(c gospec.Context) {
 
 					c.Expect(len(collisionsEntityExistsIn), Satisfies, len(collisionsEntityExistsIn) > 0)
 				}
+			}
+		})
+
+		c.Specify("can be used to create a collision index", func() {
+			for i, cg := range cgroups {
+				c.Expect(cg.CollisionIndex(), Equals, cindexs[i])
 			}
 		})
 
