@@ -1,0 +1,8 @@
+Sun Feb  1 22:07:08 EST 2015
+
+# journal - Bug in broad phase bubbling
+I need to update all refs for each entity in the collision group
+when the group gets merged. I need to think about all the places
+where the collision group reg exists when I merge them together.
+
+Sun Feb  1 22:10:58 EST 2015
