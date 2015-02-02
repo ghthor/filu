@@ -1,0 +1,11 @@
+Mon Feb  2 13:25:54 EST 2015
+
+# journal - Broad phase completed
+Feel confident about the broad phase impl.
+It creates what I wanted collision groups.
+The collision groups can't interact with each other.
+The narrow phase can operate on the collision groups in parallel.
+
+Time to move on to implementing the narrow phase in user space.
+
+Mon Feb  2 13:28:38 EST 2015
