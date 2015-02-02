@@ -174,19 +174,63 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 		}
 
 		for _, e2 := range overlappingEntities {
-			e2cg, e2cgExist := solved[e2]
-
 			// ignore self
 			if e1 == e2 {
 				continue
 			}
 
+			e2cg, e2cgExist := solved[e2]
+
 			switch {
-			case e1cg == e2cg:
-				// e1 and e2 exist in the same collision group
-				// NOTE this means e2 is from the same quad as
-				// e1 so we can do nothing because there should be
-				// a collision already.
+			case e1cg == nil && !e2cgExist:
+				// e1 is NOT in a collision group
+				// e2 is NOT in a collision group
+
+				// create a new collision group
+				// and add a collision for e1 & e2
+				cg := CollisionGroup{}.AddCollision(Collision{e1, e2})
+
+				// add this new collision group to the array of collision groups
+				cgroups = append(cgroups, &cg)
+
+				// set e1 & e2's new collision group
+				solved[e1] = &cg
+				solved[e2] = &cg
+
+				// set e1's collision group in the for loop
+				// over the unsolved map.
+				// This is done because we don't drop out
+				// of this this outer loop just yet and
+				// further iterations must know that e1
+				// is now part of a collision group.
+				e1cg = &cg
+
+				// NOTE I don't know if this is necessary
+				unsolved[e1] = &cg
+
+			case e1cg != nil && !e2cgExist:
+				// e1 is in a collision group
+				// e2 is NOT in a collision group
+				cg := e1cg
+
+				// create a new collision of e1 & e2
+				// add it to e1's collision group
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+				// and set e2's collision group
+				solved[e2] = cg
+
+			case e1cg == nil && e2cgExist:
+				// e1 is NOT in a collision group
+				// e2 is in a collision group
+
+				// add a collision for e1 & e2 to e2's collision group
+				cg := e2cg
+				*cg = cg.AddCollision(Collision{e1, e2})
+
+				// set e1's collision group
+				solved[e1] = cg
+				unsolved[e1] = cg
 
 			case e1cg != nil && e2cgExist && e1cg != e2cg:
 				// e1 exists in a collision group
@@ -215,55 +259,11 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 					}
 				}
 
-			case e1cg != nil && !e2cgExist:
-				// e1 exists in a collision group
-				// e2 doesn't exist in a collision group
-				cg := e1cg
-
-				// create a new collision of e1 & e2
-				// add it to e1's collision group
-				*cg = cg.AddCollision(Collision{e1, e2})
-
-				// and set e2's collision group
-				solved[e2] = cg
-
-			case e1cg == nil && !e2cgExist:
-				// e1 is NOT in a collision group
-				// e2 is NOT in a collision group
-
-				// create a new collision group
-				// and add a collision for e1 & e2
-				cg := CollisionGroup{}.AddCollision(Collision{e1, e2})
-
-				// add this new collision group to the array of collision groups
-				cgroups = append(cgroups, &cg)
-
-				// set e1 & e2's new collision group
-				solved[e1] = &cg
-				solved[e2] = &cg
-
-				// set e1's collision group in the for loop
-				// over the unsolved map.
-				// This is done because we don't drop out
-				// of this this outer loop just yet and
-				// further iterations must know that e1
-				// is now part of a collision group.
-				e1cg = &cg
-
-				// NOTE I don't know if this is necessary
-				unsolved[e1] = &cg
-
-			case e1cg == nil && e2cgExist:
-				// e1 is NOT in a collision group
-				// e2 is in a collision group
-
-				// add a collision for e1 & e2 to e2's collision group
-				cg := e2cg
-				*cg = cg.AddCollision(Collision{e1, e2})
-
-				// set e1's collision group
-				solved[e1] = cg
-				unsolved[e1] = cg
+			case e1cg != nil && e2cgExist && e1cg == e2cg:
+				// e1 and e2 exist in the same collision group
+				// NOTE this means e2 is from the same quad as
+				// e1 so we can do nothing because there should be
+				// a collision already.
 
 			default:
 				panic("unexpected index state when solving bubbled entities")
