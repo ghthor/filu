@@ -24,7 +24,7 @@ func broadPhaseData() ([]MockEntityWithBounds, []quad.Collision, []quad.Collisio
 				b(c(1, 0), c(2, 0)),
 			},
 
-			{ // CollisonGroup 1
+			{ // CollisionGroup 1
 				2, c(1, 1),
 				b(c(1, 2), c(1, 1)),
 			}, {
