@@ -206,6 +206,8 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				e1cg = &cg
 
 				// NOTE I don't know if this is necessary
+				// due to the inverse reason that the above
+				// statement is required.
 				unsolved[e1] = &cg
 
 			case e1cg != nil && !e2cgExist:
@@ -217,7 +219,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				// add it to e1's collision group
 				*cg = cg.AddCollision(Collision{e1, e2})
 
-				// and set e2's collision group
+				// and set e2's collision group in the collision group index
 				solved[e2] = cg
 
 			case e1cg == nil && e2cgExist:
@@ -233,8 +235,8 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				unsolved[e1] = cg
 
 			case e1cg != nil && e2cgExist && e1cg != e2cg:
-				// e1 exists in a collision group
-				// e2 exists in a collision group
+				// e1 is in a collision group
+				// e2 is in a collision group
 				// The collision groups are different
 
 				// merge the collision groups into e1's collision group
