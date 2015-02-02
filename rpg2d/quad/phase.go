@@ -227,12 +227,23 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				// e2 is in a collision group
 
 				// add a collision for e1 & e2 to e2's collision group
-				cg := e2cg
-				*cg = cg.AddCollision(Collision{e1, e2})
+				*e2cg = e2cg.AddCollision(Collision{e1, e2})
 
 				// set e1's collision group
-				solved[e1] = cg
-				unsolved[e1] = cg
+				solved[e1] = e2cg
+
+				// set e1's collision group in the for loop
+				// over the unsolved map.
+				// This is done because we don't drop out
+				// of this this outer loop just yet and
+				// further iterations must know that e1
+				// is now part of a collision group.
+				e1cg = e2cg
+
+				// NOTE I don't know if this is necessary
+				// due to the inverse reason that the above
+				// statement is required.
+				unsolved[e1] = e2cg
 
 			case e1cg != nil && e2cgExist && e1cg != e2cg:
 				// e1 is in a collision group
