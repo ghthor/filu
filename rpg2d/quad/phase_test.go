@@ -90,6 +90,17 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 				18, c(3, 6),
 				b(c(3, 6), c(3, 5)),
 			},
+
+			{ // CollisionGroup 4
+				19, c(4, 1),
+				b(c(4, 1), c(5, 1)),
+			}, {
+				20, c(4, 2),
+				b(c(4, 2), c(5, 2)),
+			}, {
+				21, c(5, 1),
+				b(c(5, 2), c(5, 1)),
+			},
 		}
 	}()
 
@@ -120,6 +131,10 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 			c(e[15], e[16]),
 			c(e[16], e[17]),
 			c(e[17], e[18]),
+
+			// Group 4
+			c(e[19], e[21]),
+			c(e[20], e[21]),
 		}
 	}(entities)
 
@@ -241,6 +256,12 @@ func DescribePhase(c gospec.Context) {
 		c.Assume(cgroups[3].Entities, ContainsAll, cgEntities[12:19])
 		c.Assume(cgroups[3].Entities, Not(ContainsAny), cgEntities[19:])
 
+		c.Assume(len(cgroups[4].Entities), Equals, 3)
+		c.Assume(len(cgroups[4].Collisions), Equals, 2)
+		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[0:19])
+		c.Assume(cgroups[4].Entities, ContainsAll, cgEntities[19:22])
+		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[22:])
+
 		makeQuad := func(entities []entity.Entity, quadMaxSize int) quad.Quad {
 			q, err := quad.New(quadBounds, quadMaxSize, nil)
 			c.Assume(err, IsNil)
@@ -274,12 +295,17 @@ func DescribePhase(c gospec.Context) {
 					tc(cg[0:2]...),
 					tc(cg[0:3]...),
 					tc(cg[0:4]...),
+					tc(cg[0:5]...),
 					tc(cg[1]),
 					tc(cg[1:3]...),
 					tc(cg[1:4]...),
+					tc(cg[1:5]...),
 					tc(cg[2]),
 					tc(cg[2:4]...),
+					tc(cg[2:5]...),
 					tc(cg[3]),
+					tc(cg[3:5]...),
+					tc(cg[4]),
 					tc(cg...),
 				}
 			}(cgroups)
