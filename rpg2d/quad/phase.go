@@ -127,6 +127,9 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 		cq, cgrps, s, u := cq.runBroadPhase(now)
 		q.children[i] = cq
 
+		// Join array of collision groups
+		cgroups = append(cgroups, cgrps...)
+
 		// TODO Rip this out into a method of collision group index.
 		// Join solved collision group index
 		if solved == nil {
@@ -145,9 +148,6 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				unsolved[e] = cg
 			}
 		}
-
-		// Join array of collision groups
-		cgroups = append(cgroups, cgrps...)
 	}
 
 	// For each entity in the unsolved array
