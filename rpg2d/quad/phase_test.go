@@ -52,7 +52,10 @@ func broadPhaseData() ([]MockEntityWithBounds, []quad.Collision, []quad.Collisio
 				b(c(0, -1), c(1, -1)),
 			}, {
 				10, c(1, -1),
-				b(c(1, -1), c(1, -1)),
+				b(c(1, -1), c(1, -2)),
+			}, {
+				11, c(1, -2),
+				b(c(-2, -2), c(1, -2)),
 			},
 		}
 	}()
@@ -75,6 +78,7 @@ func broadPhaseData() ([]MockEntityWithBounds, []quad.Collision, []quad.Collisio
 			c(e[7], e[8]),
 			c(e[8], e[9]),
 			c(e[9], e[10]),
+			c(e[10], e[11]),
 		}
 	}(entities)
 
@@ -89,7 +93,7 @@ func broadPhaseData() ([]MockEntityWithBounds, []quad.Collision, []quad.Collisio
 		return []quad.CollisionGroup{
 			cg(c[0]),
 			cg(c[1:4]...),
-			cg(c[4:9]...),
+			cg(c[4:10]...),
 		}
 	}(collisions)
 
@@ -175,11 +179,11 @@ func DescribePhase(c gospec.Context) {
 		c.Assume(cgroups[1].Entities, ContainsAll, entities[2:5])
 		c.Assume(cgroups[1].Entities, Not(ContainsAny), entities[5:])
 
-		c.Assume(len(cgroups[2].Entities), Equals, 6)
-		c.Assume(len(cgroups[2].Collisions), Equals, 5)
+		c.Assume(len(cgroups[2].Entities), Equals, 7)
+		c.Assume(len(cgroups[2].Collisions), Equals, 6)
 		c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[0:5])
-		c.Assume(cgroups[2].Entities, ContainsAll, entities[5:11])
-		c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[11:])
+		c.Assume(cgroups[2].Entities, ContainsAll, entities[5:12])
+		c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[12:])
 
 		makeQuad := func(entities []entity.Entity) quad.Quad {
 			q, err := quad.New(coord.Bounds{
