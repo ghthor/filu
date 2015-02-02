@@ -1,6 +1,7 @@
 package quad_test
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/ghthor/engine/rpg2d/coord"
@@ -292,6 +293,13 @@ func DescribePhase(c gospec.Context) {
 
 					c.Expect(len(cgroups), Equals, len(testCase.cgroups))
 					c.Expect(cgroups, ContainsAll, testCase.cgroups)
+
+					// Lets break early so the output is more useful
+					// in debugging why the test is failing.
+					if matches, _, _, _ := ContainsAll(cgroups, testCase.cgroups); !matches {
+						fmt.Println("maxSize: ", i)
+						return
+					}
 				}
 			}
 		})
