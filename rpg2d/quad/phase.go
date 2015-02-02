@@ -51,7 +51,7 @@ func (f InputPhaseHandlerFn) ApplyInputsIn(c Chunk, t stime.Time) Chunk {
 // return and I need to stop thinking about it for now and
 // just shut the fuck up and write the fucking code.
 type NarrowPhaseHandler interface {
-	ResolveCollisions(Chunk, stime.Time) Chunk
+	ResolveCollisions(CollisionGroup, stime.Time) CollisionGroup
 }
 
 func RunPhasesOn(q Quad, inputPhase InputPhaseHandler, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {

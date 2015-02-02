@@ -44,7 +44,7 @@ func (mockInputPhase) ApplyInputsIn(c quad.Chunk, now stime.Time) quad.Chunk {
 
 type mockNarrowPhase struct{}
 
-func (mockNarrowPhase) ResolveCollisions(c quad.Chunk, now stime.Time) quad.Chunk {
+func (mockNarrowPhase) ResolveCollisions(c quad.CollisionGroup, now stime.Time) quad.CollisionGroup {
 	return c
 }
 
