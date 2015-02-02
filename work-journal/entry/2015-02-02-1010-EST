@@ -1,0 +1,11 @@
+Mon Feb  2 10:10:27 EST 2015
+
+# journal - Finishing out the broad phase today
+If everything actually goes to planned today, I should be moving on to user code.
+I need to hit a few other cases for the broad phase.
+
+Something I'm not very happy with is how the tests are currently laid out.
+I'm thinking that I will re-factor the tests out into separate descriptions.
+All I know is the current way isn't great and I don't like it.
+
+Mon Feb  2 10:23:23 EST 2015
