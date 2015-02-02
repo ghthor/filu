@@ -101,6 +101,14 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 				21, c(5, 1),
 				b(c(5, 2), c(5, 1)),
 			},
+
+			{ // CollisionGroup 5
+				22, c(0, -3),
+				b(c(-1, -3), c(0, -3)),
+			}, {
+				23, c(-1, -3),
+				b(c(-1, -3), c(0, -3)),
+			},
 		}
 	}()
 
@@ -135,6 +143,9 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 			// Group 4
 			c(e[19], e[21]),
 			c(e[20], e[21]),
+
+			// Group 5
+			c(e[22], e[23]),
 		}
 	}(entities)
 
@@ -152,6 +163,7 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 			cg(c[4:10]...),
 			cg(c[10:16]...),
 			cg(c[16:18]...),
+			cg(c[18:19]...),
 		}
 	}(collisions)
 
@@ -262,6 +274,12 @@ func DescribePhase(c gospec.Context) {
 		c.Assume(cgroups[4].Entities, ContainsAll, cgEntities[19:22])
 		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[22:])
 
+		c.Assume(len(cgroups[5].Entities), Equals, 2)
+		c.Assume(len(cgroups[5].Collisions), Equals, 1)
+		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[0:22])
+		c.Assume(cgroups[5].Entities, ContainsAll, cgEntities[22:24])
+		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[24:])
+
 		makeQuad := func(entities []entity.Entity, quadMaxSize int) quad.Quad {
 			q, err := quad.New(quadBounds, quadMaxSize, nil)
 			c.Assume(err, IsNil)
@@ -296,16 +314,22 @@ func DescribePhase(c gospec.Context) {
 					tc(cg[0:3]...),
 					tc(cg[0:4]...),
 					tc(cg[0:5]...),
+					tc(cg[0:6]...),
 					tc(cg[1]),
 					tc(cg[1:3]...),
 					tc(cg[1:4]...),
 					tc(cg[1:5]...),
+					tc(cg[1:6]...),
 					tc(cg[2]),
 					tc(cg[2:4]...),
 					tc(cg[2:5]...),
+					tc(cg[2:6]...),
 					tc(cg[3]),
 					tc(cg[3:5]...),
+					tc(cg[3:6]...),
 					tc(cg[4]),
+					tc(cg[4:6]...),
+					tc(cg[5]),
 					tc(cg...),
 				}
 			}(cgroups)
