@@ -38,6 +38,59 @@ func DescribeCollision(c gospec.Context) {
 	})
 }
 
+func DescribeCollisionIndex(c gospec.Context) {
+	c.Specify("a collision index", func() {
+		c.Specify("can be compared for equality", func() {
+			c.Expect(quad.CollisionIndex(nil), Equals, quad.CollisionIndex(nil))
+
+			e := []MockEntity{
+				{id: 0},
+				{id: 1},
+				{id: 2},
+				{id: 3},
+				{id: 4},
+			}
+
+			col := func(a, b entity.Entity) quad.Collision { return quad.Collision{a, b} }
+
+			cindex := quad.CollisionIndex{
+				e[0]: []quad.Collision{
+					col(e[0], e[1]),
+					col(e[0], e[2]),
+				},
+
+				e[1]: []quad.Collision{
+					col(e[1], e[0]),
+				},
+
+				e[2]: []quad.Collision{
+					col(e[2], e[0]),
+				},
+			}
+
+			c.Expect(cindex, Equals, cindex)
+
+			cindex1 := cindex
+			cindex2 := quad.CollisionIndex{
+				e[0]: []quad.Collision{
+					col(e[2], e[0]),
+					col(e[0], e[1]),
+				},
+
+				e[1]: []quad.Collision{
+					col(e[1], e[0]),
+				},
+
+				e[2]: []quad.Collision{
+					col(e[0], e[2]),
+				},
+			}
+
+			c.Expect(cindex1, Equals, cindex2)
+		})
+	})
+}
+
 func DescribeCollisionGroup(c gospec.Context) {
 	entities := func() []MockEntityWithBounds {
 		c := func(x, y int) coord.Cell { return coord.Cell{x, y} }

@@ -12,6 +12,10 @@ type Collision struct {
 	A, B entity.Entity
 }
 
+// A collision index stores all the
+// collisions an entity is involved in.
+type CollisionIndex map[entity.Entity][]Collision
+
 // The bounds of A and B joined together.
 func (c Collision) Bounds() coord.Bounds {
 	return coord.JoinBounds(c.A.Bounds(), c.B.Bounds())

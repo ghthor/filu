@@ -13,6 +13,7 @@ func TestUnitSpecs(t *testing.T) {
 	r.AddSpec(DescribeChunkMatching)
 
 	r.AddSpec(DescribeCollision)
+	r.AddSpec(DescribeCollisionIndex)
 	r.AddSpec(DescribeCollisionGroup)
 	r.AddSpec(DescribeCollisionGroupIndex)
 
