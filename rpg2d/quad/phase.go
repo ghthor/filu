@@ -240,18 +240,29 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				// The collision groups are different
 
 				// merge the collision groups into e1's collision group
-				cg := e1cg
-
 				for _, c := range e2cg.Collisions {
-					*cg = cg.AddCollision(c)
+					*e1cg = e1cg.AddCollision(c)
 				}
 
 				// create a collision for e1 & e2
 				// add it to the collision group
-				*cg = cg.AddCollision(Collision{e1, e2})
+				*e1cg = e1cg.AddCollision(Collision{e1, e2})
 
-				// set e2's new collision group
-				solved[e2] = cg
+				// set e2's new collision group and
+				// remove e2's old collision group from the cgindex
+				for e, cg := range solved {
+					if cg == e2cg {
+						solved[e] = e1cg
+					}
+				}
+
+				// set e2's new collision group and
+				// remove e2's old collision group from the cgindex
+				for e, cg := range unsolved {
+					if cg == e2cg {
+						unsolved[e] = e1cg
+					}
+				}
 
 				// remove e2's collision group from the array
 				for i, cg := range cgroups {
@@ -342,15 +353,30 @@ func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGrou
 			case (e1cgExists && e2cgExists) && (e1cg != e2cg):
 				// both entities exist in a collision group
 				// but those collision groups are different
-				cg := e1cg
 
 				// merge the collision groups
 				for _, c := range e2cg.Collisions {
-					*cg = cg.AddCollision(c)
+					*e1cg = e1cg.AddCollision(c)
 				}
 
 				// add a collision for e1 && e2
-				*cg = cg.AddCollision(Collision{e1, e2})
+				*e1cg = e1cg.AddCollision(Collision{e1, e2})
+
+				// set e2's new collision group and
+				// remove e2's old collision group from the cgindex
+				for e, cg := range cgindex {
+					if cg == e2cg {
+						cgindex[e] = e1cg
+					}
+				}
+
+				// remove e2's collision group from the array
+				for i, cg := range cgroups {
+					if cg == e2cg {
+						cgroups = append(cgroups[:i], cgroups[i+1:]...)
+						break
+					}
+				}
 
 			case (e1cgExists && e2cgExists) && (e1cg == e2cg):
 				// both entities exist in the same collision group already
