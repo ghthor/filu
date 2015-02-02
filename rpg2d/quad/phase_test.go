@@ -109,6 +109,21 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 				23, c(-1, -3),
 				b(c(-1, -3), c(0, -3)),
 			},
+
+			{ // Non Collision Group Entities
+				24, quadBounds.TopL,
+				b(
+					c(quadBounds.TopL.X-1, quadBounds.TopL.Y),
+					quadBounds.TopL,
+				),
+			}, {
+
+				25, c(-5, -6),
+				b(c(-5, -6), c(-5, -6)),
+			}, {
+				26, c(-5, -7),
+				b(c(-5, -7), c(5, -7)),
+			},
 		}
 	}()
 
@@ -295,6 +310,7 @@ func DescribePhase(c gospec.Context) {
 			type testCase struct {
 				entities []entity.Entity
 				cgroups  []quad.CollisionGroup
+				unsolved quad.CollisionGroupIndex
 			}
 
 			testCases := func(cg []quad.CollisionGroup) []testCase {
@@ -304,7 +320,7 @@ func DescribePhase(c gospec.Context) {
 						entities = append(entities, cg.Entities...)
 					}
 					sort.Sort(byId(entities))
-					return testCase{entities, cgroups}
+					return testCase{entities, cgroups, nil}
 				}
 
 				return []testCase{
@@ -341,19 +357,61 @@ func DescribePhase(c gospec.Context) {
 					q := makeQuad(testCase.entities, i)
 
 					var cgroups []*quad.CollisionGroup
-					q, cgroups, _, _ = quad.RunBroadPhaseOn(q, stime.Time(0))
+					var unsolved quad.CollisionGroupIndex
+					q, cgroups, _, unsolved = quad.RunBroadPhaseOn(q, stime.Time(0))
 
 					c.Expect(len(cgroups), Equals, len(testCase.cgroups))
 					c.Expect(cgroups, ContainsAll, testCase.cgroups)
+					c.Expect(unsolved, Equals, testCase.unsolved)
 
 					// Lets break early so the output is more useful
 					// in debugging why the test is failing.
-					if matches, _, _, _ := ContainsAll(cgroups, testCase.cgroups); !matches {
+					if matches, _, _, _ := ContainsAll(cgroups, testCase.cgroups); !matches &&
+						!unsolved.Equals(testCase.unsolved) {
 						fmt.Println("maxSize: ", i)
 						return
 					}
 				}
 			}
+		})
+
+		c.Specify("will have an entity remaining unsolved", func() {
+			q := makeQuad(func() []entity.Entity {
+				var entities []entity.Entity
+				for _, e := range cgEntities {
+					entities = append(entities, e)
+				}
+				return entities
+			}(), 10)
+
+			_, _, _, unsolved := quad.RunBroadPhaseOn(q, stime.Time(0))
+
+			c.Expect(unsolved, Equals, quad.CollisionGroupIndex{
+				cgEntities[24]: nil,
+			})
+		})
+
+		c.Specify("will not create a collision group", func() {
+			q := makeQuad(func() []entity.Entity {
+				var entities []entity.Entity
+				for _, e := range cgEntities {
+					entities = append(entities, e)
+				}
+				return entities
+			}(), 10)
+
+			_, cgroups, _, _ := quad.RunBroadPhaseOn(q, stime.Time(0))
+
+			cgroupedEntities := func() []entity.Entity {
+				var entities []entity.Entity
+				for _, cg := range cgroups {
+					entities = append(entities, cg.Entities...)
+				}
+				return entities
+			}()
+
+			c.Expect(cgroupedEntities, Not(Contains), cgEntities[25])
+			c.Expect(cgroupedEntities, Not(Contains), cgEntities[26])
 		})
 	})
 

@@ -165,14 +165,6 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 		// Query for any overlapping entities
 		overlappingEntities := q.QueryBounds(e1.Bounds())
 
-		if len(overlappingEntities) == 0 {
-			// It doesn't collide with anything else outside
-			// of it's quad container.
-			// Remove from the unsolved index
-			delete(unsolved, e1)
-			continue
-		}
-
 		for _, e2 := range overlappingEntities {
 			// ignore self
 			if e1 == e2 {
