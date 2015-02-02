@@ -269,6 +269,9 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 				panic("unexpected index state when solving bubbled entities")
 			}
 		}
+
+		// remove the entity from the unsolved map for it is now solved
+		delete(unsolved, e1)
 	}
 
 	return q, cgroups, solved, unsolved
