@@ -10,7 +10,16 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-func broadPhaseData() ([]MockEntityWithBounds, []quad.Collision, []quad.CollisionGroup) {
+var quadBounds = coord.Bounds{
+	coord.Cell{-8, 8},
+	coord.Cell{7, -7},
+}
+
+const quadMaxSize = 4
+
+// Creates a set of entities in collision groups
+// used for testing the broad phase.
+func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.CollisionGroup) {
 	entities := func() []MockEntityWithBounds {
 		c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 		b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
@@ -161,8 +170,7 @@ func DescribePhase(c gospec.Context) {
 	})
 
 	c.Specify("the broad phase", func() {
-		entities, _, cgroups := broadPhaseData()
-
+		cgEntities, _, cgroups := cgEntitiesDataSet()
 		// Sanity check the data set is what I expect it
 		// to be. Have these check because this is the first
 		// time I've used slice operations extensively and I
@@ -170,26 +178,23 @@ func DescribePhase(c gospec.Context) {
 		// range expressions.
 		c.Assume(len(cgroups[0].Entities), Equals, 2)
 		c.Assume(len(cgroups[0].Collisions), Equals, 1)
-		c.Assume(cgroups[0].Entities, ContainsAll, entities[0:2])
-		c.Assume(cgroups[0].Entities, Not(ContainsAny), entities[2:])
+		c.Assume(cgroups[0].Entities, ContainsAll, cgEntities[0:2])
+		c.Assume(cgroups[0].Entities, Not(ContainsAny), cgEntities[2:])
 
 		c.Assume(len(cgroups[1].Entities), Equals, 3)
 		c.Assume(len(cgroups[1].Collisions), Equals, 3)
-		c.Assume(cgroups[1].Entities, Not(ContainsAny), entities[0:2])
-		c.Assume(cgroups[1].Entities, ContainsAll, entities[2:5])
-		c.Assume(cgroups[1].Entities, Not(ContainsAny), entities[5:])
+		c.Assume(cgroups[1].Entities, Not(ContainsAny), cgEntities[0:2])
+		c.Assume(cgroups[1].Entities, ContainsAll, cgEntities[2:5])
+		c.Assume(cgroups[1].Entities, Not(ContainsAny), cgEntities[5:])
 
 		c.Assume(len(cgroups[2].Entities), Equals, 7)
 		c.Assume(len(cgroups[2].Collisions), Equals, 6)
-		c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[0:5])
-		c.Assume(cgroups[2].Entities, ContainsAll, entities[5:12])
-		c.Assume(cgroups[2].Entities, Not(ContainsAny), entities[12:])
+		c.Assume(cgroups[2].Entities, Not(ContainsAny), cgEntities[0:5])
+		c.Assume(cgroups[2].Entities, ContainsAll, cgEntities[5:12])
+		c.Assume(cgroups[2].Entities, Not(ContainsAny), cgEntities[12:])
 
 		makeQuad := func(entities []entity.Entity) quad.Quad {
-			q, err := quad.New(coord.Bounds{
-				coord.Cell{-8, 8},
-				coord.Cell{7, -7},
-			}, 4, nil)
+			q, err := quad.New(quadBounds, quadMaxSize, nil)
 			c.Assume(err, IsNil)
 
 			for _, e := range entities {
