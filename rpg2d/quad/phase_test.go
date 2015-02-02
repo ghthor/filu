@@ -98,7 +98,7 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 			c(e[2], e[4]),
 			c(e[3], e[4]),
 
-			// Group 3
+			// Group 2
 			c(e[5], e[6]),
 			c(e[6], e[7]),
 			c(e[7], e[8]),
