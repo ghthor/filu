@@ -52,3 +52,45 @@ func (cg CollisionGroup) String() string {
 
 	return b.String()
 }
+
+func (a CollisionGroupIndex) Equals(other interface{}) bool {
+	switch b := other.(type) {
+	case CollisionGroupIndex:
+		return a.indexsAreTheSame(b) && b.indexsAreTheSame(a)
+	default:
+	}
+	return false
+}
+
+func (a CollisionGroupIndex) indexsAreTheSame(b CollisionGroupIndex) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for e, cgA := range a {
+		cgB, exists := b[e]
+
+		switch {
+		case !exists:
+			return false
+
+		case cgA == nil && cgB == nil:
+
+		case cgB == nil && cgA != nil:
+			fallthrough
+		case cgA == nil && cgB != nil:
+			fallthrough
+
+		case !cgA.Equals(cgB):
+			return false
+
+		default:
+		}
+	}
+
+	return true
+}
