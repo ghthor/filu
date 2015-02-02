@@ -1,6 +1,8 @@
 package quad_test
 
 import (
+	"sort"
+
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
@@ -133,10 +135,19 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 			cg(c[1:4]...),
 			cg(c[4:10]...),
 			cg(c[10:16]...),
+			cg(c[16:18]...),
 		}
 	}(collisions)
 
 	return entities, collisions, cgroups
+}
+
+type byId []entity.Entity
+
+func (e byId) Len() int      { return len(e) }
+func (e byId) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
+func (e byId) Less(i, j int) bool {
+	return e[i].Id() < e[j].Id()
 }
 
 func DescribePhase(c gospec.Context) {
@@ -252,6 +263,7 @@ func DescribePhase(c gospec.Context) {
 					for _, cg := range cgroups {
 						entities = append(entities, cg.Entities...)
 					}
+					sort.Sort(byId(entities))
 					return testCase{entities, cgroups}
 				}
 
