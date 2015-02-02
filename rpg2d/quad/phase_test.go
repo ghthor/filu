@@ -311,6 +311,8 @@ func DescribePhase(c gospec.Context) {
 			}(cgroups)
 
 			for _, testCase := range testCases {
+				// I begins as 4 because that is the min
+				// quad max size that is specified to work
 				for i := 4; i < len(testCase.entities)+1; i++ {
 					q := makeQuad(testCase.entities, i)
 
