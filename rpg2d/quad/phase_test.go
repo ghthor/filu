@@ -15,8 +15,6 @@ var quadBounds = coord.Bounds{
 	coord.Cell{7, -7},
 }
 
-const quadMaxSize = 4
-
 // Creates a set of entities in collision groups
 // used for testing the broad phase.
 func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.CollisionGroup) {
@@ -223,7 +221,7 @@ func DescribePhase(c gospec.Context) {
 		c.Assume(cgroups[3].Entities, ContainsAll, cgEntities[12:17])
 		c.Assume(cgroups[3].Entities, Not(ContainsAny), cgEntities[17:])
 
-		makeQuad := func(entities []entity.Entity) quad.Quad {
+		makeQuad := func(entities []entity.Entity, quadMaxSize int) quad.Quad {
 			q, err := quad.New(quadBounds, quadMaxSize, nil)
 			c.Assume(err, IsNil)
 
@@ -266,13 +264,15 @@ func DescribePhase(c gospec.Context) {
 			}(cgroups)
 
 			for _, testCase := range testCases {
-				q := makeQuad(testCase.entities)
+				for i := 4; i < len(testCase.entities)+1; i++ {
+					q := makeQuad(testCase.entities, i)
 
-				var cgroups []*quad.CollisionGroup
-				q, cgroups, _, _ = quad.RunBroadPhaseOn(q, stime.Time(0))
+					var cgroups []*quad.CollisionGroup
+					q, cgroups, _, _ = quad.RunBroadPhaseOn(q, stime.Time(0))
 
-				c.Expect(len(cgroups), Equals, len(testCase.cgroups))
-				c.Expect(cgroups, ContainsAll, testCase.cgroups)
+					c.Expect(len(cgroups), Equals, len(testCase.cgroups))
+					c.Expect(cgroups, ContainsAll, testCase.cgroups)
+				}
 			}
 		})
 	})
