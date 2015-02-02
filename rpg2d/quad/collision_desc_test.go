@@ -202,3 +202,34 @@ func DescribeCollisionGroup(c gospec.Context) {
 		})
 	})
 }
+
+func DescribeCollisionGroupIndex(c gospec.Context) {
+	c.Specify("a collision group index", func() {
+		c.Specify("can be compared for equality", func() {
+			// nil == nil
+			c.Expect(quad.CollisionGroupIndex(nil), Equals, quad.CollisionGroupIndex(nil))
+
+			c.Expect(quad.CollisionGroupIndex{
+				MockEntity{id: 0}: nil,
+			}, Equals, quad.CollisionGroupIndex{
+				MockEntity{id: 0}: nil,
+			})
+
+			cg := &quad.CollisionGroup{}
+
+			c.Expect(quad.CollisionGroupIndex{
+				MockEntity{id: 0}: cg,
+			}, Equals, quad.CollisionGroupIndex{
+				MockEntity{id: 0}: cg,
+			})
+
+			cg2 := cg.AddCollision(quad.Collision{MockEntity{id: 0}, MockEntity{id: 1}})
+
+			c.Expect(quad.CollisionGroupIndex{
+				MockEntity{id: 0}: cg,
+			}, Not(Equals), quad.CollisionGroupIndex{
+				MockEntity{id: 0}: &cg2,
+			})
+		})
+	})
+}

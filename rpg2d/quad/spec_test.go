@@ -14,6 +14,7 @@ func TestUnitSpecs(t *testing.T) {
 
 	r.AddSpec(DescribeCollision)
 	r.AddSpec(DescribeCollisionGroup)
+	r.AddSpec(DescribeCollisionGroupIndex)
 
 	r.AddSpec(DescribeQuad)
 	r.AddSpec(DescribeQuadInsert)
