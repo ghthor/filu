@@ -103,6 +103,9 @@ func DescribeCollisionGroup(c gospec.Context) {
 				return []quad.CollisionGroup{
 					newcg(c[2], c[0], c[1]),
 					newcg(c[1], c[2], c[0]),
+					newcg(quad.Collision{
+						c[1].B, c[1].A,
+					}, c[2], c[0]),
 				}
 			}(collisions)
 

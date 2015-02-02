@@ -31,7 +31,7 @@ func (cg CollisionGroup) hasSameCollisionsAs(ocg CollisionGroup) bool {
 toNextEntity:
 	for _, c1 := range cg.Collisions {
 		for _, c2 := range ocg.Collisions {
-			if c1 == c2 {
+			if c1.Equals(c2) {
 				continue toNextEntity
 			}
 		}
