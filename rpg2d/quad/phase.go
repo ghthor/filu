@@ -334,10 +334,6 @@ func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGrou
 				cgindex[e1] = cg
 				cgindex[e2] = cg
 
-				// set the cgroup for e1cg incase it needs
-				// to be added to the unsolvables array
-				e1cg = cg
-
 				// append the cgroup to the array of cgroups
 				cgroups = append(cgroups, cg)
 
