@@ -1,12 +1,13 @@
 package protocol
 
 import (
-	"code.google.com/p/go.net/websocket"
 	"fmt"
-	. "github.com/ghthor/engine/net/encoding"
 	"io"
 	"log"
 	"net"
+
+	. "github.com/ghthor/engine/net/encoding"
+	"golang.org/x/net/websocket"
 )
 
 type ConnState int

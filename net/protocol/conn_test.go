@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/go.net/websocket"
 	"github.com/ghthor/engine/net/encoding"
+	"golang.org/x/net/websocket"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
