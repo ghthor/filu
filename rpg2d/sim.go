@@ -1,6 +1,7 @@
 package rpg2d
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ghthor/engine/rpg2d/entity"
@@ -135,8 +136,14 @@ func (s runningSimulation) Halt() (sim.HaltedSimulation, error) {
 	return haltedSimulation{}, nil
 }
 
+var ErrMustProvideAQuadtree = errors.New("user must provide a quad tree to a simulation defination")
+
 // Implement engine/sim.UnstartedSimulation
 func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
+	if s.QuadTree == nil {
+		return nil, ErrMustProvideAQuadtree
+	}
+
 	initialState := initialWorldState{
 		now:      s.Now,
 		quadTree: s.QuadTree,
