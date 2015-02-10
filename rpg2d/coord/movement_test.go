@@ -230,6 +230,46 @@ func DescribePathAction(c gospec.Context) {
 		c.Expect(pa1.Crosses(pa2), IsFalse)
 		c.Expect(pa2.Crosses(pa1), IsFalse)
 	})
+
+	c.Specify("must know it's bounds", func() {
+		actions := func() (pas [4]PathAction) {
+			c := func(x, y int) Cell { return Cell{x, y} }
+			pa := func(orig, dest Cell) PathAction {
+				return PathAction{Orig: orig, Dest: dest}
+			}
+
+			pas[N] = pa(c(0, 0), c(0, 1))
+			pas[E] = pa(c(0, 0), c(1, 0))
+			pas[S] = pa(c(0, 0), c(0, -1))
+			pas[W] = pa(c(0, 0), c(-1, 0))
+
+			return
+		}()
+
+		for dir, a := range actions {
+			c.Assume(a.Direction(), Equals, Direction(dir))
+		}
+
+		bounds := func() (bounds [4]Bounds) {
+			c := func(x, y int) Cell { return Cell{x, y} }
+			b := func(tl, br Cell) Bounds { return Bounds{tl, br} }
+
+			bounds[N] = b(c(0, 1), c(0, 0))
+			bounds[E] = b(c(0, 0), c(1, 0))
+			bounds[S] = b(c(0, 0), c(0, -1))
+			bounds[W] = b(c(-1, 0), c(0, 0))
+
+			return
+		}()
+
+		for _, b := range bounds {
+			c.Assume(b.IsInverted(), IsFalse)
+		}
+
+		for dir, a := range actions {
+			c.Expect(a.Bounds(), Equals, bounds[dir])
+		}
+	})
 }
 
 func DescribeMoveAction(c gospec.Context) {

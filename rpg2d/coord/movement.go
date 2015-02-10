@@ -243,6 +243,20 @@ func (pa PathAction) Crosses(path PathAction) bool {
 	return pa.Traverses(path.Orig) || pa.Traverses(path.Dest)
 }
 
+func (pa PathAction) Bounds() Bounds {
+	return Bounds{
+		TopL: Cell{
+			min(pa.Orig.X, pa.Dest.X),
+			max(pa.Orig.Y, pa.Dest.Y),
+		},
+
+		BotR: Cell{
+			max(pa.Orig.X, pa.Dest.X),
+			min(pa.Orig.Y, pa.Dest.Y),
+		},
+	}
+}
+
 type Direction byte
 
 const (
