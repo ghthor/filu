@@ -209,8 +209,8 @@ func DescribeWebsocketConn(c gospec.Context) {
 
 		c.Specify("because of an UndefinedPacketType", func() {
 			testPackets := []string{
-				fmt.Sprintf("%v:::", int(encoding.PT_DISCONNECT)-1),
-				fmt.Sprintf("%v:::", encoding.PT_SIZE),
+				fmt.Sprintf("%d:::", int(encoding.PT_DISCONNECT)-1),
+				fmt.Sprintf("%d:::", encoding.PT_SIZE),
 			}
 			runRequestReply(testPackets, func(packet encoding.Packet) {
 				c.Expect(packet.Type, Equals, encoding.PT_ERROR)

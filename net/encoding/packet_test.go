@@ -2,6 +2,7 @@ package encoding
 
 import (
 	"fmt"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -138,13 +139,14 @@ func DescribePacket(c gospec.Context) {
 	c.Specify("Decoding a string with an unknown PacketType returns UndefinedPacketTypeError", func() {
 		// This is PacketTypes that are out of range of the defined packet types
 		invalidPackets := []string{
-			fmt.Sprintf("%v:::", int(PT_DISCONNECT)-1),
-			fmt.Sprintf("%v:::", PT_SIZE),
+			fmt.Sprintf("%d:::", int(PT_DISCONNECT)-1),
+			fmt.Sprintf("%d:::", PT_SIZE),
 		}
 
 		for _, invalidPacket := range invalidPackets {
 			_, err := Decode(invalidPacket)
 			_, isUndefinedPacketTypeError := err.(*UndefinedPacketTypeError)
+			c.Expect(err, Not(IsNil))
 			c.Expect(isUndefinedPacketTypeError, IsTrue)
 		}
 	})
