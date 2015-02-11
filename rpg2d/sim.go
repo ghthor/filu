@@ -276,6 +276,8 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			goto exit
 		}
 
+		panic("unclosed case in simulation communication loop select case")
+
 	tick:
 		clock = clock.Tick()
 		quadTree = runTick(quadTree, clock.Now())
