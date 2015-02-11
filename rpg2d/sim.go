@@ -226,54 +226,66 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	go func() {
 		var hasHalted chan<- struct{}
 
-	gameLoop:
-		for {
-			// Prioritized select for ticker.C and haltReq
-			select {
-			case <-ticker.C:
-				goto tick
+	communicationLoop:
+		// # This select prioritizes the following communication events
+		// ## 2 potential events to respond to
+		// 1. Trigger a simulation tick
+		// 2. Halt() method has requested halting
+		select {
+		case <-ticker.C:
+			goto tick
 
-			case hasHalted = <-haltReq:
-				break gameLoop
-			default:
-			}
-
-			select {
-			case <-ticker.C:
-				goto tick
-
-			case actor := <-addReq:
-				// a is the new sim.Actor{} to be inserted into the sim
-				a := <-actor.toBeAdded
-
-				e := entityResolver.EntityForActor(a)
-				quadTree = quadTree.Insert(e)
-
-				// signal that the operation was a success
-				actor.wasAdded <- a
-
-			case actor := <-removeReq:
-				// a is the new sim.Actor{} to be removed from the sim
-				a := <-actor.toBeRemoved
-
-				// TODO removed the actor from the simulation
-
-				// signal that the operation was a success
-				actor.wasRemoved <- a
-
-			case hasHalted = <-haltReq:
-				break gameLoop
-			}
-
-		tick:
-			clock = clock.Tick()
-			quadTree = runTick(quadTree, clock.Now())
-			// TODO quadTree to state
-			// TODO send state
-			continue
+		case hasHalted = <-haltReq:
+			goto exit
+		default:
 		}
 
-		// We're done with cleanup and going to exit
+		// ## 2 potential events to respond to
+		// 1. Trigger a simulation tick
+		// 2. ConnectActor() method has requested to connect an actor
+		// 3. RemoveActor() method has requested to remove an actor
+		// 4. Halt() method has requested halting
+		select {
+		case <-ticker.C:
+			goto tick
+
+		case actor := <-addReq:
+			// a is the new sim.Actor{} to be inserted into the sim
+			a := <-actor.toBeAdded
+
+			e := entityResolver.EntityForActor(a)
+			quadTree = quadTree.Insert(e)
+
+			// signal that the operation was a success
+			actor.wasAdded <- a
+
+			goto communicationLoop
+
+		case actor := <-removeReq:
+			// a is the new sim.Actor{} to be removed from the sim
+			a := <-actor.toBeRemoved
+
+			// TODO removed the actor from the simulation
+
+			// signal that the operation was a success
+			actor.wasRemoved <- a
+
+			goto communicationLoop
+
+		case hasHalted = <-haltReq:
+			goto exit
+		}
+
+	tick:
+		clock = clock.Tick()
+		quadTree = runTick(quadTree, clock.Now())
+		// TODO quadTree to state
+		// TODO send state
+		goto communicationLoop
+
+	exit:
+		// TODO pre halt cleanup
+		// Signal to Halt() caller that we've finished cleanup
 		hasHalted <- struct{}{}
 	}()
 }
