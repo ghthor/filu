@@ -18,7 +18,8 @@ type mockActor struct {
 }
 
 // Implement Actor
-func (a mockActor) Entity() entity.Entity { return a }
+func (a mockActor) Entity() entity.Entity     { return a }
+func (mockActor) WriteState(rpg2d.WorldState) {}
 
 // Implement entity.Entity
 func (a mockActor) Id() int64        { return a.id }

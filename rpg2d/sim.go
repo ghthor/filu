@@ -9,10 +9,19 @@ import (
 	"github.com/ghthor/engine/sim/stime"
 )
 
+type WorldState struct {
+}
+
 type Actor interface {
+	Id() int64
+
 	// Returns an entity that represents the
 	// actor in the simulation's world.
 	Entity() entity.Entity
+
+	// Enables the simulation to send the
+	// state of the world to the actor
+	WriteState(WorldState)
 }
 
 // A SimulationDef used to configure a simulation
@@ -192,6 +201,9 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	addReq = addCh
 	removeReq = removeCh
 
+	// Map of all the actors currently connected to the simulation
+	actors := make(map[int64]Actor)
+
 	// Make channel to be used to by the public api to
 	// request that the simulation be halted
 	haltCh := make(chan chan<- HaltedSimulation)
@@ -223,6 +235,8 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	go func() {
 		var hasHalted chan<- HaltedSimulation
 
+		var worldState WorldState
+
 	communicationLoop:
 		// # This select prioritizes the following communication events
 		// ## 2 potential events to respond to
@@ -251,6 +265,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			a := <-actor.toBeAdded
 
 			quadTree = quadTree.Insert(a.Entity())
+			actors[a.Id()] = a
 
 			// signal that the operation was a success
 			actor.wasAdded <- a
@@ -277,8 +292,13 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	tick:
 		clock = clock.Tick()
 		quadTree = runTick(quadTree, clock.Now())
+
 		// TODO quadTree to state
-		// TODO send state
+
+		for _, a := range actors {
+			a.WriteState(worldState)
+		}
+
 		goto communicationLoop
 
 	exit:
