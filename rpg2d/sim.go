@@ -181,7 +181,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	addCh := make(chan addActorReq)
 	removeCh := make(chan removeActorReq)
 
-	// Set the 1way send chanels used by the public api
+	// Set the 1way send channels used by the public api
 	s.addActor = addCh
 	s.removeActor = removeCh
 
