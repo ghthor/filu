@@ -37,6 +37,27 @@ func DescribeDirection(c gospec.Context) {
 		c.Expect(South.String(), Equals, "south")
 		c.Expect(West.String(), Equals, "west")
 	})
+
+	c.Specify("string converts to Direction", func() {
+		d, err := NewDirectionWithString("north")
+		c.Expect(err, IsNil)
+		c.Expect(d, Equals, North)
+
+		d, err = NewDirectionWithString("east")
+		c.Expect(err, IsNil)
+		c.Expect(d, Equals, East)
+
+		d, err = NewDirectionWithString("south")
+		c.Expect(err, IsNil)
+		c.Expect(d, Equals, South)
+
+		d, err = NewDirectionWithString("west")
+		c.Expect(err, IsNil)
+		c.Expect(d, Equals, West)
+
+		_, err = NewDirectionWithString("notadirection")
+		c.Expect(err, Equals, ErrInvalidDirection)
+	})
 }
 
 func DescribeCell(c gospec.Context) {

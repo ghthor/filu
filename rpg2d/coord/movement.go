@@ -266,6 +266,27 @@ const (
 	W, West
 )
 
+var ErrInvalidDirection = errors.New("invalid direction")
+
+// Create a new direction from a string value.
+// Returns ErrInvalidDirection if the string
+// doesn't represent a valid direction.
+func NewDirectionWithString(s string) (Direction, error) {
+	switch s {
+	case "north":
+		return N, nil
+	case "east":
+		return E, nil
+	case "south":
+		return S, nil
+	case "west":
+		return W, nil
+	default:
+	}
+
+	return Direction(0), ErrInvalidDirection
+}
+
 func (d Direction) IsParallelTo(p Direction) bool {
 	switch {
 	case d == North || d == South:
