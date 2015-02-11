@@ -5,35 +5,27 @@ import (
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
-	"github.com/ghthor/engine/sim"
 	"github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
 
-type mockActor struct{}
+type mockActor struct {
+	id int64
 
-// Implement sim.Actor
-func (mockActor) Id() int64                    { return 0 }
-func (mockActor) StateWriter() sim.StateWriter { return nil }
+	cell coord.Cell
+}
+
+// Implement Actor
+func (a mockActor) Entity() entity.Entity { return a }
 
 // Implement entity.Entity
-func (mockActor) Cell() coord.Cell {
-	return coord.Cell{}
-}
+func (a mockActor) Id() int64        { return a.id }
+func (a mockActor) Cell() coord.Cell { return a.cell }
 
-func (mockActor) Bounds() coord.Bounds {
-	return coord.Bounds{
-		coord.Cell{},
-		coord.Cell{},
-	}
-}
-
-type mockEntityResolver struct{}
-
-func (mockEntityResolver) EntityForActor(a sim.Actor) entity.Entity {
-	return a.(entity.Entity)
+func (a mockActor) Bounds() coord.Bounds {
+	return coord.Bounds{a.cell, a.cell}
 }
 
 type mockInputPhase struct{}
@@ -60,7 +52,6 @@ func DescribeASimulation(c gospec.Context) {
 
 		QuadTree: quad,
 
-		EntityResolver:     mockEntityResolver{},
 		InputPhaseHandler:  mockInputPhase{},
 		NarrowPhaseHandler: mockNarrowPhase{},
 	}
@@ -77,8 +68,9 @@ func DescribeASimulation(c gospec.Context) {
 		rs, err := def.Begin()
 		c.Assume(err, IsNil)
 
-		_, err = rs.Halt()
+		hs, err := rs.Halt()
 		c.Expect(err, IsNil)
+		c.Expect(hs.Quad(), Not(IsNil))
 	})
 
 	c.Specify("a simulation can have actors", func() {
@@ -90,15 +82,28 @@ func DescribeASimulation(c gospec.Context) {
 			c.Assume(err, IsNil)
 		}()
 
-		a := mockActor{}
+		a := mockActor{id: 1}
 
 		c.Specify("added to it", func() {
-			c.Expect(rs.ConnectActor(a), IsNil)
+			rs.ConnectActor(a)
+
+			hs, err := rs.Halt()
+			c.Assume(err, IsNil)
+
+			entities := hs.Quad().QueryCell(coord.Cell{})
+			c.Expect(len(entities), Equals, 1)
+			c.Expect(entities[0], Equals, a)
 		})
 
 		c.Specify("removed from it", func() {
-			c.Assume(rs.ConnectActor(a), IsNil)
-			c.Expect(rs.RemoveActor(a), IsNil)
+			rs.ConnectActor(a)
+			rs.RemoveActor(a)
+
+			hs, err := rs.Halt()
+			c.Assume(err, IsNil)
+
+			entities := hs.Quad().QueryCell(coord.Cell{})
+			c.Expect(len(entities), Equals, 0)
 		})
 	})
 }

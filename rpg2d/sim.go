@@ -6,18 +6,13 @@ import (
 
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
-	"github.com/ghthor/engine/sim"
 	"github.com/ghthor/engine/sim/stime"
 )
 
-// An interface the user will implement to resolve
-// an entity from an actor. This is user defined
-// because the user is creating the entities and actors
-// that will be added to the simulation. This allows the
-// user to define how the actors state is stored,
-// aka database design/interaction.
-type EntityResolver interface {
-	EntityForActor(sim.Actor) entity.Entity
+type Actor interface {
+	// Returns an entity that represents the
+	// actor in the simulation's world.
+	Entity() entity.Entity
 }
 
 // A SimulationDef used to configure a simulation
@@ -29,9 +24,6 @@ type SimulationDef struct {
 	// Initial World State
 	Now      stime.Time
 	QuadTree quad.Quad
-
-	// User defined to resolve an entity from and actor
-	EntityResolver EntityResolver
 
 	// User defined input application phase
 	InputPhaseHandler quad.InputPhaseHandler
@@ -48,12 +40,25 @@ type initialWorldState struct {
 type simSettings struct {
 	fps int
 
-	EntityResolver
 	quad.InputPhaseHandler
 	quad.NarrowPhaseHandler
 }
 
-// An implementation of engine/sim.RunningSimulation
+type UnstartedSimulation interface {
+	Begin() (RunningSimulation, error)
+}
+
+type RunningSimulation interface {
+	ConnectActor(Actor)
+	RemoveActor(Actor)
+	Halt() (HaltedSimulation, error)
+}
+
+type HaltedSimulation interface {
+	Quad() quad.Quad
+}
+
+// An implementation of RunningSimulation
 type runningSimulation struct {
 	//---- Communication
 	// These channels are used by the public api
@@ -72,18 +77,18 @@ type runningSimulation struct {
 	// send only channel into the game loop so the public
 	// api can wait and be notified that the go routine
 	// has returned and is no longer running.
-	requestHalt chan<- chan<- struct{}
+	requestHalt chan<- chan<- HaltedSimulation
 }
 
 // Communication object used to atomicly add a new actor to the sim
 type addActorReq struct {
-	toBeAdded chan sim.Actor
-	wasAdded  chan sim.Actor
+	toBeAdded chan Actor
+	wasAdded  chan Actor
 }
 
-// Implement engine/sim.RunningSimulation
-func (s runningSimulation) ConnectActor(a sim.Actor) error {
-	ch := make(chan sim.Actor)
+// Add an actor into the running simulation
+func (s runningSimulation) ConnectActor(a Actor) {
+	ch := make(chan Actor)
 
 	// Create an add request
 	actor := addActorReq{ch, ch}
@@ -96,18 +101,17 @@ func (s runningSimulation) ConnectActor(a sim.Actor) error {
 
 	// Wait for the add request to be successfully completed
 	a = <-actor.wasAdded
-	return nil
 }
 
 // Communication object used to atomicly remove an actor from the sim
 type removeActorReq struct {
-	toBeRemoved chan sim.Actor
-	wasRemoved  chan sim.Actor
+	toBeRemoved chan Actor
+	wasRemoved  chan Actor
 }
 
-// Implement engine/sim.RunningSimulation
-func (s runningSimulation) RemoveActor(a sim.Actor) error {
-	ch := make(chan sim.Actor)
+// Remove an actor from the running simulation
+func (s runningSimulation) RemoveActor(a Actor) {
+	ch := make(chan Actor)
 
 	// Create a remove request
 	actor := removeActorReq{ch, ch}
@@ -120,26 +124,23 @@ func (s runningSimulation) RemoveActor(a sim.Actor) error {
 
 	// Wait for the remove request to be successfully completed
 	a = <-actor.wasRemoved
-	return nil
 }
 
-// Implement engine/sim.RunningSimulation
-func (s runningSimulation) Halt() (sim.HaltedSimulation, error) {
-	wasHalted := make(chan struct{})
+// Stop the simulation
+func (s runningSimulation) Halt() (HaltedSimulation, error) {
+	wasHalted := make(chan HaltedSimulation)
 
 	// Send a request to the game loop to halt
 	s.requestHalt <- wasHalted
 
 	// Wait for the halt request to be successfully completed
-	<-wasHalted
-
-	return haltedSimulation{}, nil
+	return <-wasHalted, nil
 }
 
 var ErrMustProvideAQuadtree = errors.New("user must provide a quad tree to a simulation defination")
 
 // Implement engine/sim.UnstartedSimulation
-func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
+func (s SimulationDef) Begin() (RunningSimulation, error) {
 	if s.QuadTree == nil {
 		return nil, ErrMustProvideAQuadtree
 	}
@@ -152,7 +153,6 @@ func (s SimulationDef) Begin() (sim.RunningSimulation, error) {
 	settings := simSettings{
 		s.FPS,
 
-		s.EntityResolver,
 		s.InputPhaseHandler,
 		s.NarrowPhaseHandler,
 	}
@@ -194,20 +194,17 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 
 	// Make channel to be used to by the public api to
 	// request that the simulation be halted
-	haltCh := make(chan chan<- struct{})
+	haltCh := make(chan chan<- HaltedSimulation)
 
 	// Set the 1way send channel used by the public api
 	s.requestHalt = haltCh
 
 	// Set the 1way recieve channel used by the game loop
-	var haltReq <-chan chan<- struct{}
+	var haltReq <-chan chan<- HaltedSimulation
 	haltReq = haltCh
 
 	quadTree := initialState.quadTree
 	clock := stime.Clock(initialState.now)
-
-	//---- User provided actor to entity resolver
-	entityResolver := settings.EntityResolver
 
 	//---- User provided input application phase
 	inputPhase := settings.InputPhaseHandler
@@ -224,7 +221,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 
 	// Start the simulation server
 	go func() {
-		var hasHalted chan<- struct{}
+		var hasHalted chan<- HaltedSimulation
 
 	communicationLoop:
 		// # This select prioritizes the following communication events
@@ -253,8 +250,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			// a is the new sim.Actor{} to be inserted into the sim
 			a := <-actor.toBeAdded
 
-			e := entityResolver.EntityForActor(a)
-			quadTree = quadTree.Insert(e)
+			quadTree = quadTree.Insert(a.Entity())
 
 			// signal that the operation was a success
 			actor.wasAdded <- a
@@ -265,7 +261,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			// a is the new sim.Actor{} to be removed from the sim
 			a := <-actor.toBeRemoved
 
-			// TODO removed the actor from the simulation
+			quadTree = quadTree.Remove(a.Entity())
 
 			// signal that the operation was a success
 			actor.wasRemoved <- a
@@ -288,8 +284,25 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	exit:
 		// TODO pre halt cleanup
 		// Signal to Halt() caller that we've finished cleanup
-		hasHalted <- struct{}{}
+		hasHalted <- haltedSimulation{quadTree}
+
+		// NOTE Will loop forever and won't be garbage collected
+		// Not a big deal because it will only be used once the
+		// server is being torn down and the process is exiting.
+		// Enables Halt() method to be called an infinite number
+		// of times after the simulation has actually halted.
+		go func() {
+			for {
+				hasHalted = <-haltReq
+				hasHalted <- haltedSimulation{quadTree}
+			}
+		}()
 	}()
 }
 
-type haltedSimulation struct{}
+type haltedSimulation struct {
+	quadTree quad.Quad
+}
+
+// Return the quad tree used by the simulation
+func (s haltedSimulation) Quad() quad.Quad { return s.quadTree }
