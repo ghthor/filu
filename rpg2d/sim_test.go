@@ -45,16 +45,22 @@ func (mockNarrowPhase) ResolveCollisions(c quad.CollisionGroup, now stime.Time) 
 }
 
 func DescribeASimulation(c gospec.Context) {
-	quad, err := quad.New(coord.Bounds{
+	bounds := coord.Bounds{
 		TopL: coord.Cell{-1024, 1024},
 		BotR: coord.Cell{1023, -1023},
-	}, 10, nil)
+	}
+
+	quad, err := quad.New(bounds, 10, nil)
+
+	terrainMap, err := rpg2d.NewTerrainMap(bounds, string(rpg2d.TT_GRASS))
+	c.Assume(err, IsNil)
 
 	c.Assume(err, IsNil)
 	def := rpg2d.SimulationDef{
 		FPS: 40,
 
-		QuadTree: quad,
+		QuadTree:   quad,
+		TerrainMap: terrainMap,
 
 		InputPhaseHandler:  mockInputPhase{},
 		NarrowPhaseHandler: mockNarrowPhase{},

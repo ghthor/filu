@@ -25,7 +25,7 @@ func DescribeWorldState(c gospec.Context) {
 		terrain, err := NewTerrainMap(quadTree.Bounds(), string(TT_GRASS))
 		c.Assume(err, IsNil)
 
-		world := newWorld(stime.Clock(0), quadTree, terrain)
+		world := newWorld(stime.Time(0), quadTree, terrain)
 
 		mockEntity := entitytest.MockEntity{EntityId: 0}
 		world.Insert(mockEntity)

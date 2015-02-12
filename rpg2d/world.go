@@ -12,12 +12,18 @@ type World struct {
 	terrain  TerrainMap
 }
 
-func newWorld(clock stime.Clock, quad quad.Quad, terrain TerrainMap) *World {
+func newWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
 	return &World{
-		time:     clock.Now(),
+		time:     now,
 		quadTree: quad,
 		terrain:  terrain,
 	}
+}
+
+type stepToFn func(quad.Quad, stime.Time) quad.Quad
+
+func (w *World) stepTo(t stime.Time, stepTo stepToFn) {
+	w.quadTree = stepTo(w.quadTree, t)
 }
 
 func (w *World) Insert(e entity.Entity) {

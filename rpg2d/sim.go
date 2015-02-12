@@ -28,8 +28,9 @@ type SimulationDef struct {
 	FPS int
 
 	// Initial World State
-	Now      stime.Time
-	QuadTree quad.Quad
+	Now        stime.Time
+	QuadTree   quad.Quad
+	TerrainMap TerrainMap
 
 	// User defined input application phase
 	InputPhaseHandler quad.InputPhaseHandler
@@ -39,8 +40,9 @@ type SimulationDef struct {
 }
 
 type initialWorldState struct {
-	now      stime.Time
-	quadTree quad.Quad
+	now        stime.Time
+	quadTree   quad.Quad
+	terrainMap TerrainMap
 }
 
 type simSettings struct {
@@ -144,6 +146,7 @@ func (s runningSimulation) Halt() (HaltedSimulation, error) {
 }
 
 var ErrMustProvideAQuadtree = errors.New("user must provide a quad tree to a simulation defination")
+var ErrMustProvideATerrainMap = errors.New("user must provide a terrain map to a simulation defination")
 
 // Implement engine/sim.UnstartedSimulation
 func (s SimulationDef) Begin() (RunningSimulation, error) {
@@ -151,9 +154,14 @@ func (s SimulationDef) Begin() (RunningSimulation, error) {
 		return nil, ErrMustProvideAQuadtree
 	}
 
+	if s.TerrainMap.Bounds != s.QuadTree.Bounds() {
+		return nil, ErrMustProvideATerrainMap
+	}
+
 	initialState := initialWorldState{
-		now:      s.Now,
-		quadTree: s.QuadTree,
+		now:        s.Now,
+		quadTree:   s.QuadTree,
+		terrainMap: s.TerrainMap,
 	}
 
 	settings := simSettings{
@@ -212,8 +220,8 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	var haltReq <-chan chan<- HaltedSimulation
 	haltReq = haltCh
 
-	quadTree := initialState.quadTree
 	clock := stime.Clock(initialState.now)
+	world := newWorld(initialState.now, initialState.quadTree, initialState.terrainMap)
 
 	//---- User provided input application phase
 	inputPhase := settings.InputPhaseHandler
@@ -261,7 +269,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			// a is the new sim.Actor{} to be inserted into the sim
 			a := <-actor.toBeAdded
 
-			quadTree = quadTree.Insert(a.Entity())
+			world.Insert(a.Entity())
 			actors[a.Id()] = a
 
 			// signal that the operation was a success
@@ -273,7 +281,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			// a is the new sim.Actor{} to be removed from the sim
 			a := <-actor.toBeRemoved
 
-			quadTree = quadTree.Remove(a.Entity())
+			world.Remove(a.Entity())
 
 			// signal that the operation was a success
 			actor.wasRemoved <- a
@@ -288,7 +296,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 
 	tick:
 		clock = clock.Tick()
-		quadTree = runTick(quadTree, clock.Now())
+		world.stepTo(clock.Now(), runTick)
 
 		// TODO quadTree to state
 
@@ -301,7 +309,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	exit:
 		// TODO pre halt cleanup
 		// Signal to Halt() caller that we've finished cleanup
-		hasHalted <- haltedSimulation{quadTree}
+		hasHalted <- haltedSimulation{world.quadTree}
 
 		// NOTE Will loop forever and won't be garbage collected
 		// Not a big deal because it will only be used once the
@@ -311,7 +319,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		go func() {
 			for {
 				hasHalted = <-haltReq
-				hasHalted <- haltedSimulation{quadTree}
+				hasHalted <- haltedSimulation{world.quadTree}
 			}
 		}()
 	}()
