@@ -12,17 +12,12 @@ type World struct {
 	terrain  TerrainMap
 }
 
-func newWorld(clock stime.Clock, quad quad.Quad) (*World, error) {
-	terrain, err := NewTerrainMap(quad.Bounds(), string(TT_GRASS))
-	if err != nil {
-		return nil, err
-	}
-
+func newWorld(clock stime.Clock, quad quad.Quad, terrain TerrainMap) *World {
 	return &World{
 		time:     clock.Now(),
 		quadTree: quad,
 		terrain:  terrain,
-	}, nil
+	}
 }
 
 func (w *World) Insert(e entity.Entity) {
