@@ -9,9 +9,6 @@ import (
 	"github.com/ghthor/engine/sim/stime"
 )
 
-type WorldState struct {
-}
-
 type Actor interface {
 	Id() int64
 

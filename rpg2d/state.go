@@ -1,6 +1,10 @@
 package rpg2d
 
-import "github.com/ghthor/engine/rpg2d/coord"
+import (
+	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/sim/stime"
+)
 
 type TerrainMapState struct {
 	// Used to calculate diff's
@@ -110,4 +114,94 @@ func (m *TerrainMapState) Clone() (*TerrainMapState, error) {
 	}
 
 	return &TerrainMapState{TerrainMap: tm}, nil
+}
+
+type WorldState struct {
+	Time       stime.Time       `json:"time"`
+	Entities   []entity.State   `json:"entities"`
+	Removed    []entity.State   `json:"removed"`
+	TerrainMap *TerrainMapState `json:"terrainMap,omitempty"`
+}
+
+func (s WorldState) Clone() WorldState {
+	terrainMap, err := s.TerrainMap.Clone()
+	if err != nil {
+		panic("error cloning terrain map: " + err.Error())
+	}
+	clone := WorldState{
+		s.Time,
+		make([]entity.State, len(s.Entities)),
+		nil,
+		terrainMap,
+	}
+	copy(clone.Entities, s.Entities)
+	return clone
+}
+
+func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
+	culled.Time = s.Time
+
+	// Cull Entities
+	for _, e := range s.Entities {
+		if bounds.Overlaps(e.Bounds()) {
+			culled.Entities = append(culled.Entities, e)
+		}
+	}
+
+	// Cull Terrain
+	// TODO Maybe remove the ability to have an empty TerrainMap
+	// Requires updating some tests to have a terrain map that don't have one
+	if !s.TerrainMap.IsEmpty() {
+		culled.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+	}
+	return
+}
+
+func (s WorldState) Diff(ss WorldState) (diff WorldState) {
+	diff.Time = ss.Time
+
+	if len(s.Entities) == 0 && len(ss.Entities) > 0 {
+		diff.Entities = ss.Entities
+	} else {
+		// Find the entities that have changed from the old state to the new one
+	nextEntity:
+		for _, entity := range ss.Entities {
+			for _, old := range s.Entities {
+				if entity.Id() == old.Id() {
+					if old.IsDifferentFrom(entity) {
+						diff.Entities = append(diff.Entities, entity)
+					}
+					continue nextEntity
+				}
+			}
+			// This is a new Entity
+			diff.Entities = append(diff.Entities, entity)
+		}
+
+		// Check if all the entities in old state exist in the new state
+	entityStillExists:
+		for _, old := range s.Entities {
+			for _, entity := range ss.Entities {
+				if old.Id() == entity.Id() {
+					continue entityStillExists
+				}
+			}
+			diff.Removed = append(diff.Removed, old)
+		}
+	}
+
+	// Diff the TerrainMap
+	diff.TerrainMap = s.TerrainMap.Diff(ss.TerrainMap)
+	return
+}
+
+// TerrainMap needs an extra step before sending
+// TODO remove this maybe?
+// The extra step is to avoid casting the entire terrain map to a string
+// when the world state json is created. The Diff function could run this step
+// and we could call it "Finalize"
+func (s WorldState) Prepare() {
+	if !s.TerrainMap.IsEmpty() {
+		s.TerrainMap.Prepare()
+	}
 }
