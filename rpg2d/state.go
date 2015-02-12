@@ -38,59 +38,59 @@ func (m *TerrainMapState) Diff(other *TerrainMapState) (diff *TerrainMapState) {
 		return other
 	}
 
-	maabb, oaabb := m.TerrainMap.Bounds, other.TerrainMap.Bounds
-	if maabb == oaabb {
+	mBounds, oBounds := m.TerrainMap.Bounds, other.TerrainMap.Bounds
+	if mBounds == oBounds {
 		// No Overlaps
 	} else {
 
 		// Find the non overlapped section and set that in the diff
 		switch {
 		// Overlap top or bottom
-		case maabb.Width() == oaabb.Width() &&
-			maabb.TopL.X == oaabb.TopL.X &&
-			maabb.BotR.X == oaabb.BotR.X:
+		case mBounds.Width() == oBounds.Width() &&
+			mBounds.TopL.X == oBounds.TopL.X &&
+			mBounds.BotR.X == oBounds.BotR.X:
 
-			if maabb.Height() != oaabb.Height() {
+			if mBounds.Height() != oBounds.Height() {
 				panic("invalid diff attempt")
 			}
 
 			// Overlaps the top
-			if oaabb.TopL.Y > maabb.TopL.Y {
+			if oBounds.TopL.Y > mBounds.TopL.Y {
 				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					oaabb.TopL,
-					coord.Cell{oaabb.BotR.X, maabb.TopL.Y + 1},
+					oBounds.TopL,
+					coord.Cell{oBounds.BotR.X, mBounds.TopL.Y + 1},
 				})}
 
-			} else if oaabb.BotR.Y < maabb.BotR.Y {
+			} else if oBounds.BotR.Y < mBounds.BotR.Y {
 				// Overlaps the bottom
 				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					coord.Cell{oaabb.TopL.X, maabb.BotR.Y - 1},
-					oaabb.BotR,
+					coord.Cell{oBounds.TopL.X, mBounds.BotR.Y - 1},
+					oBounds.BotR,
 				})}
 			} else {
 				panic("invalid diff attempt")
 			}
 
 			// Overlaps left of right
-		case maabb.Height() == oaabb.Height() &&
-			maabb.TopL.Y == oaabb.TopL.Y &&
-			maabb.BotR.Y == oaabb.BotR.Y:
+		case mBounds.Height() == oBounds.Height() &&
+			mBounds.TopL.Y == oBounds.TopL.Y &&
+			mBounds.BotR.Y == oBounds.BotR.Y:
 
-			if maabb.Width() != oaabb.Width() {
+			if mBounds.Width() != oBounds.Width() {
 				panic("invalid diff attempt")
 			}
 
 			// Overlaps the left
-			if oaabb.TopL.X < maabb.TopL.X {
+			if oBounds.TopL.X < mBounds.TopL.X {
 				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					oaabb.TopL,
-					coord.Cell{maabb.TopL.X - 1, oaabb.BotR.Y},
+					oBounds.TopL,
+					coord.Cell{mBounds.TopL.X - 1, oBounds.BotR.Y},
 				})}
-			} else if oaabb.BotR.X > maabb.BotR.X {
+			} else if oBounds.BotR.X > mBounds.BotR.X {
 				// Overlaps the right
 				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					coord.Cell{maabb.BotR.X + 1, oaabb.TopL.Y},
-					oaabb.BotR,
+					coord.Cell{mBounds.BotR.X + 1, oBounds.TopL.Y},
+					oBounds.BotR,
 				})}
 			} else {
 				panic("invalid diff attempt")
