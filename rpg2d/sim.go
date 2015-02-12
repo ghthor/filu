@@ -282,6 +282,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			a := <-actor.toBeRemoved
 
 			world.Remove(a.Entity())
+			delete(actors, a.Id())
 
 			// signal that the operation was a success
 			actor.wasRemoved <- a
