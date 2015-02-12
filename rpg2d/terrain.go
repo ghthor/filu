@@ -141,7 +141,5 @@ func (m TerrainMap) String() string {
 
 // Produce a terrain map state with the given terrain map.
 func (m TerrainMap) ToState() *TerrainMapState {
-	return &TerrainMapState{
-		TerrainMap: m,
-	}
+	return &TerrainMapState{TerrainMap: m}
 }
