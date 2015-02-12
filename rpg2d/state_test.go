@@ -7,6 +7,7 @@ import (
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/entity/entitytest"
+	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
@@ -15,10 +16,13 @@ import (
 
 func DescribeWorldState(c gospec.Context) {
 	c.Specify("generates json compatitable state object", func() {
-		world, err := newWorld(stime.Clock(0), coord.Bounds{
+		quadTree, err := quad.New(coord.Bounds{
 			coord.Cell{-4, 4},
 			coord.Cell{3, -3},
-		})
+		}, 20, nil)
+		c.Assume(err, IsNil)
+
+		world, err := newWorld(stime.Clock(0), quadTree)
 		c.Assume(err, IsNil)
 
 		mockEntity := entitytest.MockEntity{EntityId: 0}

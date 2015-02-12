@@ -1,7 +1,6 @@
 package rpg2d
 
 import (
-	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim/stime"
@@ -13,20 +12,15 @@ type World struct {
 	terrain  TerrainMap
 }
 
-func newWorld(clock stime.Clock, bounds coord.Bounds) (*World, error) {
-	quadTree, err := quad.New(bounds, 20, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	terrain, err := NewTerrainMap(bounds, string(TT_GRASS))
+func newWorld(clock stime.Clock, quad quad.Quad) (*World, error) {
+	terrain, err := NewTerrainMap(quad.Bounds(), string(TT_GRASS))
 	if err != nil {
 		return nil, err
 	}
 
 	return &World{
 		time:     clock.Now(),
-		quadTree: quadTree,
+		quadTree: quad,
 		terrain:  terrain,
 	}, nil
 }
