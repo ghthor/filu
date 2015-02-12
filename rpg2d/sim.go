@@ -299,7 +299,8 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		clock = clock.Tick()
 		world.stepTo(clock.Now(), runTick)
 
-		// TODO quadTree to state
+		worldState = world.ToState()
+		worldState.Prepare()
 
 		for _, a := range actors {
 			a.WriteState(worldState)
