@@ -9,7 +9,6 @@ import (
 func TestUnitSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
-	r.AddSpec(DescribeMockEntities)
 	r.AddSpec(DescribeChunkMatching)
 
 	r.AddSpec(DescribeCollision)

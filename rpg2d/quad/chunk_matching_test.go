@@ -3,6 +3,7 @@ package quad_test
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
 
 	"github.com/ghthor/gospec"
@@ -16,12 +17,12 @@ func DescribeChunkMatching(c gospec.Context) {
 			bnds := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
 
 			entities := []entity.Entity{
-				&MockEntity{0, cell(0, 0)},
-				&MockEntity{1, cell(1, 1)},
-				&MockEntity{2, cell(2, 2)},
-				&MockEntity{3, cell(3, 3)},
-				&MockEntity{4, cell(4, 4)},
-				&MockEntity{5, cell(5, 5)},
+				&entitytest.MockEntity{0, cell(0, 0)},
+				&entitytest.MockEntity{1, cell(1, 1)},
+				&entitytest.MockEntity{2, cell(2, 2)},
+				&entitytest.MockEntity{3, cell(3, 3)},
+				&entitytest.MockEntity{4, cell(4, 4)},
+				&entitytest.MockEntity{5, cell(5, 5)},
 			}
 
 			chunks := []quad.Chunk{{

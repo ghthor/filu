@@ -6,6 +6,7 @@ import (
 
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
 	"github.com/ghthor/engine/sim/stime"
 
@@ -20,12 +21,12 @@ var quadBounds = coord.Bounds{
 
 // Creates a set of entities in collision groups
 // used for testing the broad phase.
-func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.CollisionGroup) {
-	entities := func() []MockEntityWithBounds {
+func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, []quad.CollisionGroup) {
+	entities := func() []entitytest.MockEntityWithBounds {
 		c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 		b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
 
-		return []MockEntityWithBounds{
+		return []entitytest.MockEntityWithBounds{
 			{ // CollisionGroup 0
 				0, c(0, 0),
 				b(c(0, 0), c(1, 0)),
@@ -127,7 +128,7 @@ func cgEntitiesDataSet() ([]MockEntityWithBounds, []quad.Collision, []quad.Colli
 		}
 	}()
 
-	collisions := func(e []MockEntityWithBounds) []quad.Collision {
+	collisions := func(e []entitytest.MockEntityWithBounds) []quad.Collision {
 		c := func(a, b entity.Entity) quad.Collision { return quad.Collision{a, b} }
 
 		return []quad.Collision{
@@ -203,14 +204,14 @@ func DescribePhase(c gospec.Context) {
 			c.Assume(err, IsNil)
 
 			// A Single Entity
-			q = q.Insert(MockEntity{0, coord.Cell{-16, 16}})
+			q = q.Insert(entitytest.MockEntity{0, coord.Cell{-16, 16}})
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
 
 			q, outOfBounds := quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk, now stime.Time) quad.Chunk {
 				c.Assume(len(chunk.Entities), Equals, 1)
 
 				// Move the entity out of bounds
-				chunk.Entities[0] = MockEntity{0, coord.Cell{-17, 16}}
+				chunk.Entities[0] = entitytest.MockEntity{0, coord.Cell{-17, 16}}
 
 				return chunk
 			}), stime.Time(0))
@@ -219,11 +220,11 @@ func DescribePhase(c gospec.Context) {
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 0)
 
 			// Multiple entities
-			q = q.Insert(MockEntity{0, coord.Cell{-16, 16}})
-			q = q.Insert(MockEntity{1, coord.Cell{15, -15}})
-			q = q.Insert(MockEntity{2, coord.Cell{-1, 1}})
-			q = q.Insert(MockEntity{3, coord.Cell{0, 0}})
-			q = q.Insert(MockEntity{4, coord.Cell{5, -2}})
+			q = q.Insert(entitytest.MockEntity{0, coord.Cell{-16, 16}})
+			q = q.Insert(entitytest.MockEntity{1, coord.Cell{15, -15}})
+			q = q.Insert(entitytest.MockEntity{2, coord.Cell{-1, 1}})
+			q = q.Insert(entitytest.MockEntity{3, coord.Cell{0, 0}})
+			q = q.Insert(entitytest.MockEntity{4, coord.Cell{5, -2}})
 
 			q, outOfBounds = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(chunk quad.Chunk, now stime.Time) quad.Chunk {
 				// Move the entity out of bounds
@@ -231,10 +232,10 @@ func DescribePhase(c gospec.Context) {
 					switch e.Id() {
 					case 1:
 						// Move out of quadtree's bounds
-						chunk.Entities[i] = MockEntity{1, coord.Cell{16, -15}}
+						chunk.Entities[i] = entitytest.MockEntity{1, coord.Cell{16, -15}}
 					case 4:
 						// Move from SE to NE quadrant
-						chunk.Entities[i] = MockEntity{4, coord.Cell{5, 5}}
+						chunk.Entities[i] = entitytest.MockEntity{4, coord.Cell{5, 5}}
 					}
 				}
 

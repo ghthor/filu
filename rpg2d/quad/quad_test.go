@@ -2,6 +2,7 @@ package quad_test
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
 
 	"github.com/ghthor/gospec"
@@ -58,14 +59,14 @@ func DescribeQuad(c gospec.Context) {
 
 		c.Specify("will subdivide", func() {
 			c.Assume(len(q.Children()), Equals, 0)
-			q = q.Insert(MockEntity{0, coord.Cell{0, 0}})
-			q = q.Insert(MockEntity{1, coord.Cell{5, 5}})
-			q = q.Insert(MockEntity{1, coord.Cell{6, 6}})
+			q = q.Insert(entitytest.MockEntity{0, coord.Cell{0, 0}})
+			q = q.Insert(entitytest.MockEntity{1, coord.Cell{5, 5}})
+			q = q.Insert(entitytest.MockEntity{1, coord.Cell{6, 6}})
 			c.Expect(len(q.Children()), Equals, 4)
 		})
 
 		c.Specify("can remove an entity", func() {
-			e := MockEntity{0, coord.Cell{0, 0}}
+			e := entitytest.MockEntity{0, coord.Cell{0, 0}}
 
 			c.Assume(len(q.QueryCell(e.Cell())), Equals, 0)
 
@@ -89,7 +90,7 @@ func DescribeQuad(c gospec.Context) {
 				id := int64(0)
 				for j := 4; j > -4; j-- {
 					for i := -4; i < 4; i++ {
-						q = q.Insert(MockEntity{id, coord.Cell{i, j}})
+						q = q.Insert(entitytest.MockEntity{id, coord.Cell{i, j}})
 						id++
 					}
 				}

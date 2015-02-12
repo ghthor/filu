@@ -2,6 +2,7 @@ package quad_test
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
 
 	"github.com/ghthor/gospec"
@@ -18,7 +19,7 @@ func DescribeQuadInsert(c gospec.Context) {
 
 		c.Specify("can insert", func() {
 			c.Specify("an entity", func() {
-				entity := MockEntity{}
+				entity := entitytest.MockEntity{}
 				q = q.Insert(entity)
 				chunk := q.Chunk()
 
@@ -31,9 +32,9 @@ func DescribeQuadInsert(c gospec.Context) {
 			})
 
 			c.Specify("some entities", func() {
-				e1 := MockEntity{0, coord.Cell{-8, 8}}
-				e2 := MockEntity{2, coord.Cell{5, -1}}
-				e3 := MockEntity{1, coord.Cell{7, -7}}
+				e1 := entitytest.MockEntity{0, coord.Cell{-8, 8}}
+				e2 := entitytest.MockEntity{2, coord.Cell{5, -1}}
+				e3 := entitytest.MockEntity{1, coord.Cell{7, -7}}
 
 				q = q.Insert(e1)
 				q = q.Insert(e2)
