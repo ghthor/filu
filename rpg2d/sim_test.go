@@ -29,6 +29,9 @@ func (a mockActor) Bounds() coord.Bounds {
 	return coord.Bounds{a.cell, a.cell}
 }
 
+func (a mockActor) ToState() entity.State             { return a }
+func (a mockActor) IsDifferentFrom(entity.State) bool { return true }
+
 type mockInputPhase struct{}
 
 func (mockInputPhase) ApplyInputsIn(c quad.Chunk, now stime.Time) quad.Chunk {

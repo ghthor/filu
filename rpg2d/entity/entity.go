@@ -14,4 +14,25 @@ type Entity interface {
 	// the entities potential interaction with
 	// the other entities in the world.
 	Bounds() coord.Bounds
+
+	// Returns a state value that represents
+	// the entity in its current state.
+	ToState() State
+}
+
+// Used by the world state to calculate
+// differences between world states.
+// An object that implements this interface
+// should also be friendly to the Json
+// marshaller and expect to be sent to the
+// client over the wire.
+type State interface {
+	// Unique ID
+	Id() int64
+
+	// Bounds of the entity
+	Bounds() coord.Bounds
+
+	// Compare to another entity
+	IsDifferentFrom(State) bool
 }
