@@ -300,7 +300,6 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		world.stepTo(clock.Now(), runTick)
 
 		worldState = world.ToState()
-		worldState.Prepare()
 
 		for _, a := range actors {
 			a.WriteState(worldState)
