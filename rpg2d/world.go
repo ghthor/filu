@@ -24,6 +24,8 @@ type stepToFn func(quad.Quad, stime.Time) quad.Quad
 
 func (w *World) stepTo(t stime.Time, stepTo stepToFn) {
 	w.quadTree = stepTo(w.quadTree, t)
+
+	w.time = t
 }
 
 func (w *World) Insert(e entity.Entity) {
