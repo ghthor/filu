@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	. "github.com/ghthor/engine/net/encoding"
+	"github.com/ghthor/engine/net/encoding"
 	"golang.org/x/net/websocket"
 )
 
@@ -36,11 +36,11 @@ type JsonOutputConn interface {
 }
 
 type Conn interface {
-	Send(Packet) error
+	Send(encoding.Packet) error
 	MessageOutputConn
 	JsonOutputConn
 	SendError(string, string) error
-	Read() (Packet, error)
+	Read() (encoding.Packet, error)
 }
 
 type WebsocketConn struct {
@@ -53,25 +53,25 @@ func NewWebsocketConn(ws *websocket.Conn) *WebsocketConn {
 }
 
 // TODO Check the Conn's State
-func (c *WebsocketConn) Send(packet Packet) error {
+func (c *WebsocketConn) Send(packet encoding.Packet) error {
 	// TODO Determine if there are any errors that shouldn't be bubbled up
 	return websocket.Message.Send(c.ws, packet.Encode())
 }
 
 func (c *WebsocketConn) SendMessage(msg, message string) error {
-	return c.Send(MessagePacket(msg, message))
+	return c.Send(encoding.MessagePacket(msg, message))
 }
 
 func (c *WebsocketConn) SendJson(msg string, obj interface{}) error {
-	return c.Send(JsonPacket(msg, obj))
+	return c.Send(encoding.JsonPacket(msg, obj))
 }
 
 func (c *WebsocketConn) SendError(errMsg, errTip string) error {
-	return c.Send(ErrorPacket(errMsg, errTip))
+	return c.Send(encoding.ErrorPacket(errMsg, errTip))
 }
 
 // TODO Check the Conn's State
-func (c *WebsocketConn) Read() (packet Packet, err error) {
+func (c *WebsocketConn) Read() (packet encoding.Packet, err error) {
 	for {
 		var msg string
 		err = websocket.Message.Receive(c.ws, &msg)
@@ -97,18 +97,18 @@ func (c *WebsocketConn) Read() (packet Packet, err error) {
 			log.Fatalf("Unknown Error Websocket.Read(): %s", err)
 		}
 
-		packet, err = Decode(msg)
+		packet, err = encoding.Decode(msg)
 
 		if err != nil {
 			// Client Sent Invalid/Bad Packets
 			switch e := err.(type) {
-			case *InvalidPacketError:
+			case *encoding.InvalidPacketError:
 				err = c.SendError("EncodingError", e.Error())
-			case *InvalidJsonPacketError:
+			case *encoding.InvalidJsonPacketError:
 				err = c.SendError("EncodingError", e.Error())
-			case *InvalidPacketTypeError:
+			case *encoding.InvalidPacketTypeError:
 				err = c.SendError("EncodingError", e.Error())
-			case *UndefinedPacketTypeError:
+			case *encoding.UndefinedPacketTypeError:
 				err = c.SendError("EncodingError", e.Error())
 
 			default:
@@ -138,30 +138,30 @@ func NewPacketLoggingConn(conn Conn, logfn func(v ...interface{})) *PacketLoggin
 	return plc
 }
 
-func (plc *PacketLoggingConn) Send(p Packet) error {
+func (plc *PacketLoggingConn) Send(p encoding.Packet) error {
 	plc.log(p.Encode())
 	return plc.Conn.Send(p)
 }
 
 func (plc *PacketLoggingConn) SendMessage(msg, message string) error {
-	p := MessagePacket(msg, message)
+	p := encoding.MessagePacket(msg, message)
 	plc.log(p.Encode())
 	return plc.Conn.SendMessage(msg, message)
 }
 
 func (plc *PacketLoggingConn) SendJson(msg string, obj interface{}) error {
-	p := JsonPacket(msg, obj)
+	p := encoding.JsonPacket(msg, obj)
 	plc.log(p.Encode())
 	return plc.Conn.SendJson(msg, obj)
 }
 
 func (plc *PacketLoggingConn) SendError(errMsg, errTip string) error {
-	p := ErrorPacket(errMsg, errTip)
+	p := encoding.ErrorPacket(errMsg, errTip)
 	plc.log(p.Encode())
 	return plc.Conn.SendError(errMsg, errTip)
 }
 
-func (plc *PacketLoggingConn) Read() (Packet, error) {
+func (plc *PacketLoggingConn) Read() (encoding.Packet, error) {
 	p, err := plc.Conn.Read()
 	if err != nil {
 		return p, err
