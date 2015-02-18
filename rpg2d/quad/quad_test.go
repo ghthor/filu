@@ -61,7 +61,7 @@ func DescribeQuad(c gospec.Context) {
 			c.Assume(len(q.Children()), Equals, 0)
 			q = q.Insert(entitytest.MockEntity{0, coord.Cell{0, 0}})
 			q = q.Insert(entitytest.MockEntity{1, coord.Cell{5, 5}})
-			q = q.Insert(entitytest.MockEntity{1, coord.Cell{6, 6}})
+			q = q.Insert(entitytest.MockEntity{3, coord.Cell{6, 6}})
 			c.Expect(len(q.Children()), Equals, 4)
 		})
 

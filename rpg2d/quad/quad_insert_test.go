@@ -51,5 +51,17 @@ func DescribeQuadInsert(c gospec.Context) {
 			})
 		})
 
+		c.Specify("can reinsert", func() {
+			c.Specify("an entity", func() {
+				entity := entitytest.MockEntity{}
+				q = q.Insert(entity)
+
+				entity.EntityCell = coord.Cell{1, 1}
+				q = q.Insert(entity)
+
+				chunk := q.Chunk()
+				c.Expect(len(chunk.Entities), Equals, 1)
+			})
+		})
 	})
 }

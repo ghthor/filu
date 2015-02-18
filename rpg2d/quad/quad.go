@@ -21,6 +21,7 @@ type Quad interface {
 
 	Bounds() coord.Bounds
 
+	// Mutators
 	Insert(entity.Entity) Quad
 	Remove(entity.Entity) Quad
 
@@ -58,10 +59,13 @@ func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, erro
 		return nil, ErrBoundsHeightMustBePowerOf2
 	}
 
-	return quadLeaf{
-		parent:  nil,
-		bounds:  bounds,
-		maxSize: maxSize,
+	return quadRoot{
+		Quad: quadLeaf{
+			parent:  nil,
+			bounds:  bounds,
+			maxSize: maxSize,
+		},
+		entityIndex: make(map[int64]entity.Entity),
 	}, nil
 }
 
@@ -74,6 +78,12 @@ type Chunk struct {
 	Entities []entity.Entity
 }
 
+type quadRoot struct {
+	Quad
+
+	entityIndex map[int64]entity.Entity
+}
+
 // A node in the quad tree that will contain 4 children,
 // one in each corner of the quad nodes bounds.
 type quadNode struct {
@@ -81,6 +91,30 @@ type quadNode struct {
 	children [4]Quad
 
 	bounds coord.Bounds
+}
+
+func (q quadRoot) Insert(e entity.Entity) Quad {
+	old, indexed := q.entityIndex[e.Id()]
+	if indexed {
+		q.Quad = q.Quad.Remove(old)
+	}
+
+	q.entityIndex[e.Id()] = e
+	q.Quad = q.Quad.Insert(e)
+
+	return q
+}
+
+func (q quadRoot) Remove(e entity.Entity) Quad {
+	old, indexed := q.entityIndex[e.Id()]
+	if !indexed {
+		return q
+	}
+
+	q.Quad = q.Quad.Remove(old)
+	delete(q.entityIndex, e.Id())
+
+	return q
 }
 
 func (q quadNode) Parent() Quad        { return q.parent }
