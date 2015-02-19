@@ -195,6 +195,42 @@ func (e byId) Less(i, j int) bool {
 }
 
 func DescribePhase(c gospec.Context) {
+	e := func(id int64, x, y int) entitytest.MockEntity {
+		return entitytest.MockEntity{
+			id,
+			coord.Cell{x, y},
+		}
+	}
+	cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+
+	c.Specify("the update phase", func() {
+		c.Specify("will insert the updated entity", func() {
+			q, err := quad.New(coord.Bounds{
+				TopL: coord.Cell{-16, 16},
+				BotR: coord.Cell{15, -15},
+			}, 3, nil)
+			c.Assume(err, IsNil)
+
+			q = q.Insert(e(0, 0, 0))
+			q = q.Insert(e(1, 1, 0))
+			q = q.Insert(e(2, 2, 0))
+			q = q.Insert(e(3, 3, 0))
+
+			q, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePositionPhaseHandlerFn(
+				func(entity entity.Entity, now stime.Time) entity.Entity {
+					c := entity.Cell()
+					return e(entity.Id(), c.X, c.Y+1)
+				},
+			), stime.Time(0))
+
+			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 4)
+			c.Expect(q.QueryCell(cell(0, 1))[0].Id(), Equals, int64(0))
+			c.Expect(q.QueryCell(cell(1, 1))[0].Id(), Equals, int64(1))
+			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, int64(2))
+			c.Expect(q.QueryCell(cell(3, 1))[0].Id(), Equals, int64(3))
+		})
+	})
+
 	c.Specify("the input phase", func() {
 		c.Specify("will insert new entities into the quad tree", func() {
 			q, err := quad.New(coord.Bounds{
@@ -381,14 +417,6 @@ func DescribePhase(c gospec.Context) {
 	})
 
 	c.Specify("the narrow phase", func() {
-		e := func(id int64, x, y int) entitytest.MockEntity {
-			return entitytest.MockEntity{
-				id,
-				coord.Cell{x, y},
-			}
-		}
-		cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
-
 		q, err := quad.New(coord.Bounds{
 			TopL: coord.Cell{-16, 16},
 			BotR: coord.Cell{15, -15},

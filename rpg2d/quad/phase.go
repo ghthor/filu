@@ -20,6 +20,14 @@ type UpdatePositionPhaseHandler interface {
 	UpdatePosition(entity.Entity, stime.Time) entity.Entity
 }
 
+// Convenience type so input phase handlers
+// can be written as closures or as functions.
+type UpdatePositionPhaseHandlerFn func(entity.Entity, stime.Time) entity.Entity
+
+func (f UpdatePositionPhaseHandlerFn) UpdatePosition(e entity.Entity, now stime.Time) entity.Entity {
+	return f(e, now)
+}
+
 // 2. Input Application Phase - User Defined
 //
 // The input phase takes the user input and applies it.
@@ -80,15 +88,21 @@ func (f NarrowPhaseHandlerFn) ResolveCollisions(cgrp *CollisionGroup, now stime.
 
 func RunPhasesOn(
 	q Quad,
+	updatePhase UpdatePositionPhaseHandler,
 	inputPhase InputPhaseHandler,
 	narrowPhase NarrowPhaseHandler,
 	now stime.Time) Quad {
 
+	q, _ = RunUpdatePositionPhaseOn(q, updatePhase, now)
 	q, _ = q.runInputPhase(inputPhase, now)
 	q, cgroups, _, _ := q.runBroadPhase(now)
 	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
 
 	return q
+}
+
+func RunUpdatePositionPhaseOn(q Quad, updatePhase UpdatePositionPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+	return q.runUpdatePositionPhase(updatePhase, now)
 }
 
 func RunInputPhaseOn(
@@ -131,8 +145,43 @@ func RunNarrowPhaseOn(
 	return q, nil
 }
 
-func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
+func (q quadRoot) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
+	q.Quad, bubbled = q.Quad.runUpdatePositionPhase(p, now)
 
+	quad = q
+	for _, e := range bubbled {
+		quad = quad.Insert(e)
+	}
+
+	return quad, nil
+}
+
+func (q quadLeaf) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+	var bubbled []entity.Entity
+
+	for _, e := range q.entities {
+		e := p.UpdatePosition(e, now)
+		bubbled = append(bubbled, e)
+	}
+
+	return q, bubbled
+}
+
+func (q quadNode) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+	var bubbled []entity.Entity
+
+	// TODO Implement concurrently
+	//      For each child, recursively descend and run input phase
+	for i, quad := range q.children {
+		quad, entities := quad.runUpdatePositionPhase(p, now)
+		q.children[i] = quad
+		bubbled = append(bubbled, entities...)
+	}
+
+	return q, bubbled
+}
+
+func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
 	q.Quad, bubbled = q.Quad.runInputPhase(p, now)
 
 	quad = q

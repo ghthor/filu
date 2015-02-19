@@ -31,7 +31,8 @@ type Quad interface {
 	Chunk() Chunk
 
 	//---- Internal methods to execute a phase calculation
-	runInputPhase(InputPhaseHandler, stime.Time) (quad Quad, OutOfBounds []entity.Entity)
+	runUpdatePositionPhase(UpdatePositionPhaseHandler, stime.Time) (quad Quad, outOfBounds []entity.Entity)
+	runInputPhase(InputPhaseHandler, stime.Time) (Quad, []entity.Entity)
 	runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
 }
 
