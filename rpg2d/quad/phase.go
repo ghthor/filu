@@ -217,6 +217,8 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []en
 	return q, bubbled
 }
 
+// Broad phase is non-mutative and therefor doesn't
+// require a method on the quadRoot type.
 func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 	for i, cq := range q.children {
 		cq, cgrps, s, u := cq.runBroadPhase(now)
