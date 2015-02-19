@@ -24,8 +24,8 @@ type InputPhaseHandler interface {
 	ApplyInputsTo(entity.Entity, stime.Time) []entity.Entity
 }
 
-// Convenience type so input phase handlers can be written
-// as closures or as functions.
+// Convenience type so input phase handlers
+// can be written as closures or as functions.
 type InputPhaseHandlerFn func(entity.Entity, stime.Time) []entity.Entity
 
 func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time) []entity.Entity {
