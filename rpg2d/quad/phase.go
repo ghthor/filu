@@ -7,17 +7,29 @@ import (
 	"github.com/ghthor/engine/sim/stime"
 )
 
-// 1. Input Application Phase - User Defined
+// 1. Update Position Phase - User Defined
 //
-// The input phase takes the user input and applies
-// it to the entities movement state. This enables the
-// broad phase to estimate where collisions might take
-// place if the movement is valid.
-// The narrow phase will revert or accept any
-// movements applied during the input phase.
-// The input phase should return a chunk of new entities
-// that may have been created by the actor's input.
-// aka (using skills and spells, chat messages, etc)
+// This phase is for updating an entity's
+// position if their previous movement has
+// be completed on this tick. This must happen
+// before the input application phase so the
+// quad tree can be queried during that phase
+// and the information won't be racy depending
+// on the order that the input hase been applied.
+type UpdatePositionPhaseHandler interface {
+	UpdatePosition(entity.Entity, stime.Time) entity.Entity
+}
+
+// 2. Input Application Phase - User Defined
+//
+// The input phase takes the user input and applies it.
+// This application can modify the entities movement
+// state or create new entities.
+// The input phase should return a slice of
+// entities that includes the entity that it was applying
+// input to. This slice of entities can also include
+// any entities that may have been created by the actor's input
+// (using skills and spells, chat messages, etc).
 // These new entities will be inserted into the
 // quad tree.
 type InputPhaseHandler interface {
@@ -32,7 +44,7 @@ func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time) []en
 	return f(e, now)
 }
 
-// 2. Broad Phase - Internal
+// 3. Broad Phase - Internal
 //
 // The broad phase is only concerned with the bounds
 // of all the entities and therefor can be implemented
@@ -44,7 +56,7 @@ func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time) []en
 // The collision groups will be passed to the
 // user supplied narrow phase implementation.
 
-// 3. Narrow Phase - User Defined
+// 4. Narrow Phase - User Defined
 //
 // The narrow phase resolves all the collisions in
 // a collision group. The phase handler should return
