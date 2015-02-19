@@ -35,14 +35,14 @@ func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time) []en
 // 2. Broad Phase - Internal
 //
 // The broad phase is only concerned with the bounds
-// of all the entities potential futures. For this
-// reason it will be and internal implementation.
-// The broad phase will need to happen while recursively
-// descending and ascending through the tree. It will be
-// where chunks of interest are created based on the
-// potential future overlapping bounds of the entities.
-// The chunks of interest will then be passed into the
-// user supplied narrow phase handler.
+// of all the entities and therefor can be implemented
+// internally.
+// The broad phase creates collision groups of entities.
+// A collision group is a collection of entities
+// such that no entity within the group can interact
+// with any entities outside of it's collision group.
+// The collision groups will be passed to the
+// user supplied narrow phase implementation.
 
 // 3. Narrow Phase - User Defined
 //
