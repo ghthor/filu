@@ -94,8 +94,8 @@ func RunPhasesOn(
 	now stime.Time) Quad {
 
 	q, _ = RunUpdatePositionPhaseOn(q, updatePhase, now)
-	q, _ = q.runInputPhase(inputPhase, now)
-	q, cgroups, _, _ := q.runBroadPhase(now)
+	q, _ = RunInputPhaseOn(q, inputPhase, now)
+	q, cgroups, _, _ := RunBroadPhaseOn(q, now)
 	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
 
 	return q
