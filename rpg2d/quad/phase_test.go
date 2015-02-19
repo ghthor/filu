@@ -232,7 +232,7 @@ func DescribePhase(c gospec.Context) {
 	})
 
 	c.Specify("the input phase", func() {
-		c.Specify("will insert new entities into the quad tree", func() {
+		c.Specify("will insert new entities", func() {
 			q, err := quad.New(coord.Bounds{
 				TopL: coord.Cell{-16, 16},
 				BotR: coord.Cell{15, -15},
