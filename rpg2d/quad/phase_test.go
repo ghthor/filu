@@ -381,7 +381,53 @@ func DescribePhase(c gospec.Context) {
 	})
 
 	c.Specify("the narrow phase", func() {
-		c.Specify("will realize all future potentials", func() {
+		e := func(id int64, x, y int) entitytest.MockEntity {
+			return entitytest.MockEntity{
+				id,
+				coord.Cell{x, y},
+			}
+		}
+		cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+
+		q, err := quad.New(coord.Bounds{
+			TopL: coord.Cell{-16, 16},
+			BotR: coord.Cell{15, -15},
+		}, 3, nil)
+		c.Assume(err, IsNil)
+
+		q = q.Insert(e(0, 0, 0))
+		q = q.Insert(e(1, 1, 0))
+
+		c.Specify("will insert all entities returned", func() {
+			q, _ = quad.RunNarrowPhaseOn(q, []*quad.CollisionGroup{nil}, quad.NarrowPhaseHandlerFn(
+				func(*quad.CollisionGroup, stime.Time) ([]entity.Entity, []entity.Entity) {
+					return []entity.Entity{
+						e(0, -1, 0),
+						e(1, 2, 0),
+						e(2, 2, 1),
+					}, nil
+				},
+			), stime.Time(0))
+
+			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 3)
+			c.Expect(q.QueryCell(cell(-1, 0))[0].Id(), Equals, int64(0))
+			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, int64(1))
+			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, int64(2))
+		})
+
+		c.Specify("will removed all the entities that have been destroyed", func() {
+			q, _ = quad.RunNarrowPhaseOn(q, []*quad.CollisionGroup{nil}, quad.NarrowPhaseHandlerFn(
+				func(*quad.CollisionGroup, stime.Time) ([]entity.Entity, []entity.Entity) {
+					return []entity.Entity{
+							e(1, 2, 0),
+						}, []entity.Entity{
+							e(0, 0, 0),
+						}
+				},
+			), stime.Time(0))
+
+			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 1)
+			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, int64(1))
 		})
 	})
 }

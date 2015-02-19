@@ -46,17 +46,24 @@ func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time) []en
 
 // 3. Narrow Phase - User Defined
 //
-// The narrow phase resolves any collisions that the
-// broad phase identified by the bounds of the potential
-// future state of the entity. The broad phase has grouped
-// this chunk together, such that, there is no possible way
-// any of these entities can interact with any entities that
-// are not included in this chunk. The narrow phase should
-// return a chunk.... Honestly I don't know what it should
-// return and I need to stop thinking about it for now and
-// just shut the fuck up and write the fucking code.
+// The narrow phase resolves all the collisions in
+// a collision group. The phase handler should return
+// 2 slices of entities. The first is the entities
+// that still exist or have been created. The second
+// is any entities that have been destroyed.
+// The user implementation should also be
+// where movement actions are accepted
+// and an entities position is modified.
 type NarrowPhaseHandler interface {
-	ResolveCollisions(CollisionGroup, stime.Time) CollisionGroup
+	ResolveCollisions(*CollisionGroup, stime.Time) (entities []entity.Entity, removed []entity.Entity)
+}
+
+// Convenience type so narrow phase handlers
+// can be written as closures or as functions.
+type NarrowPhaseHandlerFn func(*CollisionGroup, stime.Time) ([]entity.Entity, []entity.Entity)
+
+func (f NarrowPhaseHandlerFn) ResolveCollisions(cgrp *CollisionGroup, now stime.Time) ([]entity.Entity, []entity.Entity) {
+	return f(cgrp, now)
 }
 
 func RunPhasesOn(
@@ -67,7 +74,7 @@ func RunPhasesOn(
 
 	q, _ = q.runInputPhase(inputPhase, now)
 	q, cgroups, _, _ := q.runBroadPhase(now)
-	q = q.runNarrowPhase(narrowPhase, cgroups, now)
+	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
 
 	return q
 }
@@ -80,12 +87,36 @@ func RunInputPhaseOn(
 	return q.runInputPhase(inputPhase, now)
 }
 
-func RunBroadPhaseOn(q Quad, now stime.Time) (quad Quad, cgroup []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+func RunBroadPhaseOn(
+	q Quad,
+	now stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+
 	return q.runBroadPhase(now)
 }
 
-func RunNarrowPhaseOn(q Quad, cgroups []*CollisionGroup, narrowPhase NarrowPhaseHandler, now stime.Time) Quad {
-	return q.runNarrowPhase(narrowPhase, cgroups, now)
+func RunNarrowPhaseOn(
+	q Quad,
+	cgroups []*CollisionGroup,
+	narrowPhase NarrowPhaseHandler,
+	now stime.Time) (Quad, []entity.Entity) {
+
+	var toBeInserted, toBeRemoved []entity.Entity
+
+	for _, cg := range cgroups {
+		existing, removed := narrowPhase.ResolveCollisions(cg, now)
+		toBeInserted = append(toBeInserted, existing...)
+		toBeRemoved = append(toBeRemoved, removed...)
+	}
+
+	for _, e := range toBeRemoved {
+		q = q.Remove(e)
+	}
+
+	for _, e := range toBeInserted {
+		q = q.Insert(e)
+	}
+
+	return q, nil
 }
 
 func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
@@ -417,12 +448,4 @@ e2cg = %v
 	}
 
 	return q, cgroups, cgindex, unsolved
-}
-
-func (q quadNode) runNarrowPhase(narrowPhase NarrowPhaseHandler, cgrpsToSolve []*CollisionGroup, now stime.Time) Quad {
-	return q
-}
-
-func (q quadLeaf) runNarrowPhase(narrowPhase NarrowPhaseHandler, cgrpsToSolve []*CollisionGroup, now stime.Time) Quad {
-	return q
 }
