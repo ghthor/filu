@@ -32,6 +32,9 @@ type SimulationDef struct {
 	QuadTree   quad.Quad
 	TerrainMap TerrainMap
 
+	// User defined update phase handler
+	quad.UpdatePhaseHandler
+
 	// User defined input application phase
 	InputPhaseHandler quad.InputPhaseHandler
 
@@ -48,6 +51,7 @@ type initialWorldState struct {
 type simSettings struct {
 	fps int
 
+	quad.UpdatePhaseHandler
 	quad.InputPhaseHandler
 	quad.NarrowPhaseHandler
 }
@@ -167,6 +171,7 @@ func (s SimulationDef) Begin() (RunningSimulation, error) {
 	settings := simSettings{
 		s.FPS,
 
+		s.UpdatePhaseHandler,
 		s.InputPhaseHandler,
 		s.NarrowPhaseHandler,
 	}
@@ -223,6 +228,9 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	clock := stime.Clock(initialState.now)
 	world := newWorld(initialState.now, initialState.quadTree, initialState.terrainMap)
 
+	//---- User provided update phase
+	updatePhase := settings.UpdatePhaseHandler
+
 	//---- User provided input application phase
 	inputPhase := settings.InputPhaseHandler
 
@@ -230,7 +238,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	narrowPhase := settings.NarrowPhaseHandler
 
 	runTick := func(q quad.Quad, t stime.Time) quad.Quad {
-		return quad.RunPhasesOn(q, inputPhase, narrowPhase, t)
+		return quad.RunPhasesOn(q, updatePhase, inputPhase, narrowPhase, t)
 	}
 
 	// Start the Clock

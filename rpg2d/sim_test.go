@@ -34,14 +34,14 @@ func (a mockActor) IsDifferentFrom(entity.State) bool { return true }
 
 type mockInputPhase struct{}
 
-func (mockInputPhase) ApplyInputsIn(c quad.Chunk, now stime.Time) quad.Chunk {
-	return c
+func (mockInputPhase) ApplyInputsTo(e entity.Entity, now stime.Time) []entity.Entity {
+	return []entity.Entity{e}
 }
 
 type mockNarrowPhase struct{}
 
-func (mockNarrowPhase) ResolveCollisions(c quad.CollisionGroup, now stime.Time) quad.CollisionGroup {
-	return c
+func (mockNarrowPhase) ResolveCollisions(c *quad.CollisionGroup, now stime.Time) ([]entity.Entity, []entity.Entity) {
+	return c.Entities, nil
 }
 
 func DescribeASimulation(c gospec.Context) {
