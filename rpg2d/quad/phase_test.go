@@ -359,7 +359,7 @@ func DescribePhase(c gospec.Context) {
 
 					var cgroups []*quad.CollisionGroup
 					var unsolved quad.CollisionGroupIndex
-					q, cgroups, _, unsolved = quad.RunBroadPhaseOn(q, stime.Time(0))
+					cgroups, _, unsolved = quad.RunBroadPhaseOn(q, stime.Time(0))
 
 					c.Expect(len(cgroups), Equals, len(testCase.cgroups))
 					c.Expect(cgroups, ContainsAll, testCase.cgroups)
@@ -385,7 +385,7 @@ func DescribePhase(c gospec.Context) {
 				return entities
 			}(), 10)
 
-			_, _, _, unsolved := quad.RunBroadPhaseOn(q, stime.Time(0))
+			_, _, unsolved := quad.RunBroadPhaseOn(q, stime.Time(0))
 
 			c.Expect(unsolved, Equals, quad.CollisionGroupIndex{
 				cgEntities[24]: nil,
@@ -401,7 +401,7 @@ func DescribePhase(c gospec.Context) {
 				return entities
 			}(), 10)
 
-			_, cgroups, _, _ := quad.RunBroadPhaseOn(q, stime.Time(0))
+			cgroups, _, _ := quad.RunBroadPhaseOn(q, stime.Time(0))
 
 			cgroupedEntities := func() []entity.Entity {
 				var entities []entity.Entity

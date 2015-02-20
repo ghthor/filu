@@ -95,7 +95,7 @@ func RunPhasesOn(
 
 	q, _ = RunUpdatePositionPhaseOn(q, updatePhase, now)
 	q, _ = RunInputPhaseOn(q, inputPhase, now)
-	q, cgroups, _, _ := RunBroadPhaseOn(q, now)
+	cgroups, _, _ := RunBroadPhaseOn(q, now)
 	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
 
 	return q
@@ -115,7 +115,7 @@ func RunInputPhaseOn(
 
 func RunBroadPhaseOn(
 	q Quad,
-	now stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+	now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 
 	return q.runBroadPhase(now)
 }
@@ -219,10 +219,10 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []en
 
 // Broad phase is non-mutative and therefor doesn't
 // require a method on the quadRoot type.
-func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
-	for i, cq := range q.children {
-		cq, cgrps, s, u := cq.runBroadPhase(now)
-		q.children[i] = cq
+
+func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+	for _, cq := range q.children {
+		cgrps, s, u := cq.runBroadPhase(now)
 
 		// Join array of collision groups
 		cgroups = append(cgroups, cgrps...)
@@ -387,12 +387,12 @@ func (q quadNode) runBroadPhase(now stime.Time) (quad Quad, cgroups []*Collision
 		delete(unsolved, e1)
 	}
 
-	return q, cgroups, solved, unsolved
+	return cgroups, solved, unsolved
 }
 
-func (q quadLeaf) runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 	if !(len(q.entities) > 0) {
-		return q, nil, nil, nil
+		return nil, nil, nil
 	}
 
 	cgindex := make(map[entity.Entity]*CollisionGroup, len(q.entities))
@@ -510,5 +510,5 @@ e2cg = %v
 		}
 	}
 
-	return q, cgroups, cgindex, unsolved
+	return cgroups, cgindex, unsolved
 }

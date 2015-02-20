@@ -33,7 +33,7 @@ type Quad interface {
 	//---- Internal methods to execute a phase calculation
 	runUpdatePositionPhase(UpdatePhaseHandler, stime.Time) (quad Quad, outOfBounds []entity.Entity)
 	runInputPhase(InputPhaseHandler, stime.Time) (Quad, []entity.Entity)
-	runBroadPhase(stime.Time) (quad Quad, cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
+	runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
 }
 
 // Guards against unspecified behavior if the maxSize is 1
