@@ -76,15 +76,15 @@ func (c CollisionType) String() string {
 func (A PathAction) CollidesWith(B interface{}) (c Collision) {
 	switch b := B.(type) {
 	case PathAction:
-		return pathCollision(A, b)
+		return NewPathCollision(A, b)
 	case Cell:
-		return cellCollision(A, b)
+		return NewCellCollision(A, b)
 	default:
 	}
 	panic("unknown collision attempt")
 }
 
-func pathCollision(a, b PathAction) (c PathCollision) {
+func NewPathCollision(a, b PathAction) (c PathCollision) {
 	var start, end stime.Time
 	c.A, c.B = a, b
 
@@ -301,7 +301,7 @@ EXIT:
 	return
 }
 
-func cellCollision(p PathAction, c Cell) (cc CellCollision) {
+func NewCellCollision(p PathAction, c Cell) (cc CellCollision) {
 	cc.Path, cc.Cell = p, c
 	switch c {
 	case p.Dest:
