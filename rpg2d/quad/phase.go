@@ -156,17 +156,6 @@ func (q quadRoot) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (
 	return quad, nil
 }
 
-func (q quadLeaf) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
-	var bubbled []entity.Entity
-
-	for _, e := range q.entities {
-		e := p.Update(e, now)
-		bubbled = append(bubbled, e)
-	}
-
-	return q, bubbled
-}
-
 func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
 	var bubbled []entity.Entity
 
@@ -176,6 +165,17 @@ func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (
 		quad, entities := quad.runUpdatePositionPhase(p, now)
 		q.children[i] = quad
 		bubbled = append(bubbled, entities...)
+	}
+
+	return q, bubbled
+}
+
+func (q quadLeaf) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+	var bubbled []entity.Entity
+
+	for _, e := range q.entities {
+		e := p.Update(e, now)
+		bubbled = append(bubbled, e)
 	}
 
 	return q, bubbled
