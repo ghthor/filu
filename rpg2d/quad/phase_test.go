@@ -216,7 +216,7 @@ func DescribePhase(c gospec.Context) {
 			q = q.Insert(e(2, 2, 0))
 			q = q.Insert(e(3, 3, 0))
 
-			q, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePositionPhaseHandlerFn(
+			q, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePhaseHandlerFn(
 				func(entity entity.Entity, now stime.Time) entity.Entity {
 					c := entity.Cell()
 					return e(entity.Id(), c.X, c.Y+1)

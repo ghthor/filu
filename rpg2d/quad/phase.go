@@ -16,15 +16,15 @@ import (
 // quad tree can be queried during that phase
 // and the information won't be racy depending
 // on the order that the input hase been applied.
-type UpdatePositionPhaseHandler interface {
-	UpdatePosition(entity.Entity, stime.Time) entity.Entity
+type UpdatePhaseHandler interface {
+	Update(entity.Entity, stime.Time) entity.Entity
 }
 
 // Convenience type so input phase handlers
 // can be written as closures or as functions.
-type UpdatePositionPhaseHandlerFn func(entity.Entity, stime.Time) entity.Entity
+type UpdatePhaseHandlerFn func(entity.Entity, stime.Time) entity.Entity
 
-func (f UpdatePositionPhaseHandlerFn) UpdatePosition(e entity.Entity, now stime.Time) entity.Entity {
+func (f UpdatePhaseHandlerFn) Update(e entity.Entity, now stime.Time) entity.Entity {
 	return f(e, now)
 }
 
@@ -88,7 +88,7 @@ func (f NarrowPhaseHandlerFn) ResolveCollisions(cgrp *CollisionGroup, now stime.
 
 func RunPhasesOn(
 	q Quad,
-	updatePhase UpdatePositionPhaseHandler,
+	updatePhase UpdatePhaseHandler,
 	inputPhase InputPhaseHandler,
 	narrowPhase NarrowPhaseHandler,
 	now stime.Time) Quad {
@@ -101,7 +101,7 @@ func RunPhasesOn(
 	return q
 }
 
-func RunUpdatePositionPhaseOn(q Quad, updatePhase UpdatePositionPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+func RunUpdatePositionPhaseOn(q Quad, updatePhase UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
 	return q.runUpdatePositionPhase(updatePhase, now)
 }
 
@@ -145,7 +145,7 @@ func RunNarrowPhaseOn(
 	return q, nil
 }
 
-func (q quadRoot) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
+func (q quadRoot) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
 	q.Quad, bubbled = q.Quad.runUpdatePositionPhase(p, now)
 
 	quad = q
@@ -156,18 +156,18 @@ func (q quadRoot) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime
 	return quad, nil
 }
 
-func (q quadLeaf) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+func (q quadLeaf) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
 	var bubbled []entity.Entity
 
 	for _, e := range q.entities {
-		e := p.UpdatePosition(e, now)
+		e := p.Update(e, now)
 		bubbled = append(bubbled, e)
 	}
 
 	return q, bubbled
 }
 
-func (q quadNode) runUpdatePositionPhase(p UpdatePositionPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
 	var bubbled []entity.Entity
 
 	// TODO Implement concurrently
