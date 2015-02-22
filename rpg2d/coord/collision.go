@@ -1,3 +1,5 @@
+//go:generate stringer -type=CollisionType -output=collision_type_string.go
+
 package coord
 
 import (
@@ -44,34 +46,6 @@ const (
 	CT_CELL_DEST
 	CT_CELL_ORIG
 )
-
-func (c CollisionType) String() string {
-	switch c {
-	case CT_NONE:
-		return "none"
-	case CT_HEAD_TO_HEAD:
-		return "head to head"
-	case CT_FROM_SIDE:
-		return "from the side"
-	case CT_A_INTO_B:
-		return "A into B"
-	case CT_A_INTO_B_FROM_SIDE:
-		return "A into B from the side"
-	case CT_SWAP:
-		return "swap"
-	case CT_SAME_ORIG:
-		return "same origin inverse facing"
-	case CT_SAME_ORIG_PERP:
-		return "same origin perpendicular facing"
-	case CT_SAME_ORIG_DEST:
-		return "same origin and destination"
-	case CT_CELL_DEST:
-		return "cell destination"
-	case CT_CELL_ORIG:
-		return "cell origin"
-	}
-	return "unknown collision type"
-}
 
 func (A PathAction) CollidesWith(B interface{}) (c Collision) {
 	switch b := B.(type) {
