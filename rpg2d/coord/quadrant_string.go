@@ -4,9 +4,9 @@ package coord
 
 import "fmt"
 
-const _Quad_name = "NWQUAD_NEQUAD_SEQUAD_SW"
+const _Quad_name = "NWNESESW"
 
-var _Quad_index = [...]uint8{0, 2, 9, 16, 23}
+var _Quad_index = [...]uint8{0, 2, 4, 6, 8}
 
 func (i Quad) String() string {
 	if i < 0 || i+1 >= Quad(len(_Quad_index)) {
