@@ -168,16 +168,16 @@ func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 	return
 }
 
-func (s WorldState) Diff(ss WorldState) (diff WorldState) {
-	diff.Time = ss.Time
+func (state WorldState) Diff(other WorldState) (diff WorldState) {
+	diff.Time = other.Time
 
-	if len(s.Entities) == 0 && len(ss.Entities) > 0 {
-		diff.Entities = ss.Entities
+	if len(state.Entities) == 0 && len(other.Entities) > 0 {
+		diff.Entities = other.Entities
 	} else {
 		// Find the entities that have changed from the old state to the new one
 	nextEntity:
-		for _, entity := range ss.Entities {
-			for _, old := range s.Entities {
+		for _, entity := range other.Entities {
+			for _, old := range state.Entities {
 				if entity.Id() == old.Id() {
 					if old.IsDifferentFrom(entity) {
 						diff.Entities = append(diff.Entities, entity)
@@ -191,8 +191,8 @@ func (s WorldState) Diff(ss WorldState) (diff WorldState) {
 
 		// Check if all the entities in old state exist in the new state
 	entityStillExists:
-		for _, old := range s.Entities {
-			for _, entity := range ss.Entities {
+		for _, old := range state.Entities {
+			for _, entity := range other.Entities {
 				if old.Id() == entity.Id() {
 					continue entityStillExists
 				}
@@ -202,7 +202,7 @@ func (s WorldState) Diff(ss WorldState) (diff WorldState) {
 	}
 
 	// Diff the TerrainMap
-	diff.TerrainMap = s.TerrainMap.Diff(ss.TerrainMap)
+	diff.TerrainMap = state.TerrainMap.Diff(other.TerrainMap)
 	return
 }
 
