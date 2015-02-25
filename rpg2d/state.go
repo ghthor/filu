@@ -1,3 +1,5 @@
+//go:generate stringer -type=WorldStateType -output=world_state_type_string.go
+
 package rpg2d
 
 import (
@@ -116,7 +118,15 @@ func (m *TerrainMapState) Clone() (*TerrainMapState, error) {
 	return &TerrainMapState{TerrainMap: tm}, nil
 }
 
+type WorldStateType int
+
+const (
+	ST_FULL WorldStateType = iota
+	ST_DIFF
+)
+
 type WorldState struct {
+	Type       WorldStateType   `json:"type"`
 	Time       stime.Time       `json:"time"`
 	Entities   []entity.State   `json:"entities"`
 	Removed    []entity.State   `json:"removed"`
@@ -129,10 +139,11 @@ func (s WorldState) Clone() WorldState {
 		panic("error cloning terrain map: " + err.Error())
 	}
 	clone := WorldState{
-		s.Time,
-		make([]entity.State, len(s.Entities)),
-		nil,
-		terrainMap,
+		Type:       s.Type,
+		Time:       s.Time,
+		Entities:   make([]entity.State, len(s.Entities)),
+		Removed:    nil,
+		TerrainMap: terrainMap,
 	}
 	copy(clone.Entities, s.Entities)
 	return clone
