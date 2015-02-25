@@ -65,7 +65,7 @@ func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, erro
 			bounds:  bounds,
 			maxSize: maxSize,
 		},
-		entityIndex: make(map[int64]entity.Entity),
+		entityIndex: make(map[entity.Id]entity.Entity),
 	}, nil
 }
 
@@ -81,7 +81,7 @@ type Chunk struct {
 type quadRoot struct {
 	Quad
 
-	entityIndex map[int64]entity.Entity
+	entityIndex map[entity.Id]entity.Entity
 }
 
 // A node in the quad tree that will contain 4 children,

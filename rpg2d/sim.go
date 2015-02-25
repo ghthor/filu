@@ -9,8 +9,10 @@ import (
 	"github.com/ghthor/engine/sim/stime"
 )
 
+type ActorId int64
+
 type Actor interface {
-	Id() int64
+	Id() ActorId
 
 	// Returns an entity that represents the
 	// actor in the simulation's world.
@@ -212,7 +214,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	removeReq = removeCh
 
 	// Map of all the actors currently connected to the simulation
-	actors := make(map[int64]Actor)
+	actors := make(map[ActorId]Actor)
 
 	// Make channel to be used to by the public api to
 	// request that the simulation be halted

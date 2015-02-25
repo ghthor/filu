@@ -195,7 +195,7 @@ func (e byId) Less(i, j int) bool {
 }
 
 func DescribePhase(c gospec.Context) {
-	e := func(id int64, x, y int) entitytest.MockEntity {
+	e := func(id entity.Id, x, y int) entitytest.MockEntity {
 		return entitytest.MockEntity{
 			id,
 			coord.Cell{x, y},
@@ -224,10 +224,10 @@ func DescribePhase(c gospec.Context) {
 			), stime.Time(0))
 
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 4)
-			c.Expect(q.QueryCell(cell(0, 1))[0].Id(), Equals, int64(0))
-			c.Expect(q.QueryCell(cell(1, 1))[0].Id(), Equals, int64(1))
-			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, int64(2))
-			c.Expect(q.QueryCell(cell(3, 1))[0].Id(), Equals, int64(3))
+			c.Expect(q.QueryCell(cell(0, 1))[0].Id(), Equals, entity.Id(0))
+			c.Expect(q.QueryCell(cell(1, 1))[0].Id(), Equals, entity.Id(1))
+			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, entity.Id(2))
+			c.Expect(q.QueryCell(cell(3, 1))[0].Id(), Equals, entity.Id(3))
 		})
 	})
 
@@ -438,9 +438,9 @@ func DescribePhase(c gospec.Context) {
 			), stime.Time(0))
 
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 3)
-			c.Expect(q.QueryCell(cell(-1, 0))[0].Id(), Equals, int64(0))
-			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, int64(1))
-			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, int64(2))
+			c.Expect(q.QueryCell(cell(-1, 0))[0].Id(), Equals, entity.Id(0))
+			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, entity.Id(1))
+			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, entity.Id(2))
 		})
 
 		c.Specify("will removed all the entities that have been destroyed", func() {
@@ -455,7 +455,7 @@ func DescribePhase(c gospec.Context) {
 			), stime.Time(0))
 
 			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 1)
-			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, int64(1))
+			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, entity.Id(1))
 		})
 	})
 }

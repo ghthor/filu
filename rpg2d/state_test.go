@@ -53,10 +53,10 @@ func DescribeWorldState(c gospec.Context) {
 			clone.Entities = append(clone.Entities[:2], clone.Entities[3:]...)
 
 			// Check that the modification didn't effect the original
-			for i, entity := range worldState.Entities {
-				e, isMockEntity := entity.(entitytest.MockEntityState)
+			for i, e := range worldState.Entities {
+				e, isMockEntity := e.(entitytest.MockEntityState)
 				c.Assume(isMockEntity, IsTrue)
-				c.Expect(e.Id(), Equals, int64(i))
+				c.Expect(e.Id(), Equals, entity.Id(i))
 			}
 		})
 

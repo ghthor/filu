@@ -2,6 +2,7 @@ package quad_test
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
 
@@ -45,8 +46,8 @@ func DescribeQuadInsert(c gospec.Context) {
 					q = q.Remove(e1)
 
 					c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
-					c.Expect(q.QueryCell(coord.Cell{7, -7})[0].Id(), Equals, int64(1))
-					c.Expect(q.QueryCell(coord.Cell{5, -1})[0].Id(), Equals, int64(2))
+					c.Expect(q.QueryCell(coord.Cell{7, -7})[0].Id(), Equals, entity.Id(1))
+					c.Expect(q.QueryCell(coord.Cell{5, -1})[0].Id(), Equals, entity.Id(2))
 				})
 			})
 		})

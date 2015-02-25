@@ -2,10 +2,13 @@ package entity
 
 import "github.com/ghthor/engine/rpg2d/coord"
 
+// A unique Id for an entity
+type Id int64
+
 // A basic entity in the world.
 type Entity interface {
 	// Unique ID
-	Id() int64
+	Id() Id
 
 	// Location in the world
 	Cell() coord.Cell
@@ -28,7 +31,7 @@ type Entity interface {
 // client over the wire.
 type State interface {
 	// Unique ID
-	Id() int64
+	Id() Id
 
 	// Bounds of the entity
 	Bounds() coord.Bounds

@@ -11,26 +11,30 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-type mockActor struct {
-	id int64
-
+type mockActorEntity struct {
+	id   entity.Id
 	cell coord.Cell
 }
 
+type mockActor struct {
+	id rpg2d.ActorId
+	mockActorEntity
+}
+
 // Implement Actor
-func (a mockActor) Entity() entity.Entity     { return a }
+func (a mockActor) Id() rpg2d.ActorId         { return a.id }
 func (mockActor) WriteState(rpg2d.WorldState) {}
+func (a mockActor) Entity() entity.Entity     { return a.mockActorEntity }
 
 // Implement entity.Entity
-func (a mockActor) Id() int64        { return a.id }
-func (a mockActor) Cell() coord.Cell { return a.cell }
-
-func (a mockActor) Bounds() coord.Bounds {
+func (a mockActorEntity) Id() entity.Id    { return a.id }
+func (a mockActorEntity) Cell() coord.Cell { return a.cell }
+func (a mockActorEntity) Bounds() coord.Bounds {
 	return coord.Bounds{a.cell, a.cell}
 }
 
-func (a mockActor) ToState() entity.State             { return a }
-func (a mockActor) IsDifferentFrom(entity.State) bool { return true }
+func (a mockActorEntity) ToState() entity.State             { return a }
+func (a mockActorEntity) IsDifferentFrom(entity.State) bool { return true }
 
 type mockInputPhase struct{}
 
@@ -92,7 +96,12 @@ func DescribeASimulation(c gospec.Context) {
 			c.Assume(err, IsNil)
 		}()
 
-		a := mockActor{id: 1}
+		a := mockActor{
+			id: 1,
+			mockActorEntity: mockActorEntity{
+				id: 2,
+			},
+		}
 
 		c.Specify("added to it", func() {
 			rs.ConnectActor(a)
@@ -102,7 +111,7 @@ func DescribeASimulation(c gospec.Context) {
 
 			entities := hs.Quad().QueryCell(coord.Cell{})
 			c.Expect(len(entities), Equals, 1)
-			c.Expect(entities[0], Equals, a)
+			c.Expect(entities[0], Equals, a.Entity())
 		})
 
 		c.Specify("removed from it", func() {

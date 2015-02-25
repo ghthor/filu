@@ -2,6 +2,7 @@ package quad_test
 
 import (
 	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
 
@@ -87,7 +88,7 @@ func DescribeQuad(c gospec.Context) {
 				c.Assume(q.Bounds().Width(), Equals, 8)
 				c.Assume(q.Bounds().Height(), Equals, 8)
 
-				id := int64(0)
+				id := entity.Id(0)
 				for j := 4; j > -4; j-- {
 					for i := -4; i < 4; i++ {
 						q = q.Insert(entitytest.MockEntity{id, coord.Cell{i, j}})

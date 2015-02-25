@@ -9,19 +9,19 @@ import (
 
 type (
 	MockEntity struct {
-		EntityId   int64
+		EntityId   entity.Id
 		EntityCell coord.Cell
 	}
 
 	MockEntityWithBounds struct {
-		EntityId     int64
+		EntityId     entity.Id
 		EntityCell   coord.Cell
 		EntityBounds coord.Bounds
 	}
 
 	MockEntityState struct {
-		EntityId int64  `json:"id"`
-		Name     string `json:"name"`
+		EntityId entity.Id `json:"id"`
+		Name     string    `json:"name"`
 
 		EntityCell coord.Cell `json:"cell"`
 		bounds     coord.Bounds
@@ -29,7 +29,7 @@ type (
 )
 
 func (e MockEntity) String() string       { return fmt.Sprintf("MockEntity%v", e.Id()) }
-func (e MockEntity) Id() int64            { return e.EntityId }
+func (e MockEntity) Id() entity.Id        { return e.EntityId }
 func (e MockEntity) Cell() coord.Cell     { return e.EntityCell }
 func (e MockEntity) Bounds() coord.Bounds { return coord.Bounds{e.EntityCell, e.EntityCell} }
 func (e MockEntity) ToState() entity.State {
@@ -45,7 +45,7 @@ func (e MockEntity) ToState() entity.State {
 }
 
 func (e MockEntityWithBounds) String() string       { return fmt.Sprintf("MockEntityWithBounds%v", e.Id()) }
-func (e MockEntityWithBounds) Id() int64            { return e.EntityId }
+func (e MockEntityWithBounds) Id() entity.Id        { return e.EntityId }
 func (e MockEntityWithBounds) Cell() coord.Cell     { return e.EntityCell }
 func (e MockEntityWithBounds) Bounds() coord.Bounds { return e.EntityBounds }
 func (e MockEntityWithBounds) ToState() entity.State {
@@ -56,7 +56,7 @@ func (e MockEntityWithBounds) ToState() entity.State {
 	}
 }
 
-func (e MockEntityState) Id() int64            { return e.EntityId }
+func (e MockEntityState) Id() entity.Id        { return e.EntityId }
 func (e MockEntityState) Bounds() coord.Bounds { return e.bounds }
 func (e MockEntityState) IsDifferentFrom(other entity.State) bool {
 	switch other := other.(type) {
