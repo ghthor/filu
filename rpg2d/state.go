@@ -149,6 +149,9 @@ func (s WorldState) Clone() WorldState {
 	return clone
 }
 
+// Returns a world state that only contains
+// entities and terrain within bounds.
+// Does NOT change world state type.
 func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 	culled.Time = s.Time
 
@@ -168,6 +171,10 @@ func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 	return
 }
 
+// Returns a world state that only contains
+// entities and terrain that is different such
+// that state + diff == other. Diff is therefor
+// the changes necessary to get from state to other.
 func (state WorldState) Diff(other WorldState) (diff WorldState) {
 	diff.Time = other.Time
 
