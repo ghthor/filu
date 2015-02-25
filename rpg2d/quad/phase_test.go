@@ -204,19 +204,19 @@ func DescribePhase(c gospec.Context) {
 	cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 
 	c.Specify("the update phase", func() {
+		q, err := quad.New(coord.Bounds{
+			TopL: coord.Cell{-16, 16},
+			BotR: coord.Cell{15, -15},
+		}, 3, nil)
+		c.Assume(err, IsNil)
+
+		q = q.Insert(e(0, 0, 0))
+		q = q.Insert(e(1, 1, 0))
+		q = q.Insert(e(2, 2, 0))
+		q = q.Insert(e(3, 3, 0))
+
 		c.Specify("will insert the updated entity", func() {
-			q, err := quad.New(coord.Bounds{
-				TopL: coord.Cell{-16, 16},
-				BotR: coord.Cell{15, -15},
-			}, 3, nil)
-			c.Assume(err, IsNil)
-
-			q = q.Insert(e(0, 0, 0))
-			q = q.Insert(e(1, 1, 0))
-			q = q.Insert(e(2, 2, 0))
-			q = q.Insert(e(3, 3, 0))
-
-			q, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePhaseHandlerFn(
+			q, _, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePhaseHandlerFn(
 				func(entity entity.Entity, now stime.Time) entity.Entity {
 					c := entity.Cell()
 					return e(entity.Id(), c.X, c.Y+1)
@@ -228,6 +228,22 @@ func DescribePhase(c gospec.Context) {
 			c.Expect(q.QueryCell(cell(1, 1))[0].Id(), Equals, entity.Id(1))
 			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, entity.Id(2))
 			c.Expect(q.QueryCell(cell(3, 1))[0].Id(), Equals, entity.Id(3))
+		})
+
+		c.Specify("will remove an entity", func() {
+			c.Assume(len(q.QueryCell(cell(2, 0))), Equals, 1)
+
+			q, _, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePhaseHandlerFn(
+				func(e entity.Entity, now stime.Time) entity.Entity {
+					if e.Id() == entity.Id(2) {
+						return nil
+					}
+					return e
+				},
+			), stime.Time(0))
+
+			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 3)
+			c.Expect(len(q.QueryCell(cell(2, 0))), Equals, 0)
 		})
 	})
 

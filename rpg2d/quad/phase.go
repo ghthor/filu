@@ -16,6 +16,8 @@ import (
 // quad tree can be queried during that phase
 // and the information won't be racy depending
 // on the order that the input hase been applied.
+// If update returns nil instead of the entity,
+// it will be removed.
 type UpdatePhaseHandler interface {
 	Update(entity.Entity, stime.Time) entity.Entity
 }
@@ -93,7 +95,7 @@ func RunPhasesOn(
 	narrowPhase NarrowPhaseHandler,
 	now stime.Time) Quad {
 
-	q, _ = RunUpdatePositionPhaseOn(q, updatePhase, now)
+	q, _, _ = RunUpdatePositionPhaseOn(q, updatePhase, now)
 	q, _ = RunInputPhaseOn(q, inputPhase, now)
 	cgroups, _, _ := RunBroadPhaseOn(q, now)
 	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
@@ -101,7 +103,7 @@ func RunPhasesOn(
 	return q
 }
 
-func RunUpdatePositionPhaseOn(q Quad, updatePhase UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
+func RunUpdatePositionPhaseOn(q Quad, updatePhase UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity, []entity.Entity) {
 	return q.runUpdatePositionPhase(updatePhase, now)
 }
 
@@ -145,40 +147,46 @@ func RunNarrowPhaseOn(
 	return q, nil
 }
 
-func (q quadRoot) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
-	q.Quad, bubbled = q.Quad.runUpdatePositionPhase(p, now)
+func (q quadRoot) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
+	q.Quad, remaining, removed = q.Quad.runUpdatePositionPhase(p, now)
 
 	quad = q
-	for _, e := range bubbled {
+	for _, e := range remaining {
 		quad = quad.Insert(e)
 	}
 
-	return quad, nil
+	for _, e := range removed {
+		quad = quad.Remove(e)
+	}
+
+	return quad, nil, nil
 }
 
-func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
-	var bubbled []entity.Entity
-
+func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
 	// TODO Implement concurrently
 	//      For each child, recursively descend and run input phase
 	for i, quad := range q.children {
-		quad, entities := quad.runUpdatePositionPhase(p, now)
+		quad, iremaining, iremoved := quad.runUpdatePositionPhase(p, now)
 		q.children[i] = quad
-		bubbled = append(bubbled, entities...)
+
+		remaining = append(remaining, iremaining...)
+		removed = append(removed, iremoved...)
 	}
 
-	return q, bubbled
+	return q, remaining, removed
 }
 
-func (q quadLeaf) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity) {
-	var bubbled []entity.Entity
-
+func (q quadLeaf) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
 	for _, e := range q.entities {
-		e := p.Update(e, now)
-		bubbled = append(bubbled, e)
+		updatedEntity := p.Update(e, now)
+		if updatedEntity == nil {
+			removed = append(removed, e)
+		} else {
+			remaining = append(remaining, updatedEntity)
+		}
 	}
 
-	return q, bubbled
+	return q, remaining, removed
 }
 
 func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
