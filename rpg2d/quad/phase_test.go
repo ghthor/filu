@@ -216,7 +216,7 @@ func DescribePhase(c gospec.Context) {
 		q = q.Insert(e(3, 3, 0))
 
 		c.Specify("will insert the updated entity", func() {
-			q, _, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePhaseHandlerFn(
+			q, _, _ = quad.RunUpdatePhaseOn(q, quad.UpdatePhaseHandlerFn(
 				func(entity entity.Entity, now stime.Time) entity.Entity {
 					c := entity.Cell()
 					return e(entity.Id(), c.X, c.Y+1)
@@ -233,7 +233,7 @@ func DescribePhase(c gospec.Context) {
 		c.Specify("will remove an entity", func() {
 			c.Assume(len(q.QueryCell(cell(2, 0))), Equals, 1)
 
-			q, _, _ = quad.RunUpdatePositionPhaseOn(q, quad.UpdatePhaseHandlerFn(
+			q, _, _ = quad.RunUpdatePhaseOn(q, quad.UpdatePhaseHandlerFn(
 				func(e entity.Entity, now stime.Time) entity.Entity {
 					if e.Id() == entity.Id(2) {
 						return nil

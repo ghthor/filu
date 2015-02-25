@@ -95,7 +95,7 @@ func RunPhasesOn(
 	narrowPhase NarrowPhaseHandler,
 	now stime.Time) Quad {
 
-	q, _, _ = RunUpdatePositionPhaseOn(q, updatePhase, now)
+	q, _, _ = RunUpdatePhaseOn(q, updatePhase, now)
 	q, _ = RunInputPhaseOn(q, inputPhase, now)
 	cgroups, _, _ := RunBroadPhaseOn(q, now)
 	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
@@ -103,8 +103,8 @@ func RunPhasesOn(
 	return q
 }
 
-func RunUpdatePositionPhaseOn(q Quad, updatePhase UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity, []entity.Entity) {
-	return q.runUpdatePositionPhase(updatePhase, now)
+func RunUpdatePhaseOn(q Quad, updatePhase UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity, []entity.Entity) {
+	return q.runUpdatePhase(updatePhase, now)
 }
 
 func RunInputPhaseOn(
@@ -147,8 +147,8 @@ func RunNarrowPhaseOn(
 	return q, nil
 }
 
-func (q quadRoot) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
-	q.Quad, remaining, removed = q.Quad.runUpdatePositionPhase(p, now)
+func (q quadRoot) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
+	q.Quad, remaining, removed = q.Quad.runUpdatePhase(p, now)
 
 	quad = q
 	for _, e := range remaining {
@@ -162,11 +162,11 @@ func (q quadRoot) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (
 	return quad, nil, nil
 }
 
-func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
+func (q quadNode) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
 	// TODO Implement concurrently
 	//      For each child, recursively descend and run input phase
 	for i, quad := range q.children {
-		quad, iremaining, iremoved := quad.runUpdatePositionPhase(p, now)
+		quad, iremaining, iremoved := quad.runUpdatePhase(p, now)
 		q.children[i] = quad
 
 		remaining = append(remaining, iremaining...)
@@ -176,7 +176,7 @@ func (q quadNode) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (
 	return q, remaining, removed
 }
 
-func (q quadLeaf) runUpdatePositionPhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
+func (q quadLeaf) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
 	for _, e := range q.entities {
 		updatedEntity := p.Update(e, now)
 		if updatedEntity == nil {
