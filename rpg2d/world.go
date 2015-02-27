@@ -39,11 +39,10 @@ func (w *World) Remove(e entity.Entity) {
 func (w World) ToState() WorldState {
 	entities := w.quadTree.QueryBounds(w.quadTree.Bounds())
 	s := WorldState{
-		Type:       ST_FULL,
-		Time:       w.time,
-		Entities:   make([]entity.State, len(entities)),
-		Removed:    nil,
-		TerrainMap: nil,
+		w.time,
+		make([]entity.State, len(entities)),
+		nil,
+		nil,
 	}
 
 	i := 0
