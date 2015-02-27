@@ -126,7 +126,7 @@ const (
 )
 
 type WorldState struct {
-	Type       string           `json:"type"`
+	Type       WorldStateType   `json:"type"`
 	Time       stime.Time       `json:"time"`
 	Entities   []entity.State   `json:"entities"`
 	Removed    []entity.State   `json:"removed"`
@@ -176,7 +176,7 @@ func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 // that state + diff == other. Diff is therefor
 // the changes necessary to get from state to other.
 func (state WorldState) Diff(other WorldState) (diff WorldState) {
-	diff.Type = ST_DIFF.String()
+	diff.Type = ST_DIFF
 	diff.Time = other.Time
 
 	if len(state.Entities) == 0 && len(other.Entities) > 0 {
