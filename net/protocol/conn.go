@@ -1,10 +1,14 @@
 package protocol
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"strconv"
+	"strings"
 
 	"github.com/ghthor/engine/net/encoding"
 	"golang.org/x/net/websocket"
@@ -45,18 +49,46 @@ type Conn interface {
 
 type conn struct {
 	io.ReadWriteCloser
+
+	rbuf *bufio.Reader
 }
 
 func NewConn(with io.ReadWriteCloser) Conn {
-	return &conn{with}
+	return &conn{
+		with,
+		bufio.NewReader(with),
+	}
 }
 
-func (c *conn) Read() (encoding.Packet, error) {
-	return encoding.Packet{}, nil
+func (c *conn) Read() (packet encoding.Packet, err error) {
+	rawLen, err := c.rbuf.ReadString('\n')
+	if err != nil {
+		return packet, err
+	}
+
+	pLen, err := strconv.ParseInt(strings.TrimSpace(rawLen), 10, 64)
+	if err != nil {
+		return packet, err
+	}
+
+	rawPacket := bytes.NewBuffer(make([]byte, 0, pLen))
+
+	n, err := io.Copy(rawPacket, io.LimitReader(c.rbuf, pLen))
+	if n != pLen {
+		return packet, io.EOF
+	}
+
+	if err != nil {
+		return packet, err
+	}
+
+	return encoding.Decode(rawPacket.String())
 }
 
-func (c *conn) Send(encoding.Packet) error {
-	return nil
+func (c *conn) Send(p encoding.Packet) error {
+	raw := p.Encode()
+	_, err := fmt.Fprintf(c, "%d\n%s", len(raw), raw)
+	return err
 }
 
 func (c *conn) SendMessage(msg, message string) error {
