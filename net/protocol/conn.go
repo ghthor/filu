@@ -43,6 +43,34 @@ type Conn interface {
 	Read() (encoding.Packet, error)
 }
 
+type conn struct {
+	io.ReadWriteCloser
+}
+
+func NewConn(with io.ReadWriteCloser) Conn {
+	return &conn{with}
+}
+
+func (c *conn) Read() (encoding.Packet, error) {
+	return encoding.Packet{}, nil
+}
+
+func (c *conn) Send(encoding.Packet) error {
+	return nil
+}
+
+func (c *conn) SendMessage(msg, message string) error {
+	return c.Send(encoding.MessagePacket(msg, message))
+}
+
+func (c *conn) SendJson(msg string, obj interface{}) error {
+	return c.Send(encoding.JsonPacket(msg, obj))
+}
+
+func (c *conn) SendError(errMsg, errTip string) error {
+	return c.Send(encoding.ErrorPacket(errMsg, errTip))
+}
+
 type WebsocketConn struct {
 	state ConnState
 	ws    *websocket.Conn
