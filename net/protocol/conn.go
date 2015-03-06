@@ -5,13 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
-	"net"
 	"strconv"
 	"strings"
 
 	"github.com/ghthor/engine/net/encoding"
-	"golang.org/x/net/websocket"
 )
 
 type ConnState int
@@ -101,88 +98,6 @@ func (c *conn) SendJson(msg string, obj interface{}) error {
 
 func (c *conn) SendError(errMsg, errTip string) error {
 	return c.Send(encoding.ErrorPacket(errMsg, errTip))
-}
-
-type WebsocketConn struct {
-	state ConnState
-	ws    *websocket.Conn
-}
-
-func NewWebsocketConn(ws *websocket.Conn) *WebsocketConn {
-	return &WebsocketConn{ws: ws}
-}
-
-// TODO Check the Conn's State
-func (c *WebsocketConn) Send(packet encoding.Packet) error {
-	// TODO Determine if there are any errors that shouldn't be bubbled up
-	return websocket.Message.Send(c.ws, packet.Encode())
-}
-
-func (c *WebsocketConn) SendMessage(msg, message string) error {
-	return c.Send(encoding.MessagePacket(msg, message))
-}
-
-func (c *WebsocketConn) SendJson(msg string, obj interface{}) error {
-	return c.Send(encoding.JsonPacket(msg, obj))
-}
-
-func (c *WebsocketConn) SendError(errMsg, errTip string) error {
-	return c.Send(encoding.ErrorPacket(errMsg, errTip))
-}
-
-// TODO Check the Conn's State
-func (c *WebsocketConn) Read() (packet encoding.Packet, err error) {
-	for {
-		var msg string
-		err = websocket.Message.Receive(c.ws, &msg)
-
-		// TODO Wrap this in a New Error
-		if err == io.EOF {
-			c.state = CC_DISCONNECTED
-			return packet, &DisconnectionError{err}
-		}
-
-		if opErr, ok := err.(*net.OpError); ok {
-			switch opErr.Err.Error() {
-			case "use of closed network connection":
-				fallthrough
-			case "connection reset by peer":
-				return packet, &DisconnectionError{err}
-			default:
-			}
-		}
-
-		// TODO Socket error handling
-		if err != nil {
-			log.Fatalf("Unknown Error Websocket.Read(): %s", err)
-		}
-
-		packet, err = encoding.Decode(msg)
-
-		if err != nil {
-			// Client Sent Invalid/Bad Packets
-			switch e := err.(type) {
-			case *encoding.InvalidPacketError:
-				err = c.SendError("EncodingError", e.Error())
-			case *encoding.InvalidJsonPacketError:
-				err = c.SendError("EncodingError", e.Error())
-			case *encoding.InvalidPacketTypeError:
-				err = c.SendError("EncodingError", e.Error())
-			case *encoding.UndefinedPacketTypeError:
-				err = c.SendError("EncodingError", e.Error())
-
-			default:
-				log.Fatal(e, msg)
-			}
-
-			// Go Back and Wait for Another Packet
-			continue
-		}
-
-		// Successfull Recieved a Packet
-		break
-	}
-	return packet, nil
 }
 
 type PacketLoggingConn struct {
