@@ -41,7 +41,7 @@ func (w World) ToState() WorldState {
 	s := WorldState{
 		Time:     w.time,
 		Bounds:   w.quadTree.Bounds(),
-		Entities: make([]entity.State, len(entities)),
+		Entities: make(entity.StateSlice, len(entities)),
 	}
 
 	i := 0

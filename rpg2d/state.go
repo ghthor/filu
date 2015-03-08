@@ -76,7 +76,7 @@ type WorldState struct {
 	Time   stime.Time   `json:"time"`
 	Bounds coord.Bounds `json:"bounds"`
 
-	Entities []entity.State `json:"entities"`
+	Entities entity.StateSlice `json:"entities"`
 
 	TerrainMap *TerrainMapState `json:"terrainMap,omitempty"`
 }
@@ -85,8 +85,8 @@ type WorldStateDiff struct {
 	Time   stime.Time   `json:"time"`
 	Bounds coord.Bounds `json:"bounds"`
 
-	Entities []entity.State `json:"entities"`
-	Removed  []entity.State `json:"removed"`
+	Entities entity.StateSlice `json:"entities"`
+	Removed  entity.StateSlice `json:"removed"`
 
 	TerrainMapSlices []*TerrainMapState `json:"terrainMapSlices,omitempty"`
 }
@@ -98,7 +98,7 @@ func (s WorldState) Clone() WorldState {
 	}
 	clone := WorldState{
 		Time:       s.Time,
-		Entities:   make([]entity.State, len(s.Entities)),
+		Entities:   make(entity.StateSlice, len(s.Entities)),
 		TerrainMap: terrainMap,
 	}
 	copy(clone.Entities, s.Entities)

@@ -39,3 +39,5 @@ type State interface {
 	// Compare to another entity
 	IsDifferentFrom(State) bool
 }
+
+type StateSlice []State
