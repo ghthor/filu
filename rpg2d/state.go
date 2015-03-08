@@ -37,74 +37,26 @@ func (m *TerrainMapState) IsEmpty() bool {
 	return m.TerrainMap.TerrainTypes == nil
 }
 
-func (m *TerrainMapState) Diff(other *TerrainMapState) (diff *TerrainMapState) {
-	if m.IsEmpty() {
-		return other
+func (m *TerrainMapState) Diff(other *TerrainMapState) []*TerrainMapState {
+	if m.IsEmpty() || !m.Bounds.Overlaps(other.Bounds) {
+		return []*TerrainMapState{other}
 	}
 
 	mBounds, oBounds := m.TerrainMap.Bounds, other.TerrainMap.Bounds
-	if mBounds == oBounds {
-		// No Overlaps
-	} else {
+	rects := mBounds.DiffFrom(oBounds)
 
-		// Find the non overlapped section and set that in the diff
-		switch {
-		// Overlap top or bottom
-		case mBounds.Width() == oBounds.Width() &&
-			mBounds.TopL.X == oBounds.TopL.X &&
-			mBounds.BotR.X == oBounds.BotR.X:
-
-			if mBounds.Height() != oBounds.Height() {
-				panic("invalid diff attempt")
-			}
-
-			// Overlaps the top
-			if oBounds.TopL.Y > mBounds.TopL.Y {
-				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					oBounds.TopL,
-					coord.Cell{oBounds.BotR.X, mBounds.TopL.Y + 1},
-				})}
-
-			} else if oBounds.BotR.Y < mBounds.BotR.Y {
-				// Overlaps the bottom
-				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					coord.Cell{oBounds.TopL.X, mBounds.BotR.Y - 1},
-					oBounds.BotR,
-				})}
-			} else {
-				panic("invalid diff attempt")
-			}
-
-			// Overlaps left of right
-		case mBounds.Height() == oBounds.Height() &&
-			mBounds.TopL.Y == oBounds.TopL.Y &&
-			mBounds.BotR.Y == oBounds.BotR.Y:
-
-			if mBounds.Width() != oBounds.Width() {
-				panic("invalid diff attempt")
-			}
-
-			// Overlaps the left
-			if oBounds.TopL.X < mBounds.TopL.X {
-				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					oBounds.TopL,
-					coord.Cell{mBounds.TopL.X - 1, oBounds.BotR.Y},
-				})}
-			} else if oBounds.BotR.X > mBounds.BotR.X {
-				// Overlaps the right
-				diff = &TerrainMapState{TerrainMap: other.Slice(coord.Bounds{
-					coord.Cell{mBounds.BotR.X + 1, oBounds.TopL.Y},
-					oBounds.BotR,
-				})}
-			} else {
-				panic("invalid diff attempt")
-			}
-
-		default:
-			panic("invalid diff attempt")
-		}
+	// mBounds == oBounds
+	if len(rects) == 0 {
+		// TODO Still need to calc changes to map types in cells
+		return nil
 	}
-	return
+
+	slices := make([]*TerrainMapState, 0, len(rects))
+	for _, r := range rects {
+		slices = append(slices, &TerrainMapState{other.Slice(r)})
+	}
+
+	return slices
 }
 
 func (m *TerrainMapState) Clone() (*TerrainMapState, error) {
@@ -213,9 +165,6 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	}
 
 	// Diff the TerrainMap
-	mapState := state.TerrainMap.Diff(other.TerrainMap)
-	if mapState != nil {
-		diff.TerrainMapSlices = []*TerrainMapState{mapState}
-	}
+	diff.TerrainMapSlices = state.TerrainMap.Diff(other.TerrainMap)
 	return
 }

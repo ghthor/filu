@@ -153,97 +153,128 @@ DGGR
 		c.Specify("can calculate there are no differences", func() {
 			terrainState := fullMap.ToState()
 
-			diff := terrainState.Diff(terrainState)
-			c.Expect(diff.IsEmpty(), IsTrue)
+			diffs := terrainState.Diff(terrainState)
+			c.Expect(diffs, ContainsExactly, []*TerrainMapState{})
 		})
 
-		c.Specify("will, when unintialized calculate a full diff with a non empty map", func() {
-			old := &TerrainMapState{}
-			terrainState := fullMap.ToState()
-			diff := old.Diff(terrainState)
+		c.Specify("that is empty", func() {
+			c.Specify("will calculate a diff that contains everything", func() {
+				old := &TerrainMapState{}
+				terrainState := fullMap.ToState()
+				diffs := old.Diff(terrainState)
 
-			c.Expect(diff.IsEmpty(), IsFalse)
-			c.Expect(diff.TerrainMap.Bounds, Equals, terrainState.TerrainMap.Bounds)
-			c.Expect(len(diff.TerrainMap.TerrainTypes), Equals, len(terrainState.TerrainMap.TerrainTypes))
+				c.Expect(len(diffs), Equals, 1)
+
+				diff := diffs[0]
+
+				c.Expect(diff.IsEmpty(), IsFalse)
+				c.Expect(diff.TerrainMap.Bounds, Equals, terrainState.TerrainMap.Bounds)
+				c.Expect(len(diff.TerrainMap.TerrainTypes), Equals, len(terrainState.TerrainMap.TerrainTypes))
+			})
 		})
 
-		c.Specify("can calculate row or col differences with another TerrainMap", func() {
-			terrainMap := fullMap.Slice(coord.Bounds{
-				C(1, -1),
-				C(2, -2),
-			})
-			oldTerrain := terrainMap.ToState()
+		c.Specify("can calculate differences with a map that overlaps to the", func() {
+			ce := func(x, y int) coord.Cell { return coord.Cell{x, y} }
+			b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
+			strs := func(diffs []*TerrainMapState) []string {
+				strs := make([]string, 0, len(diffs))
+				for _, d := range diffs {
+					strs = append(strs, d.String())
+				}
+				return strs
+			}
 
-			c.Specify("if the width is the same and the left and right edges are the same", func() {
-				c.Specify("and it overlaps the top", func() {
-					terrainMap = fullMap.Slice(coord.Bounds{
-						C(1, 0),
-						C(2, -1),
-					})
-					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
+			center := fullMap.Slice(b(ce(1, -1), ce(2, -2))).ToState()
 
-					newTerrain := terrainMap.ToState()
-					diff := oldTerrain.Diff(newTerrain)
+			diffs := func(with coord.Bounds) []*TerrainMapState {
+				return center.Diff(fullMap.Slice(with).ToState())
+			}
 
-					c.Expect(*diff.Bounds, Equals, coord.Bounds{
-						C(1, 0),
-						C(2, 0),
-					})
-					c.Expect(diff.Terrain, Equals, "\nRG\n")
-				})
+			sliceStrs := func(rows ...string) []string {
+				for i, row := range rows {
+					rows[i] = "\n" + row + "\n"
+				}
+				return rows
+			}
 
-				c.Specify("and it overlaps the bottom", func() {
-					terrainMap = fullMap.Slice(coord.Bounds{
-						C(1, -2),
-						C(2, -3),
-					})
-					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
+			c.Specify("north", func() {
+				diffs := diffs(b(
+					ce(1, 0),
+					ce(2, -1),
+				))
 
-					newTerrain := terrainMap.ToState()
-					diff := oldTerrain.Diff(newTerrain)
-
-					c.Expect(*diff.Bounds, Equals, coord.Bounds{
-						C(1, -3),
-						C(2, -3),
-					})
-					c.Expect(diff.Terrain, Equals, "\nGG\n")
-				})
+				c.Expect(len(diffs), Equals, 1)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("RG"))
 			})
 
-			c.Specify("if the height is the same and the top and bottom edges are the same", func() {
-				c.Specify("and it overlaps the left", func() {
-					terrainMap = fullMap.Slice(coord.Bounds{
-						C(0, -1),
-						C(1, -2),
-					})
-					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
+			c.Specify("north & east", func() {
+				diffs := diffs(b(
+					ce(2, 0),
+					ce(3, -1),
+				))
 
-					newTerrain := terrainMap.ToState()
-					diff := oldTerrain.Diff(newTerrain)
+				c.Expect(len(diffs), Equals, 3)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("G", "G", "D"))
+			})
 
-					c.Expect(*diff.Bounds, Equals, coord.Bounds{
-						C(0, -1),
-						C(0, -2),
-					})
-					c.Expect(diff.Terrain, Equals, "\nD\nD\n")
-				})
+			c.Specify("east", func() {
+				diffs := diffs(b(
+					ce(2, -1),
+					ce(3, -2),
+				))
 
-				c.Specify("and it overlaps the right", func() {
-					terrainMap = fullMap.Slice(coord.Bounds{
-						C(2, -1),
-						C(3, -2),
-					})
-					c.Assume(terrainMap.Bounds.Overlaps(*oldTerrain.Bounds), IsTrue)
+				c.Expect(len(diffs), Equals, 1)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("D\nR"))
+			})
 
-					newTerrain := terrainMap.ToState()
-					diff := oldTerrain.Diff(newTerrain)
+			c.Specify("south & east", func() {
+				diffs := diffs(b(
+					ce(2, -2),
+					ce(3, -3),
+				))
 
-					c.Expect(*diff.Bounds, Equals, coord.Bounds{
-						C(3, -1),
-						C(3, -2),
-					})
-					c.Expect(diff.Terrain, Equals, "\nD\nR\n")
-				})
+				c.Expect(len(diffs), Equals, 3)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("R", "R", "G"))
+			})
+
+			c.Specify("south", func() {
+				diffs := diffs(b(
+					ce(1, -2),
+					ce(2, -3),
+				))
+
+				c.Expect(len(diffs), Equals, 1)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("GG"))
+			})
+
+			c.Specify("south & west", func() {
+				diffs := diffs(b(
+					ce(0, -2),
+					ce(1, -3),
+				))
+
+				c.Expect(len(diffs), Equals, 3)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("D", "D", "G"))
+			})
+
+			c.Specify("west", func() {
+				diffs := diffs(b(
+					ce(0, -1),
+					ce(1, -2),
+				))
+
+				c.Expect(len(diffs), Equals, 1)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("D\nD"))
+			})
+
+			c.Specify("north & west", func() {
+				diffs := diffs(b(
+					ce(0, 0),
+					ce(1, -1),
+				))
+
+				c.Expect(len(diffs), Equals, 3)
+				c.Expect(strs(diffs), ContainsAll, sliceStrs("D", "G", "R"))
 			})
 		})
 	})
