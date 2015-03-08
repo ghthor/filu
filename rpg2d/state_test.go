@@ -1,7 +1,8 @@
-// +build ignore
 package rpg2d
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 
 	"github.com/ghthor/engine/rpg2d/coord"
@@ -14,32 +15,100 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
+func init() {
+	gob.Register(entitytest.MockEntityState{})
+}
+
+func (s WorldState) Equals(other interface{}) bool {
+	switch other := other.(type) {
+	case WorldState:
+		return s.isEqual(other) && other.isEqual(s)
+	default:
+	}
+
+	return false
+}
+
+func (s WorldState) isEqual(other WorldState) bool {
+	switch {
+	case s.Time != other.Time:
+		return false
+	case s.Bounds != other.Bounds:
+		return false
+	case len(s.Entities) != len(other.Entities):
+		return false
+	case !s.hasSameEntities(other):
+		return false
+	case !s.TerrainMap.isEqualTo(other.TerrainMap):
+		return false
+	}
+	return true
+}
+
+func (s WorldState) hasSameEntities(other WorldState) bool {
+nextEntity:
+	for _, e1 := range s.Entities {
+		for _, e2 := range other.Entities {
+			if e1.Id() == e2.Id() {
+				if e1.IsDifferentFrom(e2) {
+					return false
+				}
+
+				continue nextEntity
+			}
+		}
+		return false
+	}
+
+	return true
+}
+
 func DescribeWorldState(c gospec.Context) {
-	c.Specify("generates json compatitable state object", func() {
-		quadTree, err := quad.New(coord.Bounds{
-			coord.Cell{-4, 4},
-			coord.Cell{3, -3},
-		}, 20, nil)
-		c.Assume(err, IsNil)
+	quadTree, err := quad.New(coord.Bounds{
+		coord.Cell{-4, 4},
+		coord.Cell{3, -3},
+	}, 20, nil)
+	c.Assume(err, IsNil)
 
-		terrain, err := NewTerrainMap(quadTree.Bounds(), string(TT_GRASS))
-		c.Assume(err, IsNil)
+	terrain, err := NewTerrainMap(quadTree.Bounds(), string(TT_GRASS))
+	c.Assume(err, IsNil)
 
-		world := newWorld(stime.Time(0), quadTree, terrain)
+	world := newWorld(stime.Time(0), quadTree, terrain)
 
-		mockEntity := entitytest.MockEntity{EntityId: 0}
-		world.Insert(mockEntity)
+	mockEntity := entitytest.MockEntity{EntityId: 0}
+	world.Insert(mockEntity)
 
-		worldState := world.ToState()
+	worldState := world.ToState()
 
-		c.Assume(worldState.Time, Equals, stime.Time(0))
-		c.Assume(len(worldState.Entities), Equals, 1)
+	c.Assume(worldState.Time, Equals, stime.Time(0))
+	c.Assume(len(worldState.Entities), Equals, 1)
 
-		jsonBytes, err := json.Marshal(worldState)
-		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\n"}}`)
+	c.Specify("a world state", func() {
+		c.Specify("can be encoded as json", func() {
+			jsonBytes, err := json.Marshal(worldState)
+			c.Expect(err, IsNil)
+			c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\n"}}`)
+		})
 
-		c.Specify("that can be cloned and modified", func() {
+		func() {
+			buf := bytes.NewBuffer(make([]byte, 0, 1024))
+			enc := gob.NewEncoder(buf)
+
+			c.Specify("can be encoded as a gob object", func() {
+				c.Expect(enc.Encode(worldState), IsNil)
+			})
+
+			c.Specify("can be decoded from a gob object", func() {
+				dec := gob.NewDecoder(buf)
+				c.Assume(enc.Encode(worldState), IsNil)
+
+				state := WorldState{}
+				c.Expect(dec.Decode(&state), IsNil)
+				c.Expect(state, Equals, worldState)
+			})
+		}()
+
+		c.Specify("can be cloned and modified", func() {
 			world.Insert(entitytest.MockEntity{EntityId: 1})
 			world.Insert(entitytest.MockEntity{EntityId: 2})
 			world.Insert(entitytest.MockEntity{EntityId: 3})
@@ -59,7 +128,7 @@ func DescribeWorldState(c gospec.Context) {
 			}
 		})
 
-		c.Specify("that can be culled by a bounding rectangle", func() {
+		c.Specify("can be culled by a bounding rectangle", func() {
 			toBeCulled := []entity.State{
 				entitytest.MockEntity{EntityCell: coord.Cell{-3, 3}}.ToState(),
 				entitytest.MockEntity{EntityCell: coord.Cell{3, 3}}.ToState(),
@@ -93,7 +162,7 @@ GGGGG
 `)
 		})
 
-		c.Specify("that can calculate the differences with a previous worldState state", func() {
+		c.Specify("can calculate the differences with a previous worldState state", func() {
 			c.Specify("when there are no differences", func() {
 				c.Expect(len(worldState.Diff(worldState).Entities), Equals, 0)
 			})

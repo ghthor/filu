@@ -7,6 +7,11 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
+func (m *TerrainMapState) isEqualTo(other *TerrainMapState) bool {
+	return m.Bounds == other.Bounds &&
+		m.String() == other.String()
+}
+
 func DescribeTerrainMap(c gospec.Context) {
 	C := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 

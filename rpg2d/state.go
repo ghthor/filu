@@ -1,6 +1,8 @@
 package rpg2d
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 
 	"github.com/ghthor/engine/rpg2d/coord"
@@ -18,6 +20,29 @@ func (m TerrainMapState) MarshalJSON() ([]byte, error) {
 		Bounds:  m.TerrainMap.Bounds,
 		Terrain: m.TerrainMap.String(),
 	})
+}
+
+func (m TerrainMapState) MarshalBinary() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, 1024))
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(TerrainMapStateSlice{
+		Bounds:  m.TerrainMap.Bounds,
+		Terrain: m.TerrainMap.String(),
+	})
+
+	return buf.Bytes(), err
+}
+
+func (m *TerrainMapState) UnmarshalBinary(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	slice := TerrainMapStateSlice{}
+	err := dec.Decode(&slice)
+	if err != nil {
+		return err
+	}
+
+	m.TerrainMap, err = NewTerrainMap(slice.Bounds, slice.Terrain)
+	return err
 }
 
 type TerrainMapStateSlice struct {
