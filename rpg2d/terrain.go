@@ -90,6 +90,9 @@ func (m TerrainMap) Cell(c Cell) TerrainType {
 }
 
 // Return a slice of terrain within a given bounds.
+// This method doesn't copy any memory.
+// The slice is viewport into the same memeory as
+// the map it is sliced from.
 func (m TerrainMap) Slice(bounds Bounds) TerrainMap {
 	bounds, err := m.Bounds.Intersection(bounds)
 	if err != nil {
@@ -118,7 +121,7 @@ func (m TerrainMap) Clone() (TerrainMap, error) {
 		return m, nil
 	}
 
-	// LoL this is lazy, but it's ok cause this method isn't important right now
+	// TODO LoL this is lazy, but it's ok cause this method isn't important right now
 	return NewTerrainMap(m.Bounds, m.String())
 }
 
