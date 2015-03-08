@@ -31,7 +31,6 @@ func DescribeWorldState(c gospec.Context) {
 		world.Insert(mockEntity)
 
 		worldState := world.ToState()
-		worldState.TerrainMap.Prepare()
 
 		c.Assume(worldState.Time, Equals, stime.Time(0))
 		c.Assume(len(worldState.Entities), Equals, 1)

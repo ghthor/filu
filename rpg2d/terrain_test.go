@@ -173,7 +173,6 @@ DGGR
 				C(2, -2),
 			})
 			oldTerrain := terrainMap.ToState()
-			oldTerrain.Prepare()
 
 			c.Specify("if the width is the same and the left and right edges are the same", func() {
 				c.Specify("and it overlaps the top", func() {
@@ -185,7 +184,6 @@ DGGR
 
 					newTerrain := terrainMap.ToState()
 					diff := oldTerrain.Diff(newTerrain)
-					diff.Prepare()
 
 					c.Expect(*diff.Bounds, Equals, coord.Bounds{
 						C(1, 0),
@@ -203,7 +201,6 @@ DGGR
 
 					newTerrain := terrainMap.ToState()
 					diff := oldTerrain.Diff(newTerrain)
-					diff.Prepare()
 
 					c.Expect(*diff.Bounds, Equals, coord.Bounds{
 						C(1, -3),
@@ -223,7 +220,6 @@ DGGR
 
 					newTerrain := terrainMap.ToState()
 					diff := oldTerrain.Diff(newTerrain)
-					diff.Prepare()
 
 					c.Expect(*diff.Bounds, Equals, coord.Bounds{
 						C(0, -1),
@@ -241,7 +237,6 @@ DGGR
 
 					newTerrain := terrainMap.ToState()
 					diff := oldTerrain.Diff(newTerrain)
-					diff.Prepare()
 
 					c.Expect(*diff.Bounds, Equals, coord.Bounds{
 						C(3, -1),

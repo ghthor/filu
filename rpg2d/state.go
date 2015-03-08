@@ -1,29 +1,33 @@
 package rpg2d
 
 import (
+	"encoding/json"
+
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/sim/stime"
 )
 
+// Used to calculate diff's
 type TerrainMapState struct {
-	// Used to calculate diff's
-	TerrainMap `json:"-"`
-
-	// A Slice of new terrain the client doesn't have
-	Bounds  *coord.Bounds `json:"bounds,omitempty"`
-	Terrain string        `json:"terrain,omitempty"`
-
-	// An array of type changes
-	Changes []TerrainTypeChange `json:"changes,omitempty"`
+	TerrainMap
 }
 
-// Prepare to be Marshalled
-func (m *TerrainMapState) Prepare() {
-	// Set the bounds
-	m.Bounds = &m.TerrainMap.Bounds
-	// Write out the Map as a string
-	m.Terrain = m.TerrainMap.String()
+func (m TerrainMapState) MarshalJSON() ([]byte, error) {
+	return json.Marshal(TerrainMapStateSlice{
+		Bounds:  m.TerrainMap.Bounds,
+		Terrain: m.TerrainMap.String(),
+	})
+}
+
+type TerrainMapStateSlice struct {
+	Bounds  coord.Bounds `json:"bounds"`
+	Terrain string       `json:"terrain"`
+}
+
+type TerrainMapStateDiff struct {
+	Bounds  coord.Bounds        `json:"bounds"`
+	Changes []TerrainTypeChange `json:"changes"`
 }
 
 func (m *TerrainMapState) IsEmpty() bool {
@@ -214,15 +218,4 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 		diff.TerrainMapSlices = []*TerrainMapState{mapState}
 	}
 	return
-}
-
-// TerrainMap needs an extra step before sending
-// TODO remove this maybe?
-// The extra step is to avoid casting the entire terrain map to a string
-// when the world state json is created. The Diff function could run this step
-// and we could call it "Finalize"
-func (s WorldState) Prepare() {
-	if !s.TerrainMap.IsEmpty() {
-		s.TerrainMap.Prepare()
-	}
 }
