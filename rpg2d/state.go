@@ -133,6 +133,7 @@ func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 // the changes necessary to get from state to other.
 func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	diff.Time = other.Time
+	diff.Bounds = other.Bounds
 
 	if len(state.Entities) == 0 && len(other.Entities) > 0 {
 		diff.Entities = other.Entities
