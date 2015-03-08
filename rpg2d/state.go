@@ -117,10 +117,22 @@ func (m *TerrainMapState) Clone() (*TerrainMapState, error) {
 }
 
 type WorldState struct {
-	Time       stime.Time       `json:"time"`
-	Entities   []entity.State   `json:"entities"`
-	Removed    []entity.State   `json:"removed"`
+	Time   stime.Time   `json:"time"`
+	Bounds coord.Bounds `json:"bounds"`
+
+	Entities []entity.State `json:"entities"`
+
 	TerrainMap *TerrainMapState `json:"terrainMap,omitempty"`
+}
+
+type WorldStateDiff struct {
+	Time   stime.Time   `json:"time"`
+	Bounds coord.Bounds `json:"bounds"`
+
+	Entities []entity.State `json:"entities"`
+	Removed  []entity.State `json:"removed"`
+
+	TerrainMapSlices []*TerrainMapState `json:"terrainMapSlices,omitempty"`
 }
 
 func (s WorldState) Clone() WorldState {
@@ -129,10 +141,9 @@ func (s WorldState) Clone() WorldState {
 		panic("error cloning terrain map: " + err.Error())
 	}
 	clone := WorldState{
-		s.Time,
-		make([]entity.State, len(s.Entities)),
-		nil,
-		terrainMap,
+		Time:       s.Time,
+		Entities:   make([]entity.State, len(s.Entities)),
+		TerrainMap: terrainMap,
 	}
 	copy(clone.Entities, s.Entities)
 	return clone
@@ -164,7 +175,7 @@ func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 // entities and terrain that is different such
 // that state + diff == other. Diff is therefor
 // the changes necessary to get from state to other.
-func (state WorldState) Diff(other WorldState) (diff WorldState) {
+func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	diff.Time = other.Time
 
 	if len(state.Entities) == 0 && len(other.Entities) > 0 {
@@ -198,7 +209,10 @@ func (state WorldState) Diff(other WorldState) (diff WorldState) {
 	}
 
 	// Diff the TerrainMap
-	diff.TerrainMap = state.TerrainMap.Diff(other.TerrainMap)
+	mapState := state.TerrainMap.Diff(other.TerrainMap)
+	if mapState != nil {
+		diff.TerrainMapSlices = []*TerrainMapState{mapState}
+	}
 	return
 }
 

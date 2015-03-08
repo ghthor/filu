@@ -38,7 +38,7 @@ func DescribeWorldState(c gospec.Context) {
 
 		jsonBytes, err := json.Marshal(worldState)
 		c.Expect(err, IsNil)
-		c.Expect(string(jsonBytes), Equals, `{"time":0,"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"removed":null,"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\n"}}`)
+		c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\n"}}`)
 
 		c.Specify("that can be cloned and modified", func() {
 			world.Insert(entitytest.MockEntity{EntityId: 1})
@@ -129,16 +129,17 @@ GGGGG
 					coord.Cell{2, -2},
 				})
 
+				// TODO Specify all 4 directions and all 4 corners
 				clone = clone.Cull(coord.Bounds{
 					coord.Cell{-3, 2},
 					coord.Cell{1, -2},
 				})
-				c.Expect(worldState.Diff(clone).TerrainMap, Not(IsNil))
+				c.Expect(worldState.Diff(clone).TerrainMapSlices, Not(IsNil))
 			})
 
 			c.Specify("when the viewport hasn't changed", func() {
 				clone := worldState.Clone()
-				c.Expect(worldState.Diff(clone).TerrainMap, IsNil)
+				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*TerrainMapState{})
 			})
 		})
 	})
