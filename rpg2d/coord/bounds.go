@@ -180,3 +180,161 @@ func (b Bounds) Quads() ([4]Bounds, error) {
 
 	return bounds, nil
 }
+
+// Diffs 2 overlapping bounds and returns a slice
+// of rectangles that are contained within b and
+// not contained within other. The slice of rectangles
+// will either have 1,2,3,5,8 rectangles.
+//
+//    1 rect - Iff w && h are the same and it shares 2 parallel edges
+//             aka, its been translated in 1 of the 4 directions
+//    2 rect - TODO Iff w || h are different but it shares 2 perpendicular edges
+//    3 rect - TODO If w && h are different and it shares 2 perpendicular edges
+//    3 rect - *TODO If w && h are the same, but it's been translated by 2 directions
+//    5 rect - TODO Iff w && h are different and other shares 1 edge with b
+//    8 rect - TODO Iff b contains other and shares no edges
+func (a Bounds) DiffFrom(b Bounds) []Bounds {
+	switch {
+	case !a.Overlaps(b):
+		// No Overlap
+	case a.TopL == b.TopL && a.BotR == b.BotR:
+		// Same Bounds
+
+	case a.Width() == b.Width() && a.Height() == b.Height():
+		switch {
+		case a.TopL.X == b.TopL.X && a.BotR.X == b.BotR.X:
+			// b Translated North/South
+			return []Bounds{a.vdiff(b)}
+		case a.TopL.Y == b.TopL.Y && a.BotR.Y == b.BotR.Y:
+			// b Translated East/West
+			return []Bounds{a.hdiff(b)}
+		default:
+			rects := a.diff3(b)
+			return rects[0:]
+		}
+
+	default:
+	}
+	return nil
+}
+
+func (a Bounds) vdiff(b Bounds) Bounds {
+	switch max(a.TopL.Y, b.TopL.Y) {
+	case a.TopL.Y:
+		// b Translated South
+		return Bounds{
+			Cell{
+				a.TopL.X,
+				a.BotR.Y - 1,
+			},
+			b.BotR,
+		}
+
+	case b.TopL.Y:
+		// b Translated North
+		return Bounds{
+			b.TopL,
+			Cell{
+				b.BotR.X,
+				a.TopL.Y + 1,
+			},
+		}
+	}
+
+	return Bounds{}
+}
+
+func (a Bounds) hdiff(b Bounds) Bounds {
+	switch max(a.BotR.X, b.BotR.X) {
+	case b.BotR.X:
+		// b Translated East
+		return Bounds{
+			Cell{
+				a.BotR.X + 1,
+				a.TopL.Y,
+			},
+			b.BotR,
+		}
+
+	case a.BotR.X:
+		// b Translated West
+		return Bounds{
+			b.TopL,
+			Cell{
+				a.TopL.X - 1,
+				b.BotR.Y,
+			},
+		}
+	}
+
+	return Bounds{}
+}
+
+func (a Bounds) diff3(b Bounds) (rects [3]Bounds) {
+	switch {
+	case a.Contains(b.BotL()):
+		rects = a.diff3ne(b)
+
+	case a.Contains(b.TopL):
+		rects = a.diff3se(b)
+
+	case a.Contains(b.TopR()):
+		rects = a.diff3sw(b)
+
+	case a.Contains(b.BotR):
+		rects = a.diff3nw(b)
+	}
+	return
+}
+
+func (a Bounds) diff3ne(b Bounds) [3]Bounds {
+	return [3]Bounds{{
+		b.TopL,
+		Cell{a.BotR.X, a.TopL.Y + 1},
+	}, {
+		Cell{a.BotR.X + 1, b.TopL.Y},
+		Cell{b.BotR.X, a.TopL.Y + 1},
+	}, {
+		Cell{a.BotR.X + 1, a.TopL.Y},
+		b.BotR,
+	}}
+}
+
+func (a Bounds) diff3se(b Bounds) (rects [3]Bounds) {
+	return [3]Bounds{{
+		Cell{a.BotR.X + 1, b.TopL.Y},
+		Cell{b.BotR.X, a.BotR.Y},
+	}, {
+		Cell{a.BotR.X + 1, a.BotR.Y - 1},
+		b.BotR,
+	}, {
+		Cell{b.TopL.X, a.BotR.Y - 1},
+		Cell{a.BotR.X, b.BotR.Y},
+	}}
+}
+
+func (a Bounds) diff3sw(b Bounds) (rects [3]Bounds) {
+	return [3]Bounds{{
+		Cell{a.TopL.X, a.BotR.Y - 1},
+		b.BotR,
+	}, {
+		Cell{b.TopL.X, a.BotR.Y - 1},
+		Cell{a.TopL.X - 1, b.BotR.Y},
+	}, {
+		b.TopL,
+		Cell{a.TopL.X - 1, a.BotR.Y},
+	}}
+}
+
+func (a Bounds) diff3nw(b Bounds) (rects [3]Bounds) {
+	return [3]Bounds{{
+		Cell{b.TopL.X, a.TopL.Y},
+		Cell{a.TopL.X - 1, b.BotR.Y},
+	}, {
+		b.TopL,
+		Cell{a.TopL.X - 1, a.TopL.Y + 1},
+	}, {
+		Cell{a.TopL.X, b.TopL.Y},
+		Cell{b.BotR.X, a.TopL.Y + 1},
+	}}
+}

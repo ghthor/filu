@@ -580,4 +580,120 @@ func DescribeBounds(c gospec.Context) {
 			c.Expect(err, Equals, ErrBoundsAreInverted)
 		})
 	})
+
+	c.Specify("bounds can be diffed with another bounds", func() {
+		bounds := Bounds{Cell{-1, 1}, Cell{1, -1}}
+
+		c.Specify("and will return", func() {
+			c.Specify("0 rectangles if bounds are the same", func() {
+				c.Expect(len(bounds.DiffFrom(bounds)), Equals, 0)
+			})
+
+			c.Specify("1 rectangle that is different", func() {
+				// Translated North
+				c.Specify("when other bounds is moved to the", func() {
+					c.Specify("north", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{-1, 2},
+							Cell{1, 0},
+						}), ContainsExactly, []Bounds{{
+							Cell{-1, 2},
+							Cell{1, 2},
+						}})
+					})
+
+					c.Specify("east", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{0, 1},
+							Cell{2, -1},
+						}), ContainsExactly, []Bounds{{
+							Cell{2, 1},
+							Cell{2, -1},
+						}})
+					})
+
+					c.Specify("south", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{-1, 0},
+							Cell{1, -2},
+						}), ContainsExactly, []Bounds{{
+							Cell{-1, -2},
+							Cell{1, -2},
+						}})
+					})
+
+					c.Specify("west", func() {
+					})
+				})
+			})
+
+			c.Specify("3 rectangles that are different", func() {
+				c.Specify("when other bounds is moved to the", func() {
+					c.Specify("north & east", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{0, 2},
+							Cell{2, 0},
+						}), ContainsAll, []Bounds{{
+							Cell{0, 2},
+							Cell{1, 2},
+						}, Bounds{
+							Cell{2, 2},
+							Cell{2, 2},
+						}, Bounds{
+							Cell{2, 1},
+							Cell{2, 0},
+						}})
+					})
+
+					c.Specify("south & east", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{0, 0},
+							Cell{2, -2},
+						}), ContainsAll, []Bounds{{
+							Cell{2, 0},
+							Cell{2, -1},
+						}, Bounds{
+							Cell{2, -2},
+							Cell{2, -2},
+						}, Bounds{
+							Cell{0, -2},
+							Cell{1, -2},
+						}})
+					})
+
+					c.Specify("south & west", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{-2, 0},
+							Cell{0, -2},
+						}), ContainsAll, []Bounds{{
+							Cell{-1, -2},
+							Cell{0, -2},
+						}, Bounds{
+							Cell{-2, -2},
+							Cell{-2, -2},
+						}, Bounds{
+							Cell{-2, 0},
+							Cell{-2, -1},
+						}})
+					})
+
+					c.Specify("north & west", func() {
+						c.Expect(bounds.DiffFrom(Bounds{
+							Cell{-2, 2},
+							Cell{0, 0},
+						}), ContainsAll, []Bounds{{
+							Cell{-2, 1},
+							Cell{-2, 0},
+						}, Bounds{
+							Cell{-2, 2},
+							Cell{-2, 2},
+						}, Bounds{
+							Cell{-1, 2},
+							Cell{0, 2},
+						}})
+					})
+				})
+			})
+		})
+	})
 }
