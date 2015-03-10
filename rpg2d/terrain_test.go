@@ -136,6 +136,26 @@ GGR
 				C(-3000, -3001),
 			})
 		})
+
+		c.Specify("can be joined", func() {
+			fullBounds := coord.Bounds{C(-2, 2), C(0, 0)}
+			initialBounds := coord.Bounds{C(-1, 1), C(0, 0)}
+			resultBounds := coord.Bounds{C(-2, 2), C(-1, 1)}
+
+			fullMap, err := NewTerrainMap(fullBounds, `
+GDR
+RGD
+DRG
+`)
+			initialSlice := fullMap.Slice(initialBounds)
+			resultSlice := fullMap.Slice(resultBounds)
+
+			actualMap, err := initialSlice.Clone()
+			c.Assume(err, IsNil)
+			err = actualMap.MergeDiff(resultBounds, initialSlice.ToState().Diff(resultSlice.ToState())...)
+			c.Assume(err, IsNil)
+			c.Expect(actualMap.String(), Equals, resultSlice.String())
+		})
 	})
 
 	c.Specify("a terrain map state", func() {

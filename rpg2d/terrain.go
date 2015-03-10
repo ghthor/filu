@@ -147,3 +147,104 @@ func (m TerrainMap) String() string {
 func (m TerrainMap) ToState() *TerrainMapState {
 	return &TerrainMapState{m}
 }
+
+func (m *TerrainMap) MergeDiff(newBounds coord.Bounds, slices ...TerrainMapStateSlice) error {
+	maps := make([]TerrainMap, 0, len(slices)+1)
+	for _, slice := range slices {
+		m, err := NewTerrainMap(slice.Bounds, slice.Terrain)
+		if err != nil {
+			return err
+		}
+		maps = append(maps, m)
+	}
+	maps = append(maps, m.Slice(newBounds))
+
+	joined, err := JoinTerrain(newBounds, maps...)
+	if err != nil {
+		return err
+	}
+
+	*m = joined
+
+	return nil
+}
+
+func JoinTerrain(newBounds coord.Bounds, maps ...TerrainMap) (TerrainMap, error) {
+	switch len(maps) {
+	case 2:
+		b0 := maps[0].Bounds
+		b1 := maps[1].Bounds
+
+		switch {
+		case b0.TopL.X == b1.TopL.X:
+			var top, bot TerrainMap
+
+			switch {
+			case b0.TopL == newBounds.TopL || b0.TopR() == newBounds.TopR():
+				top, bot = maps[0], maps[1]
+			case b0.BotL() == newBounds.BotL() || b0.BotR == newBounds.BotR:
+				top, bot = maps[1], maps[0]
+			}
+			return join2vert(newBounds, top, bot), nil
+
+		case b0.TopL.Y == b1.TopL.Y:
+			var left, right TerrainMap
+
+			switch {
+			case b0.TopL == newBounds.TopL || b0.BotL() == newBounds.BotL():
+				left, right = maps[0], maps[1]
+			case b0.TopR() == newBounds.TopR() || b0.BotR == newBounds.BotR:
+				left, right = maps[1], maps[0]
+			}
+			return join2horz(newBounds, left, right), nil
+
+		default:
+			return TerrainMap{}, fmt.Errorf("invalid 2 terrain join: %v", maps)
+		}
+	case 4:
+		var tl, tr, br, bl TerrainMap
+		for _, m := range maps {
+			switch {
+			case m.Bounds.TopL == newBounds.TopL:
+				tl = m
+			case m.Bounds.TopR() == newBounds.TopR():
+				tr = m
+			case m.Bounds.BotR == newBounds.BotR:
+				br = m
+			case m.Bounds.BotL() == newBounds.BotL():
+				bl = m
+
+			default:
+				return TerrainMap{}, fmt.Errorf("invalid 4 terrain join: %v", maps)
+			}
+		}
+
+		return join4(newBounds, tl, tr, br, bl), nil
+
+	default:
+		return TerrainMap{}, fmt.Errorf("unsupported terrain map join: %v", maps)
+	}
+}
+
+func join2horz(newBounds coord.Bounds, left, right TerrainMap) TerrainMap {
+	for y, row := range right.TerrainTypes {
+		left.TerrainTypes[y] = append(left.TerrainTypes[y], row...)
+	}
+
+	left.Bounds.TopL = left.Bounds.TopL
+	left.Bounds.BotR = right.Bounds.BotR
+	return left
+}
+
+func join2vert(newBounds coord.Bounds, top, bot TerrainMap) TerrainMap {
+	top.TerrainTypes = append(top.TerrainTypes, bot.TerrainTypes...)
+	top.Bounds.BotR = bot.Bounds.BotR
+	return top
+}
+
+func join4(newBounds coord.Bounds, tl, tr, br, bl TerrainMap) TerrainMap {
+	return join2vert(newBounds,
+		join2horz(newBounds, tl, tr),
+		join2horz(newBounds, bl, br),
+	)
+}
