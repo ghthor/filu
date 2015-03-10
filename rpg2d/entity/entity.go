@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/ghthor/engine/rpg2d/coord"
+import (
+	"sync"
+
+	"github.com/ghthor/engine/rpg2d/coord"
+)
 
 // A unique Id for an entity
 type Id int64
@@ -41,3 +45,21 @@ type State interface {
 }
 
 type StateSlice []State
+
+// Returns a function to generate consecutive
+// entity Id's that is safe to call concurrently.
+func NewIdGenerator() func() Id {
+	var (
+		mu     sync.Mutex
+		nextId Id
+	)
+
+	return func() Id {
+		mu.Lock()
+		defer func() {
+			nextId++
+			mu.Unlock()
+		}()
+		return nextId
+	}
+}
