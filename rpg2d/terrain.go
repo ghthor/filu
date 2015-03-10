@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 
-	. "github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/engine/rpg2d/coord"
 )
 
 // Represents a type of terrain in the world.
@@ -21,20 +22,20 @@ const (
 // A terrain map is a dense store of terrain state.
 // Ever cell in the world has a terrain type.
 type TerrainMap struct {
-	Bounds Bounds
+	Bounds coord.Bounds
 	// y, x
 	TerrainTypes [][]TerrainType
 }
 
 // A change to the terrain type of a cell.
 type TerrainTypeChange struct {
-	Cell        Cell        `json:"cell"`
+	Cell        coord.Cell  `json:"cell"`
 	TerrainType TerrainType `json:"type"`
 }
 
 // TODO extract the errors this constructor returns
 // into static error values.
-func NewTerrainMap(bounds Bounds, s string) (TerrainMap, error) {
+func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
 	if len(s) == 0 {
 		return TerrainMap{}, errors.New("invalid TerrainType")
 	}
@@ -82,7 +83,7 @@ func NewTerrainMap(bounds Bounds, s string) (TerrainMap, error) {
 }
 
 // Return the terrain type in a given cell.
-func (m TerrainMap) Cell(c Cell) TerrainType {
+func (m TerrainMap) Cell(c coord.Cell) TerrainType {
 	x := c.X - m.Bounds.TopL.X
 	y := -(c.Y - m.Bounds.TopL.Y)
 
@@ -93,7 +94,7 @@ func (m TerrainMap) Cell(c Cell) TerrainType {
 // This method doesn't copy any memory.
 // The slice is viewport into the same memeory as
 // the map it is sliced from.
-func (m TerrainMap) Slice(bounds Bounds) TerrainMap {
+func (m TerrainMap) Slice(bounds coord.Bounds) TerrainMap {
 	bounds, err := m.Bounds.Intersection(bounds)
 	if err != nil {
 		panic("invalid terrain map slicing operation: " + err.Error())
