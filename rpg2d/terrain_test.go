@@ -168,25 +168,25 @@ DGGR
 				diff := diffs[0]
 
 				c.Expect(diff.IsEmpty(), IsFalse)
-				c.Expect(diff.TerrainMap.Bounds, Equals, terrainState.TerrainMap.Bounds)
-				c.Expect(len(diff.TerrainMap.TerrainTypes), Equals, len(terrainState.TerrainMap.TerrainTypes))
+				c.Expect(diff.Bounds, Equals, terrainState.TerrainMap.Bounds)
+				c.Expect(diff.Terrain, Equals, terrainState.String())
 			})
 		})
 
 		c.Specify("can calculate differences with a map that overlaps to the", func() {
 			ce := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 			b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
-			strs := func(diffs []*TerrainMapState) []string {
+			strs := func(diffs []TerrainMapStateSlice) []string {
 				strs := make([]string, 0, len(diffs))
 				for _, d := range diffs {
-					strs = append(strs, d.String())
+					strs = append(strs, d.Terrain)
 				}
 				return strs
 			}
 
 			center := fullMap.Slice(b(ce(1, -1), ce(2, -2))).ToState()
 
-			diffs := func(with coord.Bounds) []*TerrainMapState {
+			diffs := func(with coord.Bounds) []TerrainMapStateSlice {
 				return center.Diff(fullMap.Slice(with).ToState())
 			}
 

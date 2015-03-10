@@ -62,9 +62,12 @@ func (m *TerrainMapState) IsEmpty() bool {
 	return m.TerrainMap.TerrainTypes == nil
 }
 
-func (m *TerrainMapState) Diff(other *TerrainMapState) []*TerrainMapState {
+func (m *TerrainMapState) Diff(other *TerrainMapState) []TerrainMapStateSlice {
 	if m.IsEmpty() || !m.Bounds.Overlaps(other.Bounds) {
-		return []*TerrainMapState{other}
+		return []TerrainMapStateSlice{{
+			Bounds:  other.Bounds,
+			Terrain: other.String(),
+		}}
 	}
 
 	mBounds, oBounds := m.TerrainMap.Bounds, other.TerrainMap.Bounds
@@ -76,9 +79,13 @@ func (m *TerrainMapState) Diff(other *TerrainMapState) []*TerrainMapState {
 		return nil
 	}
 
-	slices := make([]*TerrainMapState, 0, len(rects))
+	slices := make([]TerrainMapStateSlice, 0, len(rects))
 	for _, r := range rects {
-		slices = append(slices, &TerrainMapState{other.Slice(r)})
+		slice := other.Slice(r)
+		slices = append(slices, TerrainMapStateSlice{
+			Bounds:  r,
+			Terrain: slice.String(),
+		})
 	}
 
 	return slices
@@ -97,6 +104,10 @@ func (m *TerrainMapState) Clone() (*TerrainMapState, error) {
 	return &TerrainMapState{TerrainMap: tm}, nil
 }
 
+func (m TerrainMapStateSlice) IsEmpty() bool {
+	return m.Bounds == coord.Bounds{}
+}
+
 type WorldState struct {
 	Time   stime.Time   `json:"time"`
 	Bounds coord.Bounds `json:"bounds"`
@@ -113,7 +124,7 @@ type WorldStateDiff struct {
 	Entities entity.StateSlice `json:"entities"`
 	Removed  entity.StateSlice `json:"removed"`
 
-	TerrainMapSlices []*TerrainMapState `json:"terrainMapSlices,omitempty"`
+	TerrainMapSlices []TerrainMapStateSlice `json:"terrainMapSlices,omitempty"`
 }
 
 func (s WorldState) Clone() WorldState {
