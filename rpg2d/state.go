@@ -135,6 +135,7 @@ func (s WorldState) Clone() WorldState {
 // Does NOT change world state type.
 func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 	culled.Time = s.Time
+	culled.Bounds = bounds
 
 	// Cull Entities
 	for _, e := range s.Entities {

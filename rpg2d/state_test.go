@@ -109,6 +109,11 @@ func DescribeWorldState(c gospec.Context) {
 				coord.Cell{2, -2},
 			})
 
+			c.Expect(worldState.Bounds, Equals, coord.Bounds{
+				coord.Cell{-2, 2},
+				coord.Cell{2, -2},
+			})
+
 			c.Expect(worldState.Entities, Not(ContainsAll), toBeCulled)
 			c.Expect(worldState.Entities, ContainsAll, wontBeCulled)
 			c.Expect(worldState.TerrainMap.String(), Equals, `
