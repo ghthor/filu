@@ -228,7 +228,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	haltReq = haltCh
 
 	clock := stime.Clock(initialState.now)
-	world := newWorld(initialState.now, initialState.quadTree, initialState.terrainMap)
+	world := NewWorld(initialState.now, initialState.quadTree, initialState.terrainMap)
 
 	//---- User provided update phase
 	updatePhase := settings.UpdatePhaseHandler

@@ -1,14 +1,16 @@
-package rpg2d
+package rpg2d_test
 
 import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
 
+	"github.com/ghthor/engine/rpg2d"
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
 	"github.com/ghthor/engine/rpg2d/entity/entitytest"
 	"github.com/ghthor/engine/rpg2d/quad"
+	"github.com/ghthor/engine/rpg2d/rpg2dtest"
 	"github.com/ghthor/engine/sim/stime"
 
 	"github.com/ghthor/gospec"
@@ -19,50 +21,6 @@ func init() {
 	gob.Register(entitytest.MockEntityState{})
 }
 
-func (s WorldState) Equals(other interface{}) bool {
-	switch other := other.(type) {
-	case WorldState:
-		return s.isEqual(other) && other.isEqual(s)
-	default:
-	}
-
-	return false
-}
-
-func (s WorldState) isEqual(other WorldState) bool {
-	switch {
-	case s.Time != other.Time:
-		return false
-	case s.Bounds != other.Bounds:
-		return false
-	case len(s.Entities) != len(other.Entities):
-		return false
-	case !s.hasSameEntities(other):
-		return false
-	case !s.TerrainMap.isEqualTo(other.TerrainMap):
-		return false
-	}
-	return true
-}
-
-func (s WorldState) hasSameEntities(other WorldState) bool {
-nextEntity:
-	for _, e1 := range s.Entities {
-		for _, e2 := range other.Entities {
-			if e1.Id() == e2.Id() {
-				if e1.IsDifferentFrom(e2) {
-					return false
-				}
-
-				continue nextEntity
-			}
-		}
-		return false
-	}
-
-	return true
-}
-
 func DescribeWorldState(c gospec.Context) {
 	quadTree, err := quad.New(coord.Bounds{
 		coord.Cell{-4, 4},
@@ -70,10 +28,10 @@ func DescribeWorldState(c gospec.Context) {
 	}, 20, nil)
 	c.Assume(err, IsNil)
 
-	terrain, err := NewTerrainMap(quadTree.Bounds(), string(TT_GRASS))
+	terrain, err := rpg2d.NewTerrainMap(quadTree.Bounds(), string(rpg2d.TT_GRASS))
 	c.Assume(err, IsNil)
 
-	world := newWorld(stime.Time(0), quadTree, terrain)
+	world := rpg2d.NewWorld(stime.Time(0), quadTree, terrain)
 
 	mockEntity := entitytest.MockEntity{EntityId: 0}
 	world.Insert(mockEntity)
@@ -102,9 +60,9 @@ func DescribeWorldState(c gospec.Context) {
 				dec := gob.NewDecoder(buf)
 				c.Assume(enc.Encode(worldState), IsNil)
 
-				state := WorldState{}
+				state := rpg2d.WorldState{}
 				c.Expect(dec.Decode(&state), IsNil)
-				c.Expect(state, Equals, worldState)
+				c.Expect(state, rpg2dtest.StateEquals, worldState)
 			})
 		}()
 
@@ -207,7 +165,7 @@ GGGGG
 
 			c.Specify("when the viewport hasn't changed", func() {
 				clone := worldState.Clone()
-				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*TerrainMapState{})
+				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*rpg2d.TerrainMapState{})
 			})
 		})
 	})

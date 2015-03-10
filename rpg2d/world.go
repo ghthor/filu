@@ -12,7 +12,7 @@ type World struct {
 	terrain  TerrainMap
 }
 
-func newWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
+func NewWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
 	return &World{
 		time:     now,
 		quadTree: quad,

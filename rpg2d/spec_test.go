@@ -12,7 +12,7 @@ func TestUnitSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
 	r.AddSpec(rpg2d.DescribeTerrainMap)
-	r.AddSpec(rpg2d.DescribeWorldState)
+	r.AddSpec(DescribeWorldState)
 
 	r.AddSpec(DescribeASimulation)
 
