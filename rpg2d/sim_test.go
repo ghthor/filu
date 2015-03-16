@@ -27,8 +27,9 @@ func (mockActor) WriteState(rpg2d.WorldState) {}
 func (a mockActor) Entity() entity.Entity     { return a.mockActorEntity }
 
 // Implement entity.Entity
-func (a mockActorEntity) Id() entity.Id    { return a.id }
-func (a mockActorEntity) Cell() coord.Cell { return a.cell }
+func (a mockActorEntity) Id() entity.Id       { return a.id }
+func (a mockActorEntity) EntityId() entity.Id { return a.id }
+func (a mockActorEntity) Cell() coord.Cell    { return a.cell }
 func (a mockActorEntity) Bounds() coord.Bounds {
 	return coord.Bounds{a.cell, a.cell}
 }

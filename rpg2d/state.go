@@ -179,7 +179,7 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	nextEntity:
 		for _, entity := range other.Entities {
 			for _, old := range state.Entities {
-				if entity.Id() == old.Id() {
+				if entity.EntityId() == old.EntityId() {
 					if old.IsDifferentFrom(entity) {
 						diff.Entities = append(diff.Entities, entity)
 					}
@@ -194,7 +194,7 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	entityStillExists:
 		for _, old := range state.Entities {
 			for _, entity := range other.Entities {
-				if old.Id() == entity.Id() {
+				if old.EntityId() == entity.EntityId() {
 					continue entityStillExists
 				}
 			}

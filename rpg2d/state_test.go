@@ -82,7 +82,7 @@ func DescribeWorldState(c gospec.Context) {
 			for i, e := range worldState.Entities {
 				e, isMockEntity := e.(entitytest.MockEntityState)
 				c.Assume(isMockEntity, IsTrue)
-				c.Expect(e.Id(), Equals, entity.Id(i))
+				c.Expect(e.EntityId(), Equals, entity.Id(i))
 			}
 		})
 
@@ -135,7 +135,7 @@ GGGGG
 				entity := clone.Entities[0].(entitytest.MockEntityState)
 
 				// This is a state change
-				entity.EntityCell = coord.Cell{-1, 0}
+				entity.Cell = coord.Cell{-1, 0}
 				clone.Entities[0] = entity
 
 				c.Expect(len(worldState.Diff(clone).Entities), Equals, 1)

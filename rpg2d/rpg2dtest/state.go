@@ -63,7 +63,7 @@ func (s worldState) hasSameEntities(other worldState) bool {
 nextEntity:
 	for _, e1 := range s.Entities {
 		for _, e2 := range other.Entities {
-			if e1.Id() == e2.Id() {
+			if e1.EntityId() == e2.EntityId() {
 				if e1.IsDifferentFrom(e2) {
 					return false
 				}
@@ -114,7 +114,7 @@ func (s worldStateDiff) hasSameEntities(other worldStateDiff) bool {
 nextEntity:
 	for _, e1 := range s.Entities {
 		for _, e2 := range other.Entities {
-			if e1.Id() == e2.Id() {
+			if e1.EntityId() == e2.EntityId() {
 				if e1.IsDifferentFrom(e2) {
 					return false
 				}
@@ -128,7 +128,7 @@ nextEntity:
 nextRemovedEntity:
 	for _, e1 := range s.Removed {
 		for _, e2 := range other.Removed {
-			if e1.Id() == e2.Id() {
+			if e1.EntityId() == e2.EntityId() {
 				if e1.IsDifferentFrom(e2) {
 					return false
 				}

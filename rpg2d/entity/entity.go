@@ -35,7 +35,7 @@ type Entity interface {
 // client over the wire.
 type State interface {
 	// Unique ID
-	Id() Id
+	EntityId() Id
 
 	// Bounds of the entity
 	Bounds() coord.Bounds

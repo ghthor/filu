@@ -20,11 +20,11 @@ type (
 	}
 
 	MockEntityState struct {
-		EntityId entity.Id `json:"id"`
-		Name     string    `json:"name"`
+		Id   entity.Id `json:"id"`
+		Name string    `json:"name"`
 
-		EntityCell coord.Cell `json:"cell"`
-		bounds     coord.Bounds
+		Cell   coord.Cell `json:"cell"`
+		bounds coord.Bounds
 	}
 )
 
@@ -34,9 +34,9 @@ func (e MockEntity) Cell() coord.Cell     { return e.EntityCell }
 func (e MockEntity) Bounds() coord.Bounds { return coord.Bounds{e.EntityCell, e.EntityCell} }
 func (e MockEntity) ToState() entity.State {
 	return MockEntityState{
-		EntityId:   e.EntityId,
-		EntityCell: e.EntityCell,
-		Name:       e.String(),
+		Id:   e.EntityId,
+		Cell: e.EntityCell,
+		Name: e.String(),
 		bounds: coord.Bounds{
 			e.EntityCell,
 			e.EntityCell,
@@ -50,22 +50,22 @@ func (e MockEntityWithBounds) Cell() coord.Cell     { return e.EntityCell }
 func (e MockEntityWithBounds) Bounds() coord.Bounds { return e.EntityBounds }
 func (e MockEntityWithBounds) ToState() entity.State {
 	return MockEntityState{
-		EntityId:   e.EntityId,
-		EntityCell: e.EntityCell,
-		Name:       e.String(),
+		Id:   e.EntityId,
+		Cell: e.EntityCell,
+		Name: e.String(),
 	}
 }
 
-func (e MockEntityState) Id() entity.Id        { return e.EntityId }
+func (e MockEntityState) EntityId() entity.Id  { return e.Id }
 func (e MockEntityState) Bounds() coord.Bounds { return e.bounds }
 func (e MockEntityState) IsDifferentFrom(other entity.State) bool {
 	switch other := other.(type) {
 	case MockEntityState:
-		if e.EntityId != other.EntityId {
+		if e.Id != other.Id {
 			return true
 		}
 
-		if e.EntityCell != other.EntityCell {
+		if e.Cell != other.Cell {
 			return true
 		}
 
