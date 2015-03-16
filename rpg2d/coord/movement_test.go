@@ -32,26 +32,26 @@ func DescribeDirection(c gospec.Context) {
 	})
 
 	c.Specify("converts to a string", func() {
-		c.Expect(North.String(), Equals, "north")
-		c.Expect(East.String(), Equals, "east")
-		c.Expect(South.String(), Equals, "south")
-		c.Expect(West.String(), Equals, "west")
+		c.Expect(North.String(), Equals, "North")
+		c.Expect(East.String(), Equals, "East")
+		c.Expect(South.String(), Equals, "South")
+		c.Expect(West.String(), Equals, "West")
 	})
 
 	c.Specify("string converts to Direction", func() {
-		d, err := NewDirectionWithString("north")
+		d, err := NewDirectionWithString("North")
 		c.Expect(err, IsNil)
 		c.Expect(d, Equals, North)
 
-		d, err = NewDirectionWithString("east")
+		d, err = NewDirectionWithString("East")
 		c.Expect(err, IsNil)
 		c.Expect(d, Equals, East)
 
-		d, err = NewDirectionWithString("south")
+		d, err = NewDirectionWithString("South")
 		c.Expect(err, IsNil)
 		c.Expect(d, Equals, South)
 
-		d, err = NewDirectionWithString("west")
+		d, err = NewDirectionWithString("West")
 		c.Expect(err, IsNil)
 		c.Expect(d, Equals, West)
 

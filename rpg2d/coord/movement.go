@@ -259,11 +259,12 @@ func (pa PathAction) Bounds() Bounds {
 
 type Direction byte
 
+//go:generate stringer -type=Direction
 const (
-	N, North Direction = iota, iota
-	E, East
-	S, South
-	W, West
+	North, N Direction = iota, iota
+	East, E
+	South, S
+	West, W
 )
 
 var ErrInvalidDirection = errors.New("invalid direction")
@@ -273,13 +274,13 @@ var ErrInvalidDirection = errors.New("invalid direction")
 // doesn't represent a valid direction.
 func NewDirectionWithString(s string) (Direction, error) {
 	switch s {
-	case "north":
+	case "North":
 		return N, nil
-	case "east":
+	case "East":
 		return E, nil
-	case "south":
+	case "South":
 		return S, nil
-	case "west":
+	case "West":
 		return W, nil
 	default:
 	}
@@ -311,23 +312,6 @@ func (d Direction) Reverse() Direction {
 
 	case West:
 		return East
-	}
-	panic("never reached")
-}
-
-func (d Direction) String() string {
-	switch d {
-	case North:
-		return "north"
-
-	case East:
-		return "east"
-
-	case South:
-		return "south"
-
-	case West:
-		return "west"
 	}
 	panic("never reached")
 }
