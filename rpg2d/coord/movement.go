@@ -83,7 +83,7 @@ type (
 		Orig, Dest Cell
 	}
 
-	PathActionJson struct {
+	PathActionState struct {
 		Start stime.Time `json:"start"`
 		End   stime.Time `json:"end"`
 		Orig  Cell       `json:"orig"`
@@ -124,8 +124,8 @@ func (pa PathAction) String() string {
 		pa.Orig, pa.Dest)
 }
 
-func (pa PathAction) Json() PathActionJson {
-	return PathActionJson{
+func (pa PathAction) ToState() PathActionState {
+	return PathActionState{
 		pa.Span.Start,
 		pa.Span.End,
 		pa.Orig,
