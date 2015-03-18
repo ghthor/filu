@@ -175,6 +175,15 @@ GGGGG
 		})
 
 		c.Specify("can be updated with a world state diff", func() {
+			c.Specify("that updates the time", func() {
+				nextState := world.ToState()
+				nextState.Time++
+
+				worldState.Apply(worldState.Diff(nextState))
+
+				c.Expect(worldState, rpg2dtest.StateEquals, nextState)
+			})
+
 			c.Specify("that contains a new entity", func() {
 				world.Insert(entitytest.MockEntity{EntityId: 1})
 				nextState := world.ToState()

@@ -210,6 +210,8 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 // Modifies the world state with the
 // changes in a world state diff.
 func (state *WorldState) Apply(diff WorldStateDiff) {
+	state.Time = diff.Time
+
 nextRemoved:
 	for _, removed := range diff.Removed {
 		for i, e := range state.Entities {
