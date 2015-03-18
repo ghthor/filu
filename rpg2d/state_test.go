@@ -105,9 +105,9 @@ DDDDDDDD
 
 			wontBeCulled := []entity.State{
 				entitytest.MockEntity{EntityCell: coord.Cell{-2, 2}}.ToState(),
-				entitytest.MockEntity{EntityCell: coord.Cell{2, 2}}.ToState(),
-				entitytest.MockEntity{EntityCell: coord.Cell{2, -2}}.ToState(),
-				entitytest.MockEntity{EntityCell: coord.Cell{-2, -2}}.ToState(),
+				entitytest.MockEntity{EntityCell: coord.Cell{1, 2}}.ToState(),
+				entitytest.MockEntity{EntityCell: coord.Cell{1, -1}}.ToState(),
+				entitytest.MockEntity{EntityCell: coord.Cell{-2, -1}}.ToState(),
 			}
 
 			worldState.Entities = append(worldState.Entities[:0], wontBeCulled...)
@@ -115,22 +115,21 @@ DDDDDDDD
 
 			worldState = worldState.Cull(coord.Bounds{
 				coord.Cell{-2, 2},
-				coord.Cell{2, -2},
+				coord.Cell{1, -1},
 			})
 
 			c.Expect(worldState.Bounds, Equals, coord.Bounds{
 				coord.Cell{-2, 2},
-				coord.Cell{2, -2},
+				coord.Cell{1, -1},
 			})
 
 			c.Expect(worldState.Entities, Not(ContainsAll), toBeCulled)
 			c.Expect(worldState.Entities, ContainsAll, wontBeCulled)
 			c.Expect(worldState.TerrainMap.String(), Equals, `
-GRRGG
-RRRRG
-RRRRG
-GRRGG
-GGGGG
+GRRG
+RRRR
+RRRR
+GRRG
 `)
 		})
 
