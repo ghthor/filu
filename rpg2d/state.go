@@ -206,3 +206,21 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	diff.TerrainMapSlices = state.TerrainMap.Diff(other.TerrainMap)
 	return
 }
+
+// Modifies the world state with the
+// changes in a world state diff.
+func (state *WorldState) Apply(diff WorldStateDiff) {
+nextRemoved:
+	for _, removed := range diff.Removed {
+		for i, e := range state.Entities {
+			if e.EntityId() == removed.EntityId() {
+				state.Entities = append(state.Entities[:i], state.Entities[i+1:]...)
+				break nextRemoved
+			}
+		}
+	}
+
+	for _, added := range diff.Entities {
+		state.Entities = append(state.Entities, added)
+	}
+}

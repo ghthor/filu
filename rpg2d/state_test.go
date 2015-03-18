@@ -173,5 +173,25 @@ GGGGG
 				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*rpg2d.TerrainMapState{})
 			})
 		})
+
+		c.Specify("can be updated with a world state diff", func() {
+			c.Specify("that contains a new entity", func() {
+				world.Insert(entitytest.MockEntity{EntityId: 1})
+				nextState := world.ToState()
+				diff := worldState.Diff(nextState)
+
+				worldState.Apply(diff)
+				c.Expect(worldState, rpg2dtest.StateEquals, nextState)
+			})
+
+			c.Specify("that removes an entity", func() {
+				world.Remove(mockEntity)
+				nextState := world.ToState()
+				diff := worldState.Diff(nextState)
+
+				worldState.Apply(diff)
+				c.Expect(worldState, rpg2dtest.StateEquals, nextState)
+			})
+		})
 	})
 }
