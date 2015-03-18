@@ -162,18 +162,284 @@ GRRG
 			})
 
 			c.Specify("when the viewport has changed", func() {
-				clone := worldState.Clone()
-				worldState = worldState.Cull(coord.Bounds{
+				mockEntity0 := mockEntity
+				mockEntity1 := entitytest.MockEntity{
+					EntityId:   1,
+					EntityCell: coord.Cell{-1, 0},
+				}
+
+				mockEntity2 := entitytest.MockEntity{
+					EntityId:   2,
+					EntityCell: coord.Cell{-1, 1},
+				}
+
+				mockEntity3 := entitytest.MockEntity{
+					EntityId:   3,
+					EntityCell: coord.Cell{0, 1},
+				}
+
+				world.Insert(mockEntity0)
+				world.Insert(mockEntity1)
+				world.Insert(mockEntity2)
+				world.Insert(mockEntity3)
+				worldState = world.ToState()
+
+				initialState := worldState.Cull(coord.Bounds{
 					coord.Cell{-2, 2},
-					coord.Cell{2, -2},
+					coord.Cell{1, -1},
 				})
 
-				// TODO Specify all 4 directions and all 4 corners
-				clone = clone.Cull(coord.Bounds{
-					coord.Cell{-3, 2},
-					coord.Cell{1, -2},
+				var nextState rpg2d.WorldState
+
+				expectDiffEquals := func(expectedDiff rpg2d.WorldStateDiff) {
+					diff := initialState.Diff(nextState)
+					c.Expect(diff, rpg2dtest.StateEquals, expectedDiff)
+				}
+
+				c.Specify("north", func() {
+					bounds := coord.Bounds{
+						coord.Cell{-2, 4},
+						coord.Cell{1, 1},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity0.ToState(),
+							mockEntity1.ToState(),
+						},
+
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{-2, 4},
+								coord.Cell{1, 3},
+							},
+							Terrain: "\nDDDD\nGGGG\n",
+						}},
+					})
 				})
-				c.Expect(worldState.Diff(clone).TerrainMapSlices, Not(IsNil))
+
+				c.Specify("north & east", func() {
+					bounds := coord.Bounds{
+						coord.Cell{0, 4},
+						coord.Cell{3, 1},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity0.ToState(),
+							mockEntity1.ToState(),
+							mockEntity2.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{0, 4},
+								coord.Cell{1, 3},
+							},
+							Terrain: "\nDD\nGG\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{2, 4},
+								coord.Cell{3, 3},
+							},
+							Terrain: "\nDD\nGD\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{2, 2},
+								coord.Cell{3, 1},
+							},
+							Terrain: "\nGD\nGD\n",
+						}},
+					})
+				})
+
+				c.Specify("east", func() {
+					bounds := coord.Bounds{
+						coord.Cell{0, 2},
+						coord.Cell{3, -1},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity1.ToState(),
+							mockEntity2.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{2, 2},
+								coord.Cell{3, -1},
+							},
+							Terrain: "\nGD\nGD\nGD\nGD\n",
+						}},
+					})
+				})
+
+				c.Specify("south & east", func() {
+					bounds := coord.Bounds{
+						coord.Cell{0, 0},
+						coord.Cell{3, -3},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity1.ToState(),
+							mockEntity2.ToState(),
+							mockEntity3.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{2, 0},
+								coord.Cell{3, -1},
+							},
+							Terrain: "\nGD\nGD\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{2, -2},
+								coord.Cell{3, -3},
+							},
+							Terrain: "\nGD\nDD\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{0, -2},
+								coord.Cell{1, -3},
+							},
+							Terrain: "\nGG\nDD\n",
+						}},
+					})
+				})
+
+				c.Specify("south", func() {
+					bounds := coord.Bounds{
+						coord.Cell{-2, 0},
+						coord.Cell{1, -3},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity2.ToState(),
+							mockEntity3.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{-2, -2},
+								coord.Cell{1, -3},
+							},
+							Terrain: "\nGGGG\nDDDD\n",
+						}},
+					})
+				})
+
+				c.Specify("south & west", func() {
+					bounds := coord.Bounds{
+						coord.Cell{-4, 0},
+						coord.Cell{-1, -3},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity0.ToState(),
+							mockEntity2.ToState(),
+							mockEntity3.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{-2, -2},
+								coord.Cell{-1, -3},
+							},
+							Terrain: "\nGG\nDD\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{-4, -2},
+								coord.Cell{-3, -3},
+							},
+							Terrain: "\nDG\nDD\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{-4, 0},
+								coord.Cell{-3, -1},
+							},
+							Terrain: "\nDG\nDG\n",
+						}},
+					})
+				})
+
+				c.Specify("west", func() {
+					bounds := coord.Bounds{
+						coord.Cell{-4, 2},
+						coord.Cell{-1, -1},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity0.ToState(),
+							mockEntity3.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{-4, 2},
+								coord.Cell{-3, -1},
+							},
+							Terrain: "\nDG\nDG\nDG\nDG\n",
+						}},
+					})
+				})
+
+				c.Specify("north & west", func() {
+					bounds := coord.Bounds{
+						coord.Cell{-4, 4},
+						coord.Cell{-1, 1},
+					}
+
+					nextState = worldState.Cull(bounds)
+
+					expectDiffEquals(rpg2d.WorldStateDiff{
+						Bounds: bounds,
+						Removed: entity.StateSlice{
+							mockEntity0.ToState(),
+							mockEntity1.ToState(),
+							mockEntity3.ToState(),
+						},
+						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+							Bounds: coord.Bounds{
+								coord.Cell{-4, 2},
+								coord.Cell{-3, 1},
+							},
+							Terrain: "\nDG\nDG\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{-4, 4},
+								coord.Cell{-3, 3},
+							},
+							Terrain: "\nDD\nDG\n",
+						}, {
+							Bounds: coord.Bounds{
+								coord.Cell{-2, 4},
+								coord.Cell{-1, 3},
+							},
+							Terrain: "\nDD\nGG\n",
+						}},
+					})
+				})
 			})
 
 			c.Specify("when the viewport hasn't changed", func() {
