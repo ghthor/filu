@@ -19,12 +19,14 @@ const (
 	TT_ROCK  TerrainType = 'R'
 )
 
+type TerrainType2dArray [][]TerrainType
+
 // A terrain map is a dense store of terrain state.
 // Ever cell in the world has a terrain type.
 type TerrainMap struct {
 	Bounds coord.Bounds
 	// y, x
-	TerrainTypes [][]TerrainType
+	TerrainTypes TerrainType2dArray
 }
 
 // A change to the terrain type of a cell.
@@ -33,7 +35,7 @@ type TerrainTypeChange struct {
 	TerrainType TerrainType `json:"type"`
 }
 
-func NewTerrainArray(bounds coord.Bounds, s string) ([][]TerrainType, error) {
+func NewTerrainArray(bounds coord.Bounds, s string) (TerrainType2dArray, error) {
 	if len(s) == 0 {
 		return nil, errors.New("invalid [][]TerrainType defination")
 	}
@@ -136,14 +138,13 @@ func (m TerrainMap) Clone() (TerrainMap, error) {
 	return NewTerrainMap(m.Bounds, m.String())
 }
 
-// Produce a string representation of the terrain map.
-func (m TerrainMap) String() string {
-	w, h := len(m.TerrainTypes[0]), len(m.TerrainTypes)
+func (a TerrainType2dArray) String() string {
+	w, h := len(a[0]), len(a)
 	w += 1 // For \n char
 
 	buf := bytes.NewBuffer(make([]byte, 0, w*h+1))
 	buf.WriteRune('\n')
-	for _, row := range m.TerrainTypes {
+	for _, row := range a {
 		for _, t := range row {
 			buf.WriteRune(rune(t))
 		}
@@ -151,6 +152,11 @@ func (m TerrainMap) String() string {
 	}
 
 	return buf.String()
+}
+
+// Produce a string representation of the terrain map.
+func (m TerrainMap) String() string {
+	return m.TerrainTypes.String()
 }
 
 // Produce a terrain map state with the given terrain map.
