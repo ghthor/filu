@@ -33,11 +33,9 @@ type TerrainTypeChange struct {
 	TerrainType TerrainType `json:"type"`
 }
 
-// TODO extract the errors this constructor returns
-// into static error values.
-func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
+func NewTerrainArray(bounds coord.Bounds, s string) ([][]TerrainType, error) {
 	if len(s) == 0 {
-		return TerrainMap{}, errors.New("invalid TerrainType")
+		return nil, errors.New("invalid [][]TerrainType defination")
 	}
 
 	w, h := bounds.Width(), bounds.Height()
@@ -56,7 +54,7 @@ func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
 	} else {
 		s = strings.TrimLeft(s, "\n")
 		if strings.Count(s, "\n") != h {
-			return TerrainMap{}, errors.New("bounds height doesn't match num lines")
+			return nil, errors.New("bounds height doesn't match num lines")
 		}
 
 		buf := bufio.NewReader(strings.NewReader(s))
@@ -64,13 +62,13 @@ func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
 			row := make([]TerrainType, 0, w)
 			rowStr, err := buf.ReadString("\n"[0])
 			if err != nil {
-				return TerrainMap{}, err
+				return nil, err
 			}
 
 			rowStr = strings.TrimRight(rowStr, "\n")
 
 			if len(rowStr) != w {
-				return TerrainMap{}, errors.New("bounds width doesn't match line width")
+				return nil, errors.New("bounds width doesn't match line width")
 			}
 
 			for _, c := range rowStr {
@@ -79,6 +77,18 @@ func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
 			tm[y] = row
 		}
 	}
+
+	return tm, nil
+}
+
+// TODO extract the errors this constructor returns
+// into static error values.
+func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
+	tm, err := NewTerrainArray(bounds, s)
+	if err != nil {
+		return TerrainMap{}, err
+	}
+
 	return TerrainMap{bounds, tm}, nil
 }
 
