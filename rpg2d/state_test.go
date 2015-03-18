@@ -133,6 +133,46 @@ GRRG
 `)
 		})
 
+		north := coord.Bounds{
+			coord.Cell{-2, 4},
+			coord.Cell{1, 1},
+		}
+
+		northEast := coord.Bounds{
+			coord.Cell{0, 4},
+			coord.Cell{3, 1},
+		}
+
+		east := coord.Bounds{
+			coord.Cell{0, 2},
+			coord.Cell{3, -1},
+		}
+
+		southEast := coord.Bounds{
+			coord.Cell{0, 0},
+			coord.Cell{3, -3},
+		}
+
+		south := coord.Bounds{
+			coord.Cell{-2, 0},
+			coord.Cell{1, -3},
+		}
+
+		southWest := coord.Bounds{
+			coord.Cell{-4, 0},
+			coord.Cell{-1, -3},
+		}
+
+		west := coord.Bounds{
+			coord.Cell{-4, 2},
+			coord.Cell{-1, -1},
+		}
+
+		northWest := coord.Bounds{
+			coord.Cell{-4, 4},
+			coord.Cell{-1, 1},
+		}
+
 		c.Specify("can calculate the differences with a previous worldState state", func() {
 			c.Specify("when there are no differences", func() {
 				c.Expect(len(worldState.Diff(worldState).Entities), Equals, 0)
@@ -197,15 +237,10 @@ GRRG
 				}
 
 				c.Specify("north", func() {
-					bounds := coord.Bounds{
-						coord.Cell{-2, 4},
-						coord.Cell{1, 1},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(north)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: north,
 						Removed: entity.StateSlice{
 							mockEntity0.ToState(),
 							mockEntity1.ToState(),
@@ -222,15 +257,10 @@ GRRG
 				})
 
 				c.Specify("north & east", func() {
-					bounds := coord.Bounds{
-						coord.Cell{0, 4},
-						coord.Cell{3, 1},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(northEast)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: northEast,
 						Removed: entity.StateSlice{
 							mockEntity0.ToState(),
 							mockEntity1.ToState(),
@@ -259,15 +289,10 @@ GRRG
 				})
 
 				c.Specify("east", func() {
-					bounds := coord.Bounds{
-						coord.Cell{0, 2},
-						coord.Cell{3, -1},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(east)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: east,
 						Removed: entity.StateSlice{
 							mockEntity1.ToState(),
 							mockEntity2.ToState(),
@@ -283,15 +308,10 @@ GRRG
 				})
 
 				c.Specify("south & east", func() {
-					bounds := coord.Bounds{
-						coord.Cell{0, 0},
-						coord.Cell{3, -3},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(southEast)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: southEast,
 						Removed: entity.StateSlice{
 							mockEntity1.ToState(),
 							mockEntity2.ToState(),
@@ -320,15 +340,10 @@ GRRG
 				})
 
 				c.Specify("south", func() {
-					bounds := coord.Bounds{
-						coord.Cell{-2, 0},
-						coord.Cell{1, -3},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(south)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: south,
 						Removed: entity.StateSlice{
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
@@ -344,15 +359,10 @@ GRRG
 				})
 
 				c.Specify("south & west", func() {
-					bounds := coord.Bounds{
-						coord.Cell{-4, 0},
-						coord.Cell{-1, -3},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(southWest)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: southWest,
 						Removed: entity.StateSlice{
 							mockEntity0.ToState(),
 							mockEntity2.ToState(),
@@ -381,15 +391,10 @@ GRRG
 				})
 
 				c.Specify("west", func() {
-					bounds := coord.Bounds{
-						coord.Cell{-4, 2},
-						coord.Cell{-1, -1},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(west)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: west,
 						Removed: entity.StateSlice{
 							mockEntity0.ToState(),
 							mockEntity3.ToState(),
@@ -405,15 +410,10 @@ GRRG
 				})
 
 				c.Specify("north & west", func() {
-					bounds := coord.Bounds{
-						coord.Cell{-4, 4},
-						coord.Cell{-1, 1},
-					}
-
-					nextState = worldState.Cull(bounds)
+					nextState = worldState.Cull(northWest)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
-						Bounds: bounds,
+						Bounds: northWest,
 						Removed: entity.StateSlice{
 							mockEntity0.ToState(),
 							mockEntity1.ToState(),
