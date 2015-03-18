@@ -134,6 +134,7 @@ func (s WorldState) Clone() WorldState {
 	}
 	clone := WorldState{
 		Time:       s.Time,
+		Bounds:     s.Bounds,
 		Entities:   make(entity.StateSlice, len(s.Entities)),
 		TerrainMap: terrainMap,
 	}
