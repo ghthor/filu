@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 
 	"github.com/ghthor/engine/rpg2d/coord"
 	"github.com/ghthor/engine/rpg2d/entity"
@@ -211,19 +212,46 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 // Modifies the world state with the
 // changes in a world state diff.
 func (state *WorldState) Apply(diff WorldStateDiff) {
-	state.Time = diff.Time
 
 nextRemoved:
 	for _, removed := range diff.Removed {
 		for i, e := range state.Entities {
 			if e.EntityId() == removed.EntityId() {
 				state.Entities = append(state.Entities[:i], state.Entities[i+1:]...)
-				break nextRemoved
+				continue nextRemoved
 			}
 		}
 	}
 
+nextAddedOrModified:
 	for _, added := range diff.Entities {
+		for i, e := range state.Entities {
+			if added.EntityId() == e.EntityId() {
+				state.Entities[i] = added
+				continue nextAddedOrModified
+			}
+		}
+
 		state.Entities = append(state.Entities, added)
 	}
+
+	switch len(diff.TerrainMapSlices) {
+	default:
+		state.TerrainMap.MergeDiff(diff.Bounds, diff.TerrainMapSlices...)
+	case 1:
+		if state.Bounds.Overlaps(diff.Bounds) {
+			state.TerrainMap.MergeDiff(diff.Bounds, diff.TerrainMapSlices...)
+		} else {
+			slice := diff.TerrainMapSlices[0]
+			tm, err := NewTerrainMap(slice.Bounds, slice.Terrain)
+			if err != nil {
+				panic(fmt.Sprintf("error applying diff: %v", err))
+			}
+			state.TerrainMap.TerrainMap = tm
+		}
+	case 0:
+	}
+
+	state.Time = diff.Time
+	state.Bounds = diff.Bounds
 }

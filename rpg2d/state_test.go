@@ -475,6 +475,122 @@ GRRG
 				worldState.Apply(diff)
 				c.Expect(worldState, rpg2dtest.StateEquals, nextState)
 			})
+
+			c.Specify("where the diff's bounds", func() {
+				c.Specify("overlap with the state's bounds to the", func() {
+					mockEntity0 := mockEntity
+					mockEntity1 := entitytest.MockEntity{
+						EntityId:   1,
+						EntityCell: coord.Cell{-1, 0},
+					}
+
+					mockEntity2 := entitytest.MockEntity{
+						EntityId:   2,
+						EntityCell: coord.Cell{-1, 1},
+					}
+
+					mockEntity3 := entitytest.MockEntity{
+						EntityId:   3,
+						EntityCell: coord.Cell{0, 1},
+					}
+
+					world.Insert(mockEntity0)
+					world.Insert(mockEntity1)
+					world.Insert(mockEntity2)
+					world.Insert(mockEntity3)
+					worldState = world.ToState()
+
+					initialState := worldState.Cull(coord.Bounds{
+						coord.Cell{-2, 2},
+						coord.Cell{1, -1},
+					}).Clone()
+
+					var nextState rpg2d.WorldState
+
+					expectDiffApplied := func() {
+						initialState.Apply(initialState.Diff(nextState))
+						c.Expect(initialState, rpg2dtest.StateEquals, nextState)
+					}
+
+					c.Specify("north", func() {
+						nextState = worldState.Cull(north)
+						expectDiffApplied()
+					})
+
+					c.Specify("north & east", func() {
+						nextState = worldState.Cull(northEast)
+						expectDiffApplied()
+					})
+
+					c.Specify("east", func() {
+						nextState = worldState.Cull(east)
+						expectDiffApplied()
+					})
+
+					c.Specify("south & east", func() {
+						nextState = worldState.Cull(southEast)
+						expectDiffApplied()
+					})
+
+					c.Specify("south", func() {
+						nextState = worldState.Cull(south)
+						expectDiffApplied()
+					})
+
+					c.Specify("south & west", func() {
+						nextState = worldState.Cull(southWest)
+						expectDiffApplied()
+					})
+
+					c.Specify("west", func() {
+						nextState = worldState.Cull(west)
+						expectDiffApplied()
+					})
+
+					c.Specify("north & west", func() {
+						nextState = worldState.Cull(northWest)
+						expectDiffApplied()
+					})
+				})
+
+				c.Specify("does NOT overlap the state's bounds", func() {
+					mockEntity0 := entitytest.MockEntity{
+						EntityId:   0,
+						EntityCell: coord.Cell{-3, 3},
+					}
+
+					mockEntity1 := entitytest.MockEntity{
+						EntityId:   1,
+						EntityCell: coord.Cell{-4, 3},
+					}
+
+					mockEntity2 := entitytest.MockEntity{
+						EntityId:   2,
+						EntityCell: coord.Cell{3, 3},
+					}
+
+					world.Insert(mockEntity0)
+					world.Insert(mockEntity1)
+					world.Insert(mockEntity2)
+					worldState = world.ToState()
+
+					initialState := worldState.Cull(coord.Bounds{
+						coord.Cell{-4, 4},
+						coord.Cell{-2, 2},
+					}).Clone()
+
+					mockEntity0.EntityCell = coord.Cell{2, 3}
+					world.Insert(mockEntity0)
+
+					nextState := world.ToState().Cull(coord.Bounds{
+						coord.Cell{1, 4},
+						coord.Cell{3, 2},
+					})
+
+					initialState.Apply(initialState.Diff(nextState))
+					c.Expect(initialState, rpg2dtest.StateEquals, nextState)
+				})
+			})
 		})
 	})
 }
