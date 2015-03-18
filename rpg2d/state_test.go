@@ -28,7 +28,16 @@ func DescribeWorldState(c gospec.Context) {
 	}, 20, nil)
 	c.Assume(err, IsNil)
 
-	terrain, err := rpg2d.NewTerrainMap(quadTree.Bounds(), string(rpg2d.TT_GRASS))
+	terrain, err := rpg2d.NewTerrainMap(quadTree.Bounds(), `
+DDDDDDDD
+DGGGGGGD
+DGGRRGGD
+DGRRRRGD
+DGRRRRGD
+DGGRRGGD
+DGGGGGGD
+DDDDDDDD
+`)
 	c.Assume(err, IsNil)
 
 	world := rpg2d.NewWorld(stime.Time(0), quadTree, terrain)
@@ -45,7 +54,7 @@ func DescribeWorldState(c gospec.Context) {
 		c.Specify("can be encoded as json", func() {
 			jsonBytes, err := json.Marshal(worldState)
 			c.Expect(err, IsNil)
-			c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\nGGGGGGGG\n"}}`)
+			c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nDDDDDDDD\nDGGGGGGD\nDGGRRGGD\nDGRRRRGD\nDGRRRRGD\nDGGRRGGD\nDGGGGGGD\nDDDDDDDD\n"}}`)
 		})
 
 		func() {
@@ -117,10 +126,10 @@ func DescribeWorldState(c gospec.Context) {
 			c.Expect(worldState.Entities, Not(ContainsAll), toBeCulled)
 			c.Expect(worldState.Entities, ContainsAll, wontBeCulled)
 			c.Expect(worldState.TerrainMap.String(), Equals, `
-GGGGG
-GGGGG
-GGGGG
-GGGGG
+GRRGG
+RRRRG
+RRRRG
+GRRGG
 GGGGG
 `)
 		})
