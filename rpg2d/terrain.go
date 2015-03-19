@@ -102,6 +102,13 @@ func (m TerrainMap) Cell(c coord.Cell) TerrainType {
 	return m.TerrainTypes[y][x]
 }
 
+func (m *TerrainMap) SetType(t TerrainType, c coord.Cell) {
+	x := c.X - m.Bounds.TopL.X
+	y := -(c.Y - m.Bounds.TopL.Y)
+
+	m.TerrainTypes[y][x] = t
+}
+
 // Return a slice of terrain within a given bounds.
 // This method doesn't copy any memory.
 // The slice is viewport into the same memeory as
