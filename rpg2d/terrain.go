@@ -171,6 +171,10 @@ func (m TerrainMap) ToState() *TerrainMapState {
 	return &TerrainMapState{m}
 }
 
+// MergeDiff will merge the slices of terrain into
+// the TerrainMap. TerrainMap will have the bounds of
+// newBounds once the operation is complete. If slices
+// are unmergable MergeDiff will return an error.
 func (m *TerrainMap) MergeDiff(newBounds coord.Bounds, slices ...TerrainMapStateSlice) error {
 	maps := make([]TerrainMap, 0, len(slices)+1)
 	for _, slice := range slices {
