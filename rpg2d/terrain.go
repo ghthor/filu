@@ -14,9 +14,10 @@ import (
 type TerrainType rune
 
 const (
-	TT_GRASS TerrainType = 'G'
-	TT_DIRT  TerrainType = 'D'
-	TT_ROCK  TerrainType = 'R'
+	TT_UNKNOWN TerrainType = 'U'
+	TT_GRASS   TerrainType = 'G'
+	TT_DIRT    TerrainType = 'D'
+	TT_ROCK    TerrainType = 'R'
 )
 
 type TerrainType2dArray [][]TerrainType
