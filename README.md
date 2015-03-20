@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/ghthor/engine?status.svg)](https://godoc.org/github.com/ghthor/engine)
+
 # A Simulation
 
 A simulation, in engine, is the running kernel that is simulating a world.
