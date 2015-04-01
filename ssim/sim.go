@@ -36,23 +36,23 @@ type EventStream interface {
 	EventEmitter
 }
 
-func NewEventPipeline(nodes ...EventStream) EventStream {
-	switch len(nodes) {
+func NewEventPipeline(streams ...EventStream) EventStream {
+	switch len(streams) {
 	case 0:
 		return nil
 	case 1:
-		return nodes[0]
+		return streams[0]
 	default:
 	}
 
-	nodes[0].Subscribe(nodes[1])
+	streams[0].Subscribe(streams[1])
 
 	return struct {
 		EventWriter
 		EventEmitter
 	}{
-		nodes[0],
-		NewEventPipeline(nodes[1:]...),
+		streams[0],
+		NewEventPipeline(streams[1:]...),
 	}
 
 }
@@ -82,22 +82,22 @@ type ChangeStream interface {
 	ChangeEmitter
 }
 
-func NewChangePipeline(nodes ...ChangeStream) ChangeStream {
-	switch len(nodes) {
+func NewChangePipeline(streams ...ChangeStream) ChangeStream {
+	switch len(streams) {
 	case 0:
 		return nil
 	case 1:
-		return nodes[0]
+		return streams[0]
 	default:
 	}
 
-	nodes[0].Subscribe(nodes[1])
+	streams[0].Subscribe(streams[1])
 
 	return struct {
 		ChangeWriter
 		ChangeEmitter
 	}{
-		nodes[0],
-		NewChangePipeline(nodes[1:]...),
+		streams[0],
+		NewChangePipeline(streams[1:]...),
 	}
 }
