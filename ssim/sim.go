@@ -18,20 +18,22 @@ type Event interface {
 	IssuedAt() time.Time
 }
 
-// An EventProcessor is used to listen and
-// respond to events as they are added to an
-// EventLog.
-type EventProcessor interface {
-	Process(Event)
+// An EventEmitter will emit Event's to all
+// subscribed EventWriter's.
+type EventEmitter interface {
+	Subscribe(EventWriter)
 }
 
-// An EventLog is an append only log of Event's.
-// Any number of EventProcessor's can be subscribed
-// to the log. Each processor will be called
-// when an Event is appended to the log.
-type EventLog interface {
-	Append() chan<- Event
-	Subscribe(EventProcessor)
+// An EventWriter can receive Event's.
+type EventWriter interface {
+	Write(Event)
+}
+
+// An EventStream can receive Event's and will
+// emit them to all subscriber's.
+type EventStream interface {
+	EventWriter
+	EventEmitter
 }
 
 // A Change is the immutable modification
@@ -41,18 +43,20 @@ type Change interface {
 	Source() Event
 }
 
-// A ChangeProcessor is used to listen and
-// respond to events as they are added to a
-// ChangeLog.
-type ChangeProcessor interface {
-	Process(Change)
+// A ChangeEmitter will emit Change's to all
+// subscribed ChangeWriter's.
+type ChangeEmitter interface {
+	Subscribe(ChangeWriter)
 }
 
-// A ChangeLog is an append only log of Change's.
-// Any number of ChangeProcessor's can be subscribed
-// to the log. Each processor will be called
-// when a Change is appended to the log.
-type ChangeLog interface {
-	Append(Change)
-	Subscribe(ChangeProcessor)
+// A ChangeWriter can receive Change's.
+type ChangeWriter interface {
+	Write(Change)
+}
+
+// A ChangeStream can receive Change's and will
+// emit them to all subscriber's.
+type ChangeStream interface {
+	ChangeWriter
+	ChangeEmitter
 }
