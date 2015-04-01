@@ -16,6 +16,10 @@ type Event interface {
 	// The time(according to the client)
 	// when the event was issued.
 	IssuedAt() time.Time
+
+	// Should create a new Event value with
+	// the time the event was received.
+	AcceptAt(time.Time) Event
 }
 
 // An EventEmitter will emit Event's to all
