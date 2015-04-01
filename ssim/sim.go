@@ -36,6 +36,8 @@ type EventStream interface {
 	EventEmitter
 }
 
+// NewEventPipeline will chain `n` EventStreams together with streams[0]
+// as the entry point and streams[len(streams)-1] being the exit point.
 func NewEventPipeline(streams ...EventStream) EventStream {
 	switch len(streams) {
 	case 0:
@@ -82,6 +84,8 @@ type ChangeStream interface {
 	ChangeEmitter
 }
 
+// NewChangePipeline will chain `n` ChangeStreams together with streams[0]
+// as the entry point and streams[len(streams)-1] being the exit point.
 func NewChangePipeline(streams ...ChangeStream) ChangeStream {
 	switch len(streams) {
 	case 0:
