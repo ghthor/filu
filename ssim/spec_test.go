@@ -9,8 +9,10 @@ import (
 func TestUnitSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
-	r.AddSpec(DescribePipelines)
 	r.AddSpec(DescribeMemEventLog)
+
+	r.AddSpec(DescribePipelines)
+	r.AddSpec(DescribeSyncedStream)
 
 	gospec.MainGoTest(r, t)
 }
