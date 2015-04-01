@@ -1,8 +1,6 @@
 package ssim_test
 
 import (
-	"testing"
-
 	"github.com/ghthor/engine/ssim"
 
 	"github.com/ghthor/gospec"
@@ -105,12 +103,4 @@ func DescribePipelines(c gospec.Context) {
 			})
 		})
 	})
-}
-
-func TestUnitSpecs(t *testing.T) {
-	r := gospec.NewRunner()
-
-	r.AddSpec(DescribePipelines)
-
-	gospec.MainGoTest(r, t)
 }
