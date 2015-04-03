@@ -3,13 +3,15 @@ package ssim
 // A SelectableEventWriter is an EventWriter that
 // is easier to write to from a select statement.
 type SelectableEventWriter interface {
-	Write() chan<- Event
+	EventWriter
+	WriteCh() chan<- Event
 }
 
 // A SelectableEventEmitter is an EventEmitter that
 // is easier to subscribe to from a select statement.
 type SelectableEventEmitter interface {
-	Subscribe() chan<- EventWriter
+	EventEmitter
+	SubscribeCh() chan<- EventWriter
 }
 
 // A SelectableEventStream is an EventStream that
@@ -31,11 +33,19 @@ type syncedEventStream struct {
 	halt chan<- eventStreamHaltReq
 }
 
-func (s syncedEventStream) Write() chan<- Event {
+func (s syncedEventStream) Write(e Event) {
+	s.in <- e
+}
+
+func (s syncedEventStream) WriteCh() chan<- Event {
 	return s.in
 }
 
-func (s syncedEventStream) Subscribe() chan<- EventWriter {
+func (s syncedEventStream) Subscribe(w EventWriter) {
+	s.subs <- w
+}
+
+func (s syncedEventStream) SubscribeCh() chan<- EventWriter {
 	return s.subs
 }
 

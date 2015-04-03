@@ -36,13 +36,13 @@ func DescribeSyncedStream(c gospec.Context) {
 			}()
 
 			c.Specify("can be written to", func() {
-				syncedLog.Write() <- mockEvent{}
+				syncedLog.WriteCh() <- mockEvent{}
 			})
 
 			c.Specify("can be subscribed to", func() {
 				out := newMockSyncedEventWriter()
-				syncedLog.Subscribe() <- out
-				syncedLog.Write() <- mockEvent{}
+				syncedLog.SubscribeCh() <- out
+				syncedLog.WriteCh() <- mockEvent{}
 				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
 
 				go func() {
