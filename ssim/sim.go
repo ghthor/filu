@@ -60,5 +60,4 @@ func NewEventPipeline(streams ...EventStream) EventStream {
 		streams[0],
 		NewEventPipeline(streams[1:]...),
 	}
-
 }
