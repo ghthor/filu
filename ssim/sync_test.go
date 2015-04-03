@@ -17,6 +17,10 @@ func (w mockSyncedEventWriter) Write(e ssim.Event) {
 	w.lastWrite <- e
 }
 
+func newMockSyncedEventWriter() mockSyncedEventWriter {
+	return mockSyncedEventWriter{make(chan ssim.Event)}
+}
+
 func DescribeSyncedStream(c gospec.Context) {
 	c.Specify("a synced stream", func() {
 		c.Specify("of events", func() {
@@ -36,11 +40,7 @@ func DescribeSyncedStream(c gospec.Context) {
 			})
 
 			c.Specify("can be subscribed to", func() {
-				newWriter := func() mockSyncedEventWriter {
-					return mockSyncedEventWriter{make(chan ssim.Event)}
-				}
-
-				out := newWriter()
+				out := newMockSyncedEventWriter()
 				syncedLog.Subscribe() <- out
 				syncedLog.Write() <- mockEvent{}
 				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
