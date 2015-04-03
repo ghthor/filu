@@ -1,9 +1,11 @@
 package engine_test
 
 import (
-	"github.com/ghthor/engine"
-	"github.com/ghthor/gospec"
 	"testing"
+
+	"bitbucket.org/ghthor/ages-of-dark/engine"
+
+	"github.com/ghthor/gospec"
 )
 
 func TestAllSpecs(t *testing.T) {
