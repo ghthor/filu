@@ -1,7 +1,7 @@
 package rpg2d
 
 import (
-	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/coord"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"

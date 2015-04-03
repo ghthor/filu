@@ -1,8 +1,8 @@
 package quad
 
 import (
-	"github.com/ghthor/engine/rpg2d/coord"
-	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/filu/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/entity"
 )
 
 // A collision between 2 entities because the

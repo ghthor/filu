@@ -3,8 +3,8 @@ package quad
 import (
 	"fmt"
 
-	"github.com/ghthor/engine/rpg2d/entity"
-	"github.com/ghthor/engine/sim/stime"
+	"github.com/ghthor/filu/rpg2d/entity"
+	"github.com/ghthor/filu/sim/stime"
 )
 
 // 1. Update Position Phase - User Defined

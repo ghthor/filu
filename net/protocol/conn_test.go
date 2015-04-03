@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/ghthor/engine/net/encoding"
+	"github.com/ghthor/filu/net/encoding"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"

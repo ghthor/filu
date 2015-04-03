@@ -5,8 +5,8 @@ import (
 	"encoding/gob"
 	"testing"
 
-	"github.com/ghthor/engine/rpg2d/entity"
-	"github.com/ghthor/engine/rpg2d/entity/entitytest"
+	"github.com/ghthor/filu/rpg2d/entity"
+	"github.com/ghthor/filu/rpg2d/entity/entitytest"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"

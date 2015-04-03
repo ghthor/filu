@@ -3,8 +3,8 @@ package entitytest
 import (
 	"fmt"
 
-	"github.com/ghthor/engine/rpg2d/coord"
-	"github.com/ghthor/engine/rpg2d/entity"
+	"github.com/ghthor/filu/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/entity"
 )
 
 type (

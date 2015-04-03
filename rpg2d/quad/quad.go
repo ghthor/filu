@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ghthor/engine/rpg2d/coord"
-	"github.com/ghthor/engine/rpg2d/entity"
-	"github.com/ghthor/engine/sim/stime"
+	"github.com/ghthor/filu/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/entity"
+	"github.com/ghthor/filu/sim/stime"
 )
 
 // Represents one of the four quad corners

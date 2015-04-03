@@ -1,7 +1,7 @@
 package coord
 
 import (
-	"github.com/ghthor/engine/sim/stime"
+	"github.com/ghthor/filu/sim/stime"
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )

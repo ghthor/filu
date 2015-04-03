@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ghthor/engine/net/encoding"
+	"github.com/ghthor/filu/net/encoding"
 )
 
 type ConnState int

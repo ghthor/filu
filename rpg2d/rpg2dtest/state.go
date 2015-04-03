@@ -1,7 +1,7 @@
 package rpg2dtest
 
 import (
-	"github.com/ghthor/engine/rpg2d"
+	"github.com/ghthor/filu/rpg2d"
 	"github.com/ghthor/gospec"
 )
 

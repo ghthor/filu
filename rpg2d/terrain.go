@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/coord"
 )
 
 // Represents a type of terrain in the world.

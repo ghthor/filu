@@ -5,7 +5,7 @@ package coord
 import (
 	"math"
 
-	"github.com/ghthor/engine/sim/stime"
+	"github.com/ghthor/filu/sim/stime"
 )
 
 type (

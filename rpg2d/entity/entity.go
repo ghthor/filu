@@ -3,7 +3,7 @@ package entity
 import (
 	"sync"
 
-	"github.com/ghthor/engine/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/coord"
 )
 
 // A unique Id for an entity

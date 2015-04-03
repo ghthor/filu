@@ -1,7 +1,7 @@
 package ssim_test
 
 import (
-	"github.com/ghthor/engine/ssim"
+	"github.com/ghthor/filu/ssim"
 
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
