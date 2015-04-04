@@ -7,32 +7,8 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-type eventEmitter struct {
-	listeners []ssim.EventWriter
-}
-
-func (em eventEmitter) emit(e ssim.Event) {
-	for _, l := range em.listeners {
-		l.Write(e)
-	}
-}
-
-func (em *eventEmitter) Subscribe(w ssim.EventWriter) {
-	em.listeners = append(em.listeners, w)
-}
-
-type eventProcessor struct {
-	fn func(ssim.Event)
-	*eventEmitter
-}
-
-func newEventProc(fn func(ssim.Event)) eventProcessor {
-	return eventProcessor{fn: fn, eventEmitter: &eventEmitter{}}
-}
-
-func (p eventProcessor) Write(e ssim.Event) {
-	p.fn(e)
-	p.emit(e)
+func newEventProc(fn func(ssim.Event)) ssim.EventStream {
+	return ssim.NewEventProccessorFn(fn)
 }
 
 func DescribePipelines(c gospec.Context) {
