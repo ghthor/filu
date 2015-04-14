@@ -43,31 +43,21 @@ func DescribeSyncedStream(c gospec.Context) {
 				out := newMockSyncedEventWriter()
 				syncedLog.SubscribeCh() <- out
 				syncedLog.WriteCh() <- mockEvent("sync sub")
-				c.Expect(<-out.lastWrite, Equals, ssim.LogEvent{
-					Time:   now,
-					Source: mockEvent("sync sub"),
-				})
+				c.Expect((<-out.lastWrite).(ssim.LogEvent).LoggedAt(), Equals, now)
 
 				go func() {
 					syncedLog.WriteCh() <- mockEvent("sync sub")
 				}()
-				c.Expect(<-out.lastWrite, Equals, ssim.LogEvent{
-					Time:   now,
-					Source: mockEvent("sync sub"),
-				})
+				c.Expect((<-out.lastWrite).(ssim.LogEvent).LoggedAt(), Equals, now)
 			})
 
 			c.Specify("can be unsubscribed from", func() {
 				out := newMockSyncedEventWriter()
 				syncedLog.SubscribeCh() <- out
 				syncedLog.WriteCh() <- mockEvent("sync unsub")
-				c.Expect(<-out.lastWrite, Equals, ssim.LogEvent{
-					Time:   now,
-					Source: mockEvent("sync unsub"),
-				})
+				c.Expect((<-out.lastWrite).(ssim.LogEvent).LoggedAt(), Equals, now)
 
 				syncedLog.UnsubscribeCh() <- out
-
 				close(out.lastWrite)
 				syncedLog.WriteCh() <- mockEvent("")
 

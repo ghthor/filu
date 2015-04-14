@@ -11,6 +11,8 @@ import (
 
 type mockEvent string
 
+func (e mockEvent) Source() ssim.Event { return e }
+
 type mockEventWriter struct {
 	lastWrite ssim.Event
 }
@@ -33,10 +35,7 @@ func DescribeMemEventLog(c gospec.Context) {
 
 		c.Specify("can receive events", func() {
 			l.Write(mockEvent("recv"))
-			c.Expect(outStream.lastWrite, Equals, ssim.LogEvent{
-				Time:   now,
-				Source: mockEvent("recv"),
-			})
+			c.Expect(outStream.lastWrite.(ssim.LogEvent).LoggedAt(), Equals, now)
 
 			c.Specify("and will set the time received on the event", func() {
 				var err error
@@ -44,10 +43,7 @@ func DescribeMemEventLog(c gospec.Context) {
 				c.Assume(err, IsNil)
 
 				l.Write(mockEvent("time recv"))
-				c.Expect(outStream.lastWrite, Equals, ssim.LogEvent{
-					Time:   now,
-					Source: mockEvent("time recv"),
-				})
+				c.Expect(outStream.lastWrite.(ssim.LogEvent).LoggedAt(), Equals, now)
 			})
 
 			c.Specify("and will publish the event to subscribers", func() {
@@ -63,10 +59,7 @@ func DescribeMemEventLog(c gospec.Context) {
 
 				l.Write(mockEvent("publish"))
 				for _, w := range outStreams {
-					c.Expect(w.lastWrite, Equals, ssim.LogEvent{
-						Time:   now,
-						Source: mockEvent("publish"),
-					})
+					c.Expect(w.lastWrite.(ssim.LogEvent).LoggedAt(), Equals, now)
 				}
 			})
 		})

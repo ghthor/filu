@@ -8,6 +8,7 @@ type ActorID int
 // An Event is an immutable fact that an actor
 // emits to interact with a simulation.
 type Event interface {
+	Source() Event
 }
 
 // An EventEmitter will emit Event's to all

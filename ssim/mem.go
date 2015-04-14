@@ -31,16 +31,26 @@ func NewMemEventLog(options ...MemEventLogOption) EventStream {
 	return l
 }
 
-type LogEvent struct {
-	time.Time
+type LogEvent interface {
+	Event
 
-	Source Event
+	LoggedAt() time.Time
+}
+
+type logEvent struct {
+	loggedAt time.Time
+	source   Event
+}
+
+func (e logEvent) Source() Event { return e.source }
+func (e logEvent) LoggedAt() time.Time {
+	return e.loggedAt
 }
 
 func (l *memEventLog) Write(e Event) {
-	e = LogEvent{
-		Time:   l.now(),
-		Source: e,
+	e = logEvent{
+		loggedAt: l.now(),
+		source:   e,
 	}
 
 	l.events = append(l.events, e)
