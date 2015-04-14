@@ -9,16 +9,7 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-type mockEvent struct {
-	recv time.Time
-}
-
-func (e mockEvent) Source() ssim.ActorID { return 0 }
-func (e mockEvent) IssuedAt() time.Time  { return time.Time{} }
-func (e mockEvent) AcceptAt(t time.Time) ssim.Event {
-	e.recv = t
-	return e
-}
+type mockEvent string
 
 type mockEventWriter struct {
 	lastWrite ssim.Event
@@ -41,16 +32,22 @@ func DescribeMemEventLog(c gospec.Context) {
 		l.Subscribe(&outStream)
 
 		c.Specify("can receive events", func() {
-			l.Write(mockEvent{})
-			c.Expect(outStream.lastWrite, Equals, mockEvent{recv: now})
+			l.Write(mockEvent("recv"))
+			c.Expect(outStream.lastWrite, Equals, ssim.LogEvent{
+				Time:   now,
+				Source: mockEvent("recv"),
+			})
 
 			c.Specify("and will set the time received on the event", func() {
 				var err error
 				now, err = time.Parse("2006-Jan-01", "2015-Apr-01")
 				c.Assume(err, IsNil)
 
-				l.Write(mockEvent{})
-				c.Expect(outStream.lastWrite, Equals, mockEvent{recv: now})
+				l.Write(mockEvent("time recv"))
+				c.Expect(outStream.lastWrite, Equals, ssim.LogEvent{
+					Time:   now,
+					Source: mockEvent("time recv"),
+				})
 			})
 
 			c.Specify("and will publish the event to subscribers", func() {
@@ -64,9 +61,12 @@ func DescribeMemEventLog(c gospec.Context) {
 					l.Subscribe(w)
 				}
 
-				l.Write(mockEvent{})
+				l.Write(mockEvent("publish"))
 				for _, w := range outStreams {
-					c.Expect(w.lastWrite, Equals, mockEvent{recv: now})
+					c.Expect(w.lastWrite, Equals, ssim.LogEvent{
+						Time:   now,
+						Source: mockEvent("publish"),
+					})
 				}
 			})
 		})

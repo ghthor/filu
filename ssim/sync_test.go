@@ -36,31 +36,40 @@ func DescribeSyncedStream(c gospec.Context) {
 			}()
 
 			c.Specify("can be written to", func() {
-				syncedLog.WriteCh() <- mockEvent{}
+				syncedLog.WriteCh() <- mockEvent("")
 			})
 
 			c.Specify("can be subscribed to", func() {
 				out := newMockSyncedEventWriter()
 				syncedLog.SubscribeCh() <- out
-				syncedLog.WriteCh() <- mockEvent{}
-				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
+				syncedLog.WriteCh() <- mockEvent("sync sub")
+				c.Expect(<-out.lastWrite, Equals, ssim.LogEvent{
+					Time:   now,
+					Source: mockEvent("sync sub"),
+				})
 
 				go func() {
-					log.Write(mockEvent{})
+					syncedLog.WriteCh() <- mockEvent("sync sub")
 				}()
-				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
+				c.Expect(<-out.lastWrite, Equals, ssim.LogEvent{
+					Time:   now,
+					Source: mockEvent("sync sub"),
+				})
 			})
 
 			c.Specify("can be unsubscribed from", func() {
 				out := newMockSyncedEventWriter()
 				syncedLog.SubscribeCh() <- out
-				syncedLog.WriteCh() <- mockEvent{}
-				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
+				syncedLog.WriteCh() <- mockEvent("sync unsub")
+				c.Expect(<-out.lastWrite, Equals, ssim.LogEvent{
+					Time:   now,
+					Source: mockEvent("sync unsub"),
+				})
 
 				syncedLog.UnsubscribeCh() <- out
 
 				close(out.lastWrite)
-				syncedLog.WriteCh() <- mockEvent{}
+				syncedLog.WriteCh() <- mockEvent("")
 
 				c.Expect(<-out.lastWrite, IsNil)
 			})

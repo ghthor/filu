@@ -2,24 +2,12 @@
 // of an append only log of immutable Event's.
 package ssim
 
-import "time"
-
 // A ActorID is a unique ID assigned to an actor.
 type ActorID int
 
 // An Event is an immutable fact that an actor
 // emits to interact with a simulation.
 type Event interface {
-	// The actor that produced the event.
-	Source() ActorID
-
-	// The time(according to the client)
-	// when the event was issued.
-	IssuedAt() time.Time
-
-	// Should create a new Event value with
-	// the time the event was received.
-	AcceptAt(time.Time) Event
 }
 
 // An EventEmitter will emit Event's to all

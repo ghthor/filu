@@ -61,7 +61,7 @@ func DescribePipelines(c gospec.Context) {
 
 				out := newMockSyncedEventWriter()
 				pipe.Subscribe(out)
-				pipe.Write(mockEvent{})
+				pipe.Write(mockEvent(""))
 				<-out.lastWrite
 
 				c.Expect(output, Equals, "123")
@@ -85,7 +85,7 @@ func DescribePipelines(c gospec.Context) {
 
 				out := newMockSyncedEventWriter()
 				pipe.Subscribe(out)
-				pipe.Write(mockEvent{})
+				pipe.Write(mockEvent(""))
 				<-out.lastWrite
 
 				c.Expect(output, Equals, "123")
