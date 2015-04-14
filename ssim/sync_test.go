@@ -50,6 +50,20 @@ func DescribeSyncedStream(c gospec.Context) {
 				}()
 				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
 			})
+
+			c.Specify("can be unsubscribed from", func() {
+				out := newMockSyncedEventWriter()
+				syncedLog.SubscribeCh() <- out
+				syncedLog.WriteCh() <- mockEvent{}
+				c.Expect(<-out.lastWrite, Equals, mockEvent{recv: now})
+
+				syncedLog.UnsubscribeCh() <- out
+
+				close(out.lastWrite)
+				syncedLog.WriteCh() <- mockEvent{}
+
+				c.Expect(<-out.lastWrite, IsNil)
+			})
 		})
 	})
 }

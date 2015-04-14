@@ -26,6 +26,7 @@ type Event interface {
 // subscribed EventWriter's.
 type EventEmitter interface {
 	Subscribe(EventWriter)
+	Unsubscribe(EventWriter)
 }
 
 // An EventWriter can receive Event's.

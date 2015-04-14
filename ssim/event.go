@@ -14,6 +14,16 @@ func (em *eventEmitter) Subscribe(w EventWriter) {
 	em.listeners = append(em.listeners, w)
 }
 
+func (em *eventEmitter) Unsubscribe(w EventWriter) {
+	subs := em.listeners
+	for i, l := range subs {
+		if w == l {
+			em.listeners = append(subs[:i], subs[i+1:]...)
+			return
+		}
+	}
+}
+
 type eventProcessor struct {
 	fn func(Event)
 	*eventEmitter

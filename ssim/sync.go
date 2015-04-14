@@ -12,6 +12,7 @@ type SelectableEventWriter interface {
 type SelectableEventEmitter interface {
 	EventEmitter
 	SubscribeCh() chan<- EventWriter
+	UnsubscribeCh() chan<- EventWriter
 }
 
 // A SelectableEventStream is an EventStream that
@@ -27,8 +28,10 @@ type eventStreamHaltReq struct {
 }
 
 type syncedEventStream struct {
-	in   chan<- Event
-	subs chan<- EventWriter
+	in chan<- Event
+
+	subs,
+	unsubs chan<- EventWriter
 
 	halt chan<- eventStreamHaltReq
 }
@@ -49,6 +52,14 @@ func (s syncedEventStream) SubscribeCh() chan<- EventWriter {
 	return s.subs
 }
 
+func (s syncedEventStream) Unsubscribe(w EventWriter) {
+	s.unsubs <- w
+}
+
+func (s syncedEventStream) UnsubscribeCh() chan<- EventWriter {
+	return s.unsubs
+}
+
 func (s syncedEventStream) HaltStream() EventStream {
 	stream := make(chan EventStream)
 	s.halt <- eventStreamHaltReq{stream}
@@ -62,25 +73,31 @@ func NewSyncedEventStream(stream EventStream) SelectableEventStream {
 	var (
 		sync syncedEventStream
 
-		in   <-chan Event
-		subs <-chan EventWriter
+		in <-chan Event
+
+		subs,
+		unsubs <-chan EventWriter
+
 		halt <-chan eventStreamHaltReq
 	)
 
 	closeChans := func() func() {
 		var (
-			inCh   = make(chan Event)
-			subsCh = make(chan EventWriter)
-			haltCh = make(chan eventStreamHaltReq)
+			inCh     = make(chan Event)
+			subsCh   = make(chan EventWriter)
+			unsubsCh = make(chan EventWriter)
+			haltCh   = make(chan eventStreamHaltReq)
 		)
 
 		sync.in, in = inCh, inCh
 		sync.subs, subs = subsCh, subsCh
+		sync.unsubs, unsubs = unsubsCh, unsubsCh
 		sync.halt, halt = haltCh, haltCh
 
 		return func() {
 			close(inCh)
 			close(subsCh)
+			close(unsubsCh)
 			close(haltCh)
 		}
 	}()
@@ -96,6 +113,9 @@ func NewSyncedEventStream(stream EventStream) SelectableEventStream {
 
 			case w := <-subs:
 				stream.Subscribe(w)
+
+			case w := <-unsubs:
+				stream.Unsubscribe(w)
 
 			case haltReq = <-halt:
 				break communication

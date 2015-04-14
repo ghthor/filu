@@ -4,9 +4,9 @@ import "time"
 
 type memEventLog struct {
 	events []Event
-	subs   []EventWriter
+	now    func() time.Time
 
-	now func() time.Time
+	*eventEmitter
 }
 
 type MemEventLogOption func(*memEventLog)
@@ -20,8 +20,8 @@ func NowProvider(now func() time.Time) MemEventLogOption {
 func NewMemEventLog(options ...MemEventLogOption) EventStream {
 	l := &memEventLog{
 		// TODO add a package option to adjust default capacities
-		events: make([]Event, 0, 1024),
-		subs:   make([]EventWriter, 0, 10),
+		events:       make([]Event, 0, 1024),
+		eventEmitter: &eventEmitter{},
 	}
 
 	for _, o := range options {
@@ -37,11 +37,7 @@ func (l *memEventLog) Write(e Event) {
 	l.events = append(l.events, e)
 
 	// TODO add concurrent writes using a waitgroup
-	for _, s := range l.subs {
+	for _, s := range l.eventEmitter.listeners {
 		s.Write(e)
 	}
-}
-
-func (l *memEventLog) Subscribe(w EventWriter) {
-	l.subs = append(l.subs, w)
 }
