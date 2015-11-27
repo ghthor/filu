@@ -67,23 +67,80 @@ type AuthorizedUser struct {
 	Request
 }
 
-// A Processor consumes Request's and produces a stream of Results.
-type Processor interface {
+// A Stream consumes Request's.
+type Stream interface {
 	RequestAuthorization() chan<- Request
 }
 
-// A MemoryProcessor stores all registered Username/Password
+// A memoryProcessor stores all registered Username/Password
 // combonations in a go map. The map is a materialized view of
 // the Request stream.
-type MemoryProcessor struct {
-	// [Username: PasswordHash]
-	db map[string]string
+type memoryProcessor struct {
+	requests chan<- Request
+}
+
+func newMemoryProcessor(results chan<- Result) memoryProcessor {
+	var in <-chan Request
+
+	var memProc memoryProcessor
+
+	func() {
+		requestCh := make(chan Request)
+
+		in = requestCh
+
+		memProc = memoryProcessor{
+			requests: requestCh,
+		}
+	}()
+
+	go func() {
+		users := make(map[string]string)
+
+		for r := range in {
+			password := users[r.Username]
+			switch {
+			case password == "":
+				users[r.Username] = r.Password
+				results <- CreatedUser{Request: r}
+
+			case password == r.Password:
+				results <- AuthorizedUser{Request: r}
+
+			default:
+				results <- InvalidPassword{Request: r}
+			}
+		}
+	}()
+
+	return memProc
+}
+
+func (p memoryProcessor) RequestAuthorization() chan<- Request {
+	return p.requests
+}
+
+// A NewStream creates a authorization that is terminated.
+func NewStream() Stream {
+	return newMemoryProcessor(newTerminator())
 }
 
 // A terminator comsumes Result's and will terminate an auth Stream.
 // The Stream is terminated by sending the Result to the Request sender.
 // A terminator has no outputs.
 type terminator chan<- Result
+
+func newTerminator() terminator {
+	resultCh := make(chan Result)
+
+	go func() {
+		for r := range resultCh {
+			r.respondToRequestor()
+		}
+	}()
+
+	return resultCh
+}
 
 func (e InvalidPassword) respondToRequestor() {
 	e.Request.sendInvalidPassword <- e
