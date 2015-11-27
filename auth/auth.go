@@ -23,6 +23,25 @@ type Request struct {
 	sendAuthorizedUser  chan<- AuthorizedUser
 }
 
+func NewRequest(username, password string) Request {
+	invalidCh := make(chan InvalidPassword)
+	createdCh := make(chan CreatedUser)
+	authorizedCh := make(chan AuthorizedUser)
+
+	return Request{
+		Username: username,
+		Password: password,
+
+		InvalidPassword: invalidCh,
+		CreatedUser:     createdCh,
+		AuthorizedUser:  authorizedCh,
+
+		sendInvalidPassword: invalidCh,
+		sendCreatedUser:     createdCh,
+		sendAuthorizedUser:  authorizedCh,
+	}
+}
+
 // A Result of a Request after it was processed by a Processor.
 type Result interface {
 	filu.Event
