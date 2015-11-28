@@ -14,6 +14,10 @@ type Time struct {
 	moment time.Time
 }
 
+func Now() Time {
+	return Time{time.Now()}
+}
+
 func (e Time) HappenedAt() time.Time {
 	return e.moment
 }
