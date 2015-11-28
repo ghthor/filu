@@ -119,11 +119,13 @@ func DescribeStream(c gospec.Context) {
 
 				result := <-r.InvalidPassword
 				c.Expect(result.Username, Equals, "test")
+				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
 			})
 
 			c.Specify("a created user", func() {
 				result := <-r.CreatedUser
 				c.Expect(result.Username, Equals, "test")
+				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
 			})
 
 			c.Specify("an authenicated  user", func() {
@@ -133,6 +135,7 @@ func DescribeStream(c gospec.Context) {
 
 				result := <-r.AuthenticatedUser
 				c.Expect(result.Username, Equals, "test")
+				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
 			})
 		})
 

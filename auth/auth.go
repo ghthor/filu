@@ -32,6 +32,7 @@ func NewRequest(username, password string) Request {
 	authenticatedCh := make(chan AuthenticatedUser)
 
 	return Request{
+		Time:     filu.Now(),
 		Username: username,
 		Password: password,
 
@@ -192,13 +193,22 @@ func (p memoryProcessor) Write(r Request) {
 	switch {
 	case password == "":
 		p.users[r.Username] = r.Password
-		p.results <- CreatedUser{Request: r}
+		p.results <- CreatedUser{
+			Time:    filu.Now(),
+			Request: r,
+		}
 
 	case password == r.Password:
-		p.results <- AuthenticatedUser{Request: r}
+		p.results <- AuthenticatedUser{
+			Time:    filu.Now(),
+			Request: r,
+		}
 
 	default:
-		p.results <- InvalidPassword{Request: r}
+		p.results <- InvalidPassword{
+			Time:    filu.Now(),
+			Request: r,
+		}
 	}
 }
 
