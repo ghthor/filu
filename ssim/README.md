@@ -15,6 +15,11 @@
 	- A materialized view of the InputLog.
 3. WorldLog
 	- A materialized log of the InputLog via InputProcessor.
+4. WorldProcessor
+	- A materialized view of the WorldLog
+	- Calculates the state change made by an Input Event
+5. WorldStateLog
+	- A materialized log of the WorldLog via WorldProcessor
 
 ### Examples
 
@@ -60,6 +65,11 @@
 	WorldEvent and inserts
 	  v
 	WorldLog -> LongTermStore
+	  v
+	WorldProcessor calculates how
+	the state of the world changes
+	  v
+	WorldStateLog -> LongTermStore
 	  v
 	ActorHandler
 	- culls changes
