@@ -1,4 +1,5 @@
-// The auth package provides a stream processing pattern to supply user authentication.
+// Package auth provides a stream processing pattern
+// to supply user authentication to a filu application
 package auth
 
 import "github.com/ghthor/filu"
@@ -46,14 +47,19 @@ func NewRequest(username, password string) Request {
 	}
 }
 
+// A RequestConsumer is used as the consumption end of a RequestStream.
 type RequestConsumer interface {
+	// The implementation of Write can assume in will never be called in parallel.
 	Write(Request)
 }
 
+// A RequestProducer is used as the production end of a RequestStream.
 type RequestProducer interface {
 	Read() <-chan Request
 }
 
+// A RequestStream represents a function that when given a Request
+// will produce a Request.
 type RequestStream interface {
 	RequestConsumer
 	RequestProducer
@@ -67,6 +73,9 @@ func linkRequest(source RequestProducer, destination RequestConsumer) {
 	}()
 }
 
+// NewRequestStream will concatenate a series of RequestStreams into
+// a single RequestStream. The Consumer entry point will be the first parameter,
+// the Producer endpoint will be the last parameter.
 func NewRequestStream(streams ...RequestStream) RequestStream {
 	switch len(streams) {
 	case 0:
@@ -125,6 +134,9 @@ func linkResult(source ResultProducer, destination ResultConsumer) {
 	}()
 }
 
+// NewResultStream will concatenate a series of ResultStreams into
+// a single ResultStream. The Consumer entry point will be the first parameter,
+// the Producer endpoint will be the last parameter.
 func NewResultStream(streams ...ResultStream) ResultStream {
 	switch len(streams) {
 	case 0:
@@ -163,6 +175,9 @@ type AuthenticatedUser struct {
 	Request
 }
 
+// A Processor is the step in a Stream when a Request is transformed into a Result.
+// This is where a Username/Password pair would be compared against what exists in
+// a database to determine if the pair is a valid.
 type Processor interface {
 	RequestConsumer
 	ResultProducer
@@ -266,9 +281,9 @@ func NewStream(preAuth RequestStream, postAuth ResultStream) Stream {
 
 	if preAuth != nil {
 		return newStreamHead(preAuth)
-	} else {
-		return newStreamHead(proc)
 	}
+
+	return newStreamHead(proc)
 }
 
 // A terminator comsumes Result's and will terminate an auth Stream.
