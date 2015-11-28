@@ -77,27 +77,32 @@ type Stream interface {
 // the Request stream.
 type memoryProcessor struct {
 	requests chan<- Request
+	results  <-chan Result
 }
 
-func newMemoryProcessor(results chan<- Result) memoryProcessor {
-	var in <-chan Request
+func newMemoryProcessor() memoryProcessor {
+	var requests <-chan Request
+	var results chan<- Result
 
 	var memProc memoryProcessor
 
 	func() {
 		requestCh := make(chan Request)
+		resultsCh := make(chan Result)
 
-		in = requestCh
+		requests = requestCh
+		results = resultsCh
 
 		memProc = memoryProcessor{
 			requests: requestCh,
+			results:  resultsCh,
 		}
 	}()
 
 	go func() {
 		users := make(map[string]string)
 
-		for r := range in {
+		for r := range requests {
 			password := users[r.Username]
 			switch {
 			case password == "":
@@ -120,26 +125,55 @@ func (p memoryProcessor) RequestAuthorization() chan<- Request {
 	return p.requests
 }
 
-// A NewStream creates a authorization that is terminated.
-func NewStream() Stream {
-	return newMemoryProcessor(newTerminator())
+func (p memoryProcessor) Read() <-chan Result {
+	return p.results
+}
+
+type ResultProducer interface {
+	Read() <-chan Result
+}
+
+type ResultConsumer interface {
+	Write(Result)
+}
+
+type ResultStream interface {
+	ResultProducer
+	ResultConsumer
+}
+
+func link(source ResultProducer, destination ResultConsumer) {
+	go func() {
+		for r := range source.Read() {
+			destination.Write(r)
+		}
+	}()
+}
+
+// NewStream creates an auth processor and connect the Result output
+// into the provided ResultStream's and returns a terminated Stream
+// that will return the Result of a Request back to the Requestor.
+func NewStream(streams ...ResultStream) Stream {
+	proc := newMemoryProcessor()
+
+	var last ResultProducer = proc
+	for _, s := range streams {
+		link(last, s)
+		last = s
+	}
+
+	link(last, terminator{})
+
+	return proc
 }
 
 // A terminator comsumes Result's and will terminate an auth Stream.
 // The Stream is terminated by sending the Result to the Request sender.
 // A terminator has no outputs.
-type terminator chan<- Result
+type terminator struct{}
 
-func newTerminator() terminator {
-	resultCh := make(chan Result)
-
-	go func() {
-		for r := range resultCh {
-			r.respondToRequestor()
-		}
-	}()
-
-	return resultCh
+func (terminator) Write(r Result) {
+	r.respondToRequestor()
 }
 
 func (e InvalidPassword) respondToRequestor() {
