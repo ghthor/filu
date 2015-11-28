@@ -7,24 +7,66 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-type logResultStream struct {
+type requestLog struct {
+	loggedRequest chan auth.Request
+	requests      chan auth.Request
+}
+
+func newRequestLog() requestLog {
+	return requestLog{
+		loggedRequest: make(chan auth.Request, 20),
+		requests:      make(chan auth.Request, 20),
+	}
+}
+
+func (l requestLog) Write(r auth.Request) {
+	l.loggedRequest <- r
+	l.requests <- r
+}
+
+func (l requestLog) Read() <-chan auth.Request {
+	return l.requests
+}
+
+type requestStore struct {
+	allRequests []auth.Request
+	requests    chan auth.Request
+}
+
+func newRequestStore() *requestStore {
+	return &requestStore{
+		allRequests: make([]auth.Request, 0, 10),
+		requests:    make(chan auth.Request, 10),
+	}
+}
+
+func (s *requestStore) Write(r auth.Request) {
+	s.allRequests = append(s.allRequests, r)
+	s.requests <- r
+}
+
+func (s requestStore) Read() <-chan auth.Request {
+	return s.requests
+}
+
+type resultLog struct {
 	loggedResult chan auth.Result
 	results      chan auth.Result
 }
 
-func newLogResultStream() logResultStream {
-	return logResultStream{
+func newResultLog() resultLog {
+	return resultLog{
 		loggedResult: make(chan auth.Result, 20),
 		results:      make(chan auth.Result, 20),
 	}
 }
 
-func (s logResultStream) Write(r auth.Result) {
+func (s resultLog) Write(r auth.Result) {
 	s.loggedResult <- r
 	s.results <- r
 }
 
-func (s logResultStream) Read() <-chan auth.Result {
+func (s resultLog) Read() <-chan auth.Result {
 	return s.results
 }
 
@@ -51,10 +93,16 @@ func (s resultStore) Read() <-chan auth.Result {
 
 func DescribeStream(c gospec.Context) {
 	c.Specify("a stream", func() {
-		log := newLogResultStream()
-		store := newResultStore()
+		requestLog := newRequestLog()
+		requestStore := newRequestStore()
 
-		s := auth.NewStream(log, store)
+		resultLog := newResultLog()
+		resultStore := newResultStore()
+
+		s := auth.NewStream(
+			auth.NewRequestStream(requestLog, requestStore),
+			auth.NewResultStream(resultLog, resultStore))
+
 		defer func() {
 			close(s.RequestAuthorization())
 		}()
@@ -88,12 +136,22 @@ func DescribeStream(c gospec.Context) {
 			})
 		})
 
+		c.Specify("will log the request", func() {
+			c.Expect((<-requestLog.loggedRequest).Username, Equals, "test")
+		})
+
+		c.Specify("will store the request", func() {
+			c.Assume((<-r.CreatedUser).Username, Equals, "test")
+			c.Expect(requestStore.allRequests[0].Username, Equals, "test")
+		})
+
 		c.Specify("will log the result", func() {
-			c.Expect((<-log.loggedResult).(auth.CreatedUser).Username, Equals, "test")
+			c.Expect((<-resultLog.loggedResult).(auth.CreatedUser).Username, Equals, "test")
 		})
 
 		c.Specify("will store the result", func() {
-			c.Expect(store.allResults[0].(auth.CreatedUser).Username, Equals, "test")
+			c.Assume((<-r.CreatedUser).Username, Equals, "test")
+			c.Expect(resultStore.allResults[0].(auth.CreatedUser).Username, Equals, "test")
 		})
 	})
 }

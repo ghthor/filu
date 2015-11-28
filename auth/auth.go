@@ -44,91 +44,52 @@ func NewRequest(username, password string) Request {
 	}
 }
 
+type RequestConsumer interface {
+	Write(Request)
+}
+
+type RequestProducer interface {
+	Read() <-chan Request
+}
+
+type RequestStream interface {
+	RequestConsumer
+	RequestProducer
+}
+
+func linkRequest(source RequestProducer, destination RequestConsumer) {
+	go func() {
+		for r := range source.Read() {
+			destination.Write(r)
+		}
+	}()
+}
+
+func NewRequestStream(streams ...RequestStream) RequestStream {
+	switch len(streams) {
+	case 0:
+		return nil
+	case 1:
+		return streams[0]
+	default:
+	}
+
+	linkRequest(streams[0], streams[1])
+
+	return struct {
+		RequestConsumer
+		RequestProducer
+	}{
+		streams[0],
+		NewRequestStream(streams[1:]...),
+	}
+}
+
 // A Result of a Request after it was processed by a Processor.
 type Result interface {
 	filu.Event
 
 	respondToRequestor()
-}
-
-// An InvalidPassword is the result of a Request with an invalid password.
-type InvalidPassword struct {
-	filu.Time
-	Request
-}
-
-// A CreatedUser is the result of a Request where the user doesn't already exist.
-type CreatedUser struct {
-	filu.Time
-	Request
-}
-
-// An AuthorizedUser is the result of a correct Username & Password combonation.
-type AuthorizedUser struct {
-	filu.Time
-	Request
-}
-
-// A Stream consumes Request's.
-type Stream interface {
-	RequestAuthorization() chan<- Request
-}
-
-// A memoryProcessor stores all registered Username/Password
-// combonations in a go map. The map is a materialized view of
-// the Request stream.
-type memoryProcessor struct {
-	requests chan<- Request
-	results  <-chan Result
-}
-
-func newMemoryProcessor() memoryProcessor {
-	var requests <-chan Request
-	var results chan<- Result
-
-	var memProc memoryProcessor
-
-	func() {
-		requestCh := make(chan Request)
-		resultsCh := make(chan Result)
-
-		requests = requestCh
-		results = resultsCh
-
-		memProc = memoryProcessor{
-			requests: requestCh,
-			results:  resultsCh,
-		}
-	}()
-
-	go func() {
-		users := make(map[string]string)
-
-		for r := range requests {
-			password := users[r.Username]
-			switch {
-			case password == "":
-				users[r.Username] = r.Password
-				results <- CreatedUser{Request: r}
-
-			case password == r.Password:
-				results <- AuthorizedUser{Request: r}
-
-			default:
-				results <- InvalidPassword{Request: r}
-			}
-		}
-	}()
-
-	return memProc
-}
-
-func (p memoryProcessor) RequestAuthorization() chan<- Request {
-	return p.requests
-}
-
-func (p memoryProcessor) Read() <-chan Result {
-	return p.results
 }
 
 // A ResultProducer is the source of a stream of Results.
@@ -150,7 +111,11 @@ type ResultStream interface {
 	ResultConsumer
 }
 
-func link(source ResultProducer, destination ResultConsumer) {
+func linkResult(source ResultProducer, destination ResultConsumer) {
+	if source == nil || destination == nil {
+		return
+	}
+
 	go func() {
 		for r := range source.Read() {
 			destination.Write(r)
@@ -158,21 +123,141 @@ func link(source ResultProducer, destination ResultConsumer) {
 	}()
 }
 
+func NewResultStream(streams ...ResultStream) ResultStream {
+	switch len(streams) {
+	case 0:
+		return nil
+	case 1:
+		return streams[0]
+	default:
+	}
+
+	linkResult(streams[0], streams[1])
+
+	return struct {
+		ResultConsumer
+		ResultProducer
+	}{
+		streams[0],
+		NewResultStream(streams[1:]...),
+	}
+}
+
+// An InvalidPassword is the result of a Request with an invalid password.
+type InvalidPassword struct {
+	filu.Time
+	Request
+}
+
+// A CreatedUser is the result of a Request where the user doesn't already exist.
+type CreatedUser struct {
+	filu.Time
+	Request
+}
+
+// An AuthorizedUser is the result of a correct Username & Password combonation.
+type AuthorizedUser struct {
+	filu.Time
+	Request
+}
+
+type Processor interface {
+	RequestConsumer
+	ResultProducer
+}
+
+// A Stream consumes Request's.
+type Stream interface {
+	RequestAuthorization() chan<- Request
+}
+
+// A memoryProcessor stores all registered Username/Password
+// combonations in a go map. The map is a materialized view of
+// the Request stream.
+type memoryProcessor struct {
+	users   map[string]string
+	results chan Result
+}
+
+func newMemoryProcessor() memoryProcessor {
+	return memoryProcessor{
+		users:   make(map[string]string),
+		results: make(chan Result),
+	}
+}
+
+func (p memoryProcessor) Write(r Request) {
+	password := p.users[r.Username]
+	switch {
+	case password == "":
+		p.users[r.Username] = r.Password
+		p.results <- CreatedUser{Request: r}
+
+	case password == r.Password:
+		p.results <- AuthorizedUser{Request: r}
+
+	default:
+		p.results <- InvalidPassword{Request: r}
+	}
+}
+
+func (p memoryProcessor) Read() <-chan Result {
+	return p.results
+}
+
+type streamHead struct {
+	requests chan<- Request
+}
+
+func (s streamHead) RequestAuthorization() chan<- Request {
+	return s.requests
+}
+
+func newStreamHead(consumer RequestConsumer) Stream {
+	var requests <-chan Request
+	var head streamHead
+
+	func() {
+		requestsCh := make(chan Request)
+
+		requests = requestsCh
+
+		head = streamHead{
+			requests: requestsCh,
+		}
+	}()
+
+	go func() {
+		for r := range requests {
+			consumer.Write(r)
+		}
+	}()
+
+	return head
+}
+
 // NewStream creates an auth processor and connect the Result output
 // into the provided ResultStream's and returns a terminated Stream
 // that will return the Result of a Request back to the Requestor.
-func NewStream(streams ...ResultStream) Stream {
+func NewStream(preAuth RequestStream, postAuth ResultStream) Stream {
 	proc := newMemoryProcessor()
 
-	var last ResultProducer = proc
-	for _, s := range streams {
-		link(last, s)
-		last = s
+	if preAuth != nil {
+		linkRequest(preAuth, proc)
 	}
 
-	link(last, terminator{})
+	if postAuth != nil {
+		linkResult(proc, postAuth)
+		linkResult(postAuth, terminator{})
+	} else {
+		linkResult(proc, terminator{})
+	}
 
-	return proc
+	if preAuth != nil {
+		return newStreamHead(preAuth)
+	} else {
+		return newStreamHead(proc)
+	}
 }
 
 // A terminator comsumes Result's and will terminate an auth Stream.
