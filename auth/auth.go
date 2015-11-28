@@ -23,6 +23,8 @@ type Request struct {
 	sendAuthorizedUser  chan<- AuthorizedUser
 }
 
+// NewRequest will construct a Request suitible for use with
+// Stream.RequestAuthorization() <- Request.
 func NewRequest(username, password string) Request {
 	invalidCh := make(chan InvalidPassword)
 	createdCh := make(chan CreatedUser)
@@ -129,14 +131,20 @@ func (p memoryProcessor) Read() <-chan Result {
 	return p.results
 }
 
+// A ResultProducer is the source of a stream of Results.
 type ResultProducer interface {
 	Read() <-chan Result
 }
 
+// A ResultConsumer is a sink of a stream of Results.
 type ResultConsumer interface {
+	// The implementation of Write can assume in will never be called in parallel.
 	Write(Result)
 }
 
+// A ResultStream is sink & source of Results. It is implemented
+// and used when constructing a Stream to hook into the post-auth
+// Result stream for user defined processing.
 type ResultStream interface {
 	ResultProducer
 	ResultConsumer
