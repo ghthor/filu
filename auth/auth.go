@@ -1,9 +1,10 @@
+// The auth package provides a stream processing pattern to supply user authentication.
 package auth
 
 import "github.com/ghthor/filu"
 
 // A Request is a filu.Event that represents an
-// authorization request sent by a client/user.
+// authentication request sent by a client/user.
 // It is consumed by a Processor that will output
 // a PostAuthEvent.
 type Request struct {
@@ -11,36 +12,36 @@ type Request struct {
 	Username, Password string
 
 	// The public interface for the user to receive the
-	// result of the authorization request.
-	InvalidPassword <-chan InvalidPassword
-	CreatedUser     <-chan CreatedUser
-	AuthorizedUser  <-chan AuthorizedUser
+	// result of the authentication request.
+	InvalidPassword   <-chan InvalidPassword
+	CreatedUser       <-chan CreatedUser
+	AuthenticatedUser <-chan AuthenticatedUser
 
 	// The private interface used by the stream terminator
 	// to respond with the result of the Request.
-	sendInvalidPassword chan<- InvalidPassword
-	sendCreatedUser     chan<- CreatedUser
-	sendAuthorizedUser  chan<- AuthorizedUser
+	sendInvalidPassword   chan<- InvalidPassword
+	sendCreatedUser       chan<- CreatedUser
+	sendAuthenticatedUser chan<- AuthenticatedUser
 }
 
 // NewRequest will construct a Request suitible for use with
-// Stream.RequestAuthorization() <- Request.
+// Stream.RequestAuthentication() <- Request.
 func NewRequest(username, password string) Request {
 	invalidCh := make(chan InvalidPassword)
 	createdCh := make(chan CreatedUser)
-	authorizedCh := make(chan AuthorizedUser)
+	authenticatedCh := make(chan AuthenticatedUser)
 
 	return Request{
 		Username: username,
 		Password: password,
 
-		InvalidPassword: invalidCh,
-		CreatedUser:     createdCh,
-		AuthorizedUser:  authorizedCh,
+		InvalidPassword:   invalidCh,
+		CreatedUser:       createdCh,
+		AuthenticatedUser: authenticatedCh,
 
-		sendInvalidPassword: invalidCh,
-		sendCreatedUser:     createdCh,
-		sendAuthorizedUser:  authorizedCh,
+		sendInvalidPassword:   invalidCh,
+		sendCreatedUser:       createdCh,
+		sendAuthenticatedUser: authenticatedCh,
 	}
 }
 
@@ -155,8 +156,8 @@ type CreatedUser struct {
 	Request
 }
 
-// An AuthorizedUser is the result of a correct Username & Password combonation.
-type AuthorizedUser struct {
+// An AuthenticatedUser is the result of a correct Username & Password combonation.
+type AuthenticatedUser struct {
 	filu.Time
 	Request
 }
@@ -168,7 +169,7 @@ type Processor interface {
 
 // A Stream consumes Request's.
 type Stream interface {
-	RequestAuthorization() chan<- Request
+	RequestAuthentication() chan<- Request
 }
 
 // A memoryProcessor stores all registered Username/Password
@@ -194,7 +195,7 @@ func (p memoryProcessor) Write(r Request) {
 		p.results <- CreatedUser{Request: r}
 
 	case password == r.Password:
-		p.results <- AuthorizedUser{Request: r}
+		p.results <- AuthenticatedUser{Request: r}
 
 	default:
 		p.results <- InvalidPassword{Request: r}
@@ -209,7 +210,7 @@ type streamHead struct {
 	requests chan<- Request
 }
 
-func (s streamHead) RequestAuthorization() chan<- Request {
+func (s streamHead) RequestAuthentication() chan<- Request {
 	return s.requests
 }
 
@@ -277,6 +278,6 @@ func (e CreatedUser) respondToRequestor() {
 	e.Request.sendCreatedUser <- e
 }
 
-func (e AuthorizedUser) respondToRequestor() {
-	e.Request.sendAuthorizedUser <- e
+func (e AuthenticatedUser) respondToRequestor() {
+	e.Request.sendAuthenticatedUser <- e
 }

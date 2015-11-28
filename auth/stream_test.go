@@ -104,18 +104,18 @@ func DescribeStream(c gospec.Context) {
 			auth.NewResultStream(resultLog, resultStore))
 
 		defer func() {
-			close(s.RequestAuthorization())
+			close(s.RequestAuthentication())
 		}()
 
 		r := auth.NewRequest("test", "password")
-		s.RequestAuthorization() <- r
+		s.RequestAuthentication() <- r
 
 		c.Specify("will return", func() {
 			c.Specify("an invalid password", func() {
 				c.Assume((<-r.CreatedUser).Username, Equals, "test")
 
 				r = auth.NewRequest("test", "invalid")
-				s.RequestAuthorization() <- r
+				s.RequestAuthentication() <- r
 
 				result := <-r.InvalidPassword
 				c.Expect(result.Username, Equals, "test")
@@ -126,12 +126,12 @@ func DescribeStream(c gospec.Context) {
 				c.Expect(result.Username, Equals, "test")
 			})
 
-			c.Specify("an authorized user", func() {
+			c.Specify("an authenicated  user", func() {
 				c.Assume((<-r.CreatedUser).Username, Equals, "test")
 
-				s.RequestAuthorization() <- r
+				s.RequestAuthentication() <- r
 
-				result := <-r.AuthorizedUser
+				result := <-r.AuthenticatedUser
 				c.Expect(result.Username, Equals, "test")
 			})
 		})
