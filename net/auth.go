@@ -1,6 +1,7 @@
 package net
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/ghthor/filu/auth"
@@ -19,9 +20,16 @@ readNextType:
 
 	switch eType {
 	default:
-		log.Println("unexpected encoded type: ", eType)
-		// TODO: Notify client their protocol usage is incorrect
 		// TODO: Log error to universal error log
+		log.Println("unexpected EncodeType:", eType)
+
+		err := conn.Encode(ProtocolError(
+			fmt.Sprintf("expected EncodeType(%v) got EncodeType(%v)", ET_USER_LOGIN_REQUEST, eType),
+		))
+		if err != nil {
+			return AuthenticatedUser{}, err
+		}
+
 		goto readNextType
 
 	case ET_USER_LOGIN_REQUEST:
