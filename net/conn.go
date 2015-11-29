@@ -10,6 +10,7 @@ type EncodedType int
 //go:generate stringer -type=EncodedType
 const (
 	ET_ERROR EncodedType = iota
+	ET_PROTOCOL_ERROR
 	ET_DISCONNECT
 
 	ET_USER_LOGIN_REQUEST
@@ -28,12 +29,18 @@ type EncodableType interface {
 	Type() EncodedType
 }
 
+type ProtocolError string
+
 type UserLoginRequest struct{ Name, Password string }
 type UserLoginFailure struct{ Name string }
 type UserLoginSuccess struct{ Name string }
 type UserCreateSuccess UserLoginSuccess
 
 const DisconnectResponse = "disconnected"
+
+func (ProtocolError) Type() EncodedType { return ET_PROTOCOL_ERROR }
+func (e ProtocolError) Error() string   { return string(e) }
+func (e ProtocolError) String() string  { return string(e) }
 
 func (UserLoginRequest) Type() EncodedType  { return ET_USER_LOGIN_REQUEST }
 func (UserLoginFailure) Type() EncodedType  { return ET_USER_LOGIN_FAILED }

@@ -4,9 +4,9 @@ package net
 
 import "fmt"
 
-const _EncodedType_name = "ET_ERRORET_DISCONNECTET_USER_LOGIN_REQUESTET_USER_LOGIN_FAILEDET_USER_LOGIN_SUCCESSET_USER_CREATE_SUCCESSET_EXTEND"
+const _EncodedType_name = "ET_ERRORET_PROTOCOL_ERRORET_DISCONNECTET_USER_LOGIN_REQUESTET_USER_LOGIN_FAILEDET_USER_LOGIN_SUCCESSET_USER_CREATE_SUCCESSET_EXTEND"
 
-var _EncodedType_index = [...]uint8{0, 8, 21, 42, 62, 83, 105, 114}
+var _EncodedType_index = [...]uint8{0, 8, 25, 38, 59, 79, 100, 122, 131}
 
 func (i EncodedType) String() string {
 	if i < 0 || i >= EncodedType(len(_EncodedType_index)-1) {
