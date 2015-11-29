@@ -11,7 +11,7 @@ type Event interface {
 // of the Event interface to avoid reimplementation of the HappenedAt()
 // method.
 type Time struct {
-	moment time.Time
+	Moment time.Time
 }
 
 func Now() Time {
@@ -19,5 +19,5 @@ func Now() Time {
 }
 
 func (e Time) HappenedAt() time.Time {
-	return e.moment
+	return e.Moment
 }
