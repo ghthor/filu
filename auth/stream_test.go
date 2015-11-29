@@ -1,6 +1,9 @@
 package auth_test
 
 import (
+	"bytes"
+	"encoding/gob"
+
 	"github.com/ghthor/filu/auth"
 	"github.com/ghthor/gospec"
 
@@ -95,66 +98,94 @@ func DescribeStream(c gospec.Context) {
 	c.Specify("a stream", func() {
 		requestLog := newRequestLog()
 		requestStore := newRequestStore()
+		requestStream := auth.NewRequestStream(requestLog, requestStore)
+
+		var buf bytes.Buffer
+		enc := gob.NewEncoder(&buf)
+
+		requests := []struct {
+			Username, Password string
+		}{
+			{"test", "password"},
+			{"mary", "listallwords"},
+			{"test", "password"},
+			{"mary", "invalid"},
+		}
+
+		for _, r := range requests {
+			c.Assume(enc.Encode(auth.NewRequest(r.Username, r.Password)), IsNil)
+		}
+
+		processor, err := auth.NewProcessor(&buf)
+		c.Assume(err, IsNil)
 
 		resultLog := newResultLog()
 		resultStore := newResultStore()
+		resultStream := auth.NewResultStream(resultLog, resultStore)
 
 		s := auth.NewStream(
-			auth.NewRequestStream(requestLog, requestStore),
-			auth.NewResultStream(resultLog, resultStore))
+			requestStream,
+			processor,
+			resultStream)
 
 		defer func() {
 			close(s.RequestAuthentication())
 		}()
 
-		r := auth.NewRequest("test", "password")
-		s.RequestAuthentication() <- r
+		runRequest := func(username, password string) auth.Request {
+			r := auth.NewRequest(username, password)
+			s.RequestAuthentication() <- r
+			return r
+		}
+
+		c.Specify("will fast forward", func() {
+			r := runRequest("test", "password")
+			c.Expect((<-r.AuthenticatedUser).Username, Equals, "test")
+
+			r = runRequest("mary", "invalid")
+			c.Expect((<-r.InvalidPassword).Username, Equals, "mary")
+
+			r = runRequest("created", "user")
+			c.Expect((<-r.CreatedUser).Username, Equals, "created")
+		})
 
 		c.Specify("will return", func() {
 			c.Specify("an invalid password", func() {
-				c.Assume((<-r.CreatedUser).Username, Equals, "test")
-
-				r = auth.NewRequest("test", "invalid")
-				s.RequestAuthentication() <- r
-
+				r := runRequest("mary", "invalid")
 				result := <-r.InvalidPassword
-				c.Expect(result.Username, Equals, "test")
+				c.Expect(result.Username, Equals, "mary")
 				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
 			})
 
 			c.Specify("a created user", func() {
+				r := runRequest("created", "user")
 				result := <-r.CreatedUser
-				c.Expect(result.Username, Equals, "test")
+				c.Expect(result.Username, Equals, "created")
 				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
 			})
 
-			c.Specify("an authenicated  user", func() {
-				c.Assume((<-r.CreatedUser).Username, Equals, "test")
-
-				s.RequestAuthentication() <- r
-
-				result := <-r.AuthenticatedUser
+			c.Specify("an authenticated user", func() {
+				request := runRequest("test", "password")
+				result := <-request.AuthenticatedUser
 				c.Expect(result.Username, Equals, "test")
-				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
+				c.Expect(result.HappenedAt().After(request.HappenedAt()), IsTrue)
 			})
 		})
 
-		c.Specify("will log the request", func() {
-			c.Expect((<-requestLog.loggedRequest).Username, Equals, "test")
-		})
+		c.Specify("will log and store", func() {
+			r := runRequest("test", "password")
 
-		c.Specify("will store the request", func() {
-			c.Assume((<-r.CreatedUser).Username, Equals, "test")
-			c.Expect(requestStore.allRequests[0].Username, Equals, "test")
-		})
+			c.Specify("the request", func() {
+				c.Assume((<-r.AuthenticatedUser).Username, Equals, "test")
+				c.Expect((<-requestLog.loggedRequest).Username, Equals, "test")
+				c.Expect(requestStore.allRequests[0].Username, Equals, "test")
+			})
 
-		c.Specify("will log the result", func() {
-			c.Expect((<-resultLog.loggedResult).(auth.CreatedUser).Username, Equals, "test")
-		})
-
-		c.Specify("will store the result", func() {
-			c.Assume((<-r.CreatedUser).Username, Equals, "test")
-			c.Expect(resultStore.allResults[0].(auth.CreatedUser).Username, Equals, "test")
+			c.Specify("the result", func() {
+				c.Assume((<-r.AuthenticatedUser).Username, Equals, "test")
+				c.Expect((<-resultLog.loggedResult).(auth.AuthenticatedUser).Username, Equals, "test")
+				c.Expect(resultStore.allResults[0].(auth.AuthenticatedUser).Username, Equals, "test")
+			})
 		})
 	})
 }

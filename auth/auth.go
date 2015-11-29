@@ -2,7 +2,12 @@
 // to supply user authentication to a filu application
 package auth
 
-import "github.com/ghthor/filu"
+import (
+	"encoding/gob"
+	"io"
+
+	"github.com/ghthor/filu"
+)
 
 // A Request is a filu.Event that represents an
 // authentication request sent by a client/user.
@@ -45,6 +50,12 @@ func NewRequest(username, password string) Request {
 		sendCreatedUser:       createdCh,
 		sendAuthenticatedUser: authenticatedCh,
 	}
+}
+
+func (r Request) closeResultChannels() {
+	close(r.sendInvalidPassword)
+	close(r.sendCreatedUser)
+	close(r.sendAuthenticatedUser)
 }
 
 // A RequestConsumer is used as the consumption end of a RequestStream.
@@ -181,6 +192,8 @@ type AuthenticatedUser struct {
 type Processor interface {
 	RequestConsumer
 	ResultProducer
+
+	fastForward(from io.Reader) error
 }
 
 // A Stream consumes Request's.
@@ -227,6 +240,38 @@ func (p memoryProcessor) Write(r Request) {
 	}
 }
 
+func (p memoryProcessor) fastForward(from io.Reader) error {
+	var requests []Request
+	var err error
+
+	// Decode all Requests from the io.Reader
+	dec := gob.NewDecoder(from)
+	for err == nil {
+		var r Request
+		err = dec.Decode(&r)
+		if err != nil {
+			if err != io.EOF {
+				return err
+			}
+
+		}
+
+		requests = append(requests, r)
+	}
+
+	// Apply all Requests to the internal database
+	for _, r := range requests {
+		password := p.users[r.Username]
+		switch {
+		case password == "":
+			p.users[r.Username] = r.Password
+		default:
+		}
+	}
+
+	return nil
+}
+
 func (p memoryProcessor) Read() <-chan Result {
 	return p.results
 }
@@ -265,25 +310,27 @@ func newStreamHead(consumer RequestConsumer) Stream {
 // NewStream creates an auth processor and connect the Result output
 // into the provided ResultStream's and returns a terminated Stream
 // that will return the Result of a Request back to the Requestor.
-func NewStream(preAuth RequestStream, postAuth ResultStream) Stream {
-	proc := newMemoryProcessor()
+func NewStream(preAuth RequestStream, processor Processor, postAuth ResultStream) Stream {
+	if processor == nil {
+		processor = newMemoryProcessor()
+	}
 
 	if preAuth != nil {
-		linkRequest(preAuth, proc)
+		linkRequest(preAuth, processor)
 	}
 
 	if postAuth != nil {
-		linkResult(proc, postAuth)
+		linkResult(processor, postAuth)
 		linkResult(postAuth, terminator{})
 	} else {
-		linkResult(proc, terminator{})
+		linkResult(processor, terminator{})
 	}
 
 	if preAuth != nil {
 		return newStreamHead(preAuth)
 	}
 
-	return newStreamHead(proc)
+	return newStreamHead(processor)
 }
 
 // A terminator comsumes Result's and will terminate an auth Stream.
@@ -297,12 +344,22 @@ func (terminator) Write(r Result) {
 
 func (e InvalidPassword) respondToRequestor() {
 	e.Request.sendInvalidPassword <- e
+	e.Request.closeResultChannels()
 }
 
 func (e CreatedUser) respondToRequestor() {
 	e.Request.sendCreatedUser <- e
+	e.Request.closeResultChannels()
 }
 
 func (e AuthenticatedUser) respondToRequestor() {
 	e.Request.sendAuthenticatedUser <- e
+	e.Request.closeResultChannels()
+}
+
+// NewProcessor reads gob encoded Requests from io.Reader
+// and apply them to the processors state in order.
+func NewProcessor(from io.Reader) (Processor, error) {
+	proc := newMemoryProcessor()
+	return proc, proc.fastForward(from)
 }
