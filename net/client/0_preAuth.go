@@ -142,7 +142,7 @@ func (trip LoginRoundTrip) run(r net.UserLoginRequest) LoginRoundTrip {
 // functionality.
 type LoggedInUser struct {
 	Name string
-	//LoggedInConn
+	AuthenticatedConn
 }
 
 // A CreatedUser represents a successful login attempt where the
@@ -151,5 +151,5 @@ type LoggedInUser struct {
 // which allows the client to have more access to functionality.
 type CreatedUser struct {
 	Name string
-	//LoggedInConn
+	AuthenticatedConn
 }
