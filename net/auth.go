@@ -1,6 +1,7 @@
 package net
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -11,8 +12,9 @@ type AuthenticatedUser struct {
 	Username string
 }
 
+var ErrInvalidLoginCredentials = errors.New("client provided invalid login credentials")
+
 func AuthenticateFrom(conn Conn, stream auth.Stream) (AuthenticatedUser, error) {
-readNextType:
 	eType, err := conn.NextType()
 	if err != nil {
 		return AuthenticatedUser{}, err
@@ -23,14 +25,16 @@ readNextType:
 		// TODO: Log error to universal error log
 		log.Println("unexpected EncodeType:", eType)
 
-		err := conn.Encode(ProtocolError(
+		protoError := ProtocolError(
 			fmt.Sprintf("expected EncodeType(%v) got EncodeType(%v)", ET_USER_LOGIN_REQUEST, eType),
-		))
+		)
+
+		err := conn.Encode(protoError)
 		if err != nil {
 			return AuthenticatedUser{}, err
 		}
 
-		goto readNextType
+		return AuthenticatedUser{}, protoError
 
 	case ET_USER_LOGIN_REQUEST:
 	}
@@ -66,7 +70,7 @@ readNextType:
 		if err != nil {
 			return AuthenticatedUser{}, err
 		}
-	}
 
-	goto readNextType
+		return AuthenticatedUser{}, ErrInvalidLoginCredentials
+	}
 }
