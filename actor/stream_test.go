@@ -8,13 +8,16 @@ import (
 	. "github.com/ghthor/gospec"
 )
 
-type requestLogger struct {
-	requests <-chan actor.SelectionRequest
+const logSize = 100
+
+type logger struct {
+	selectionRequests <-chan actor.SelectionRequest
+	selectionResults  <-chan actor.SelectionResult
 }
 
-func (l *requestLogger) ReadFrom(requests <-chan actor.SelectionRequest) actor.SelectionRequestSource {
-	log := make(chan actor.SelectionRequest, 10)
-	l.requests = log
+func (l *logger) ReadSelectionRequestsFrom(requests <-chan actor.SelectionRequest) actor.SelectionRequestSource {
+	log := make(chan actor.SelectionRequest, logSize)
+	l.selectionRequests = log
 
 	out := make(chan actor.SelectionRequest)
 
@@ -30,13 +33,9 @@ func (l *requestLogger) ReadFrom(requests <-chan actor.SelectionRequest) actor.S
 	return out
 }
 
-type resultLogger struct {
-	results <-chan actor.SelectionResult
-}
-
-func (l *resultLogger) ReadFrom(results <-chan actor.SelectionResult) actor.SelectionResultSource {
-	log := make(chan actor.SelectionResult, 10)
-	l.results = log
+func (l *logger) ReadSelectionResultsFrom(results <-chan actor.SelectionResult) actor.SelectionResultSource {
+	log := make(chan actor.SelectionResult, logSize)
+	l.selectionResults = log
 
 	out := make(chan actor.SelectionResult)
 
@@ -53,12 +52,12 @@ func (l *resultLogger) ReadFrom(results <-chan actor.SelectionResult) actor.Sele
 }
 
 type closeVerifier struct {
-	wasClosed <-chan bool
+	selectionStreamClosed <-chan bool
 }
 
-func (c *closeVerifier) ReadFrom(results <-chan actor.SelectionResult) actor.SelectionResultSource {
+func (c *closeVerifier) ReadSelectionResultsFrom(results <-chan actor.SelectionResult) actor.SelectionResultSource {
 	closed := make(chan bool)
-	c.wasClosed = closed
+	c.selectionStreamClosed = closed
 
 	out := make(chan actor.SelectionResult)
 
@@ -67,9 +66,8 @@ func (c *closeVerifier) ReadFrom(results <-chan actor.SelectionResult) actor.Sel
 			out <- r
 		}
 
-		closed <- true
-
 		close(out)
+		closed <- true
 	}(out, closed)
 
 	return out
@@ -78,24 +76,24 @@ func (c *closeVerifier) ReadFrom(results <-chan actor.SelectionResult) actor.Sel
 func DescribeStream(c gospec.Context) {
 	requestStream := make(chan actor.SelectionRequest)
 
-	verifyStream := &closeVerifier{}
+	log := &logger{}
 
-	requestLog := &requestLogger{}
-	resultLog := &resultLogger{}
+
+	closeVerifier := &closeVerifier{}
 
 	actor.SelectionRequestSource(requestStream).
-		WriteTo(requestLog).
+		WriteTo(log).
 		WriteToProcessor(actor.NewSelectionProcessor()).
-		WriteTo(resultLog).
-		WriteTo(verifyStream).
+		WriteTo(log).
+		WriteTo(closeVerifier).
 		End()
 
 	defer func() {
 		close(requestStream)
-		c.Expect(<-verifyStream.wasClosed, IsTrue)
+		c.Expect(<-closeVerifier.selectionStreamClosed, IsTrue)
 	}()
 
-	c.Specify("a stream", func() {
+	c.Specify("a selection stream", func() {
 		a := filu.Actor{
 			Username: "user",
 			Name:     "actor name",
@@ -128,11 +126,11 @@ func DescribeStream(c gospec.Context) {
 		})
 
 		c.Specify("will log a request", func() {
-			c.Expect((<-requestLog.requests).Actor, Equals, a)
+			c.Expect((<-log.selectionRequests).Actor, Equals, a)
 		})
 
 		c.Specify("will log a result", func() {
-			c.Expect((<-resultLog.results).(actor.CreatedActor).Actor, Equals, a)
+			c.Expect((<-log.selectionResults).(actor.CreatedActor).Actor, Equals, a)
 		})
 	})
 }

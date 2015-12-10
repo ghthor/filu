@@ -54,21 +54,21 @@ type SelectionResult interface {
 type SelectionRequestSource <-chan SelectionRequest
 
 func (s SelectionRequestSource) WriteTo(sink SelectionRequestSink) SelectionRequestSource {
-	return sink.ReadFrom(s)
+	return sink.ReadSelectionRequestsFrom(s)
 }
 
 func (s SelectionRequestSource) WriteToProcessor(proc SelectionProcessor) SelectionResultSource {
-	return proc.ReadFrom(s)
+	return proc.ProcessSelectionRequestsFrom(s)
 }
 
 type SelectionRequestSink interface {
-	ReadFrom(<-chan SelectionRequest) SelectionRequestSource
+	ReadSelectionRequestsFrom(<-chan SelectionRequest) SelectionRequestSource
 }
 
 type SelectionResultSource <-chan SelectionResult
 
 func (s SelectionResultSource) WriteTo(sink SelectionResultSink) SelectionResultSource {
-	return sink.ReadFrom(s)
+	return sink.ReadSelectionResultsFrom(s)
 }
 
 func (s SelectionResultSource) End() {
@@ -80,11 +80,11 @@ func (s SelectionResultSource) End() {
 }
 
 type SelectionResultSink interface {
-	ReadFrom(<-chan SelectionResult) SelectionResultSource
+	ReadSelectionResultsFrom(<-chan SelectionResult) SelectionResultSource
 }
 
 type SelectionProcessor interface {
-	ReadFrom(<-chan SelectionRequest) SelectionResultSource
+	ProcessSelectionRequestsFrom(<-chan SelectionRequest) SelectionResultSource
 }
 
 // Dictionary of [Username:Actor]
@@ -100,9 +100,9 @@ func (actors actors) contains(target filu.Actor) bool {
 	return false
 }
 
-type selectedDB map[string]actors
+type actorsHashmapDB map[string]actors
 
-func (db selectedDB) ReadFrom(requests <-chan SelectionRequest) SelectionResultSource {
+func (db actorsHashmapDB) ProcessSelectionRequestsFrom(requests <-chan SelectionRequest) SelectionResultSource {
 	out := make(chan SelectionResult)
 
 	go func(out chan<- SelectionResult) {
@@ -129,7 +129,6 @@ func (db selectedDB) ReadFrom(requests <-chan SelectionRequest) SelectionResultS
 				Actor:            actor,
 				SelectionRequest: r,
 			}
-
 		}
 
 		close(out)
@@ -139,7 +138,7 @@ func (db selectedDB) ReadFrom(requests <-chan SelectionRequest) SelectionResultS
 }
 
 func NewSelectionProcessor() SelectionProcessor {
-	return make(selectedDB, 100)
+	return make(actorsHashmapDB, 100)
 }
 
 // A CreatedActor is the result of a selection request where
