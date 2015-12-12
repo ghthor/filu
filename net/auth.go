@@ -14,7 +14,7 @@ type AuthenticatedUser struct {
 
 var ErrInvalidLoginCredentials = errors.New("client provided invalid login credentials")
 
-func AuthenticateFrom(conn Conn, stream auth.Stream) (AuthenticatedUser, error) {
+func AuthenticateFrom(conn Conn, authDB auth.Stream) (AuthenticatedUser, error) {
 	eType, err := conn.NextType()
 	if err != nil {
 		return AuthenticatedUser{}, err
@@ -46,7 +46,7 @@ func AuthenticateFrom(conn Conn, stream auth.Stream) (AuthenticatedUser, error) 
 	}
 
 	authReq := auth.NewRequest(r.Name, r.Password)
-	stream.RequestAuthentication() <- authReq
+	authDB.RequestAuthentication() <- authReq
 
 	select {
 	case user := <-authReq.CreatedUser:
