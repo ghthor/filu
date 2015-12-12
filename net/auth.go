@@ -50,7 +50,9 @@ func AuthenticateFrom(conn Conn, authDB auth.Stream) (AuthenticatedUser, error) 
 
 	select {
 	case user := <-authReq.CreatedUser:
-		err = conn.Encode(UserCreateSuccess{user.Username})
+		err = conn.Encode(UserCreateSuccess{
+			Name: user.Username,
+		})
 		if err != nil {
 			return AuthenticatedUser{}, err
 		}
@@ -58,7 +60,9 @@ func AuthenticateFrom(conn Conn, authDB auth.Stream) (AuthenticatedUser, error) 
 		return AuthenticatedUser{user.Username}, nil
 
 	case user := <-authReq.AuthenticatedUser:
-		err = conn.Encode(UserLoginSuccess{user.Username})
+		err = conn.Encode(UserLoginSuccess{
+			Name: user.Username,
+		})
 		if err != nil {
 			return AuthenticatedUser{}, err
 		}
