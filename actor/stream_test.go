@@ -1,6 +1,8 @@
 package actor_test
 
 import (
+	"fmt"
+
 	"github.com/ghthor/filu"
 	"github.com/ghthor/filu/actor"
 
@@ -179,48 +181,7 @@ func DescribeStream(c gospec.Context) {
 		c.Expect(<-closeVerifier.getActorsStreamClosed, IsTrue)
 	}()
 
-	c.Specify("a selection stream", func() {
-		a := filu.Actor{
-			Username: "user",
-			Name:     "actor name",
-		}
-
-		r := actor.NewSelectionRequest(a)
-		requestStream <- r
-		c.Assume((<-r.CreatedActor).Actor, Equals, a)
-		c.Assume((<-r.SelectedActor).Actor, Equals, filu.Actor{})
-
-		c.Specify("will create an actor", func() {
-			a.Name = "another actor"
-			r = actor.NewSelectionRequest(a)
-			requestStream <- r
-			c.Expect((<-r.CreatedActor).Actor, Equals, a)
-
-			c.Specify("and close result channels", func() {
-				c.Expect((<-r.SelectedActor).Actor, Equals, filu.Actor{})
-			})
-		})
-
-		c.Specify("will select an actor", func() {
-			r = actor.NewSelectionRequest(a)
-			requestStream <- r
-			c.Expect((<-r.SelectedActor).Actor, Equals, a)
-
-			c.Specify("and close result channels", func() {
-				c.Expect((<-r.CreatedActor).Actor, Equals, filu.Actor{})
-			})
-		})
-
-		c.Specify("will log a request", func() {
-			c.Expect((<-log.selectionRequests).Actor, Equals, a)
-		})
-
-		c.Specify("will log a result", func() {
-			c.Expect((<-log.selectionResults).(actor.CreatedActor).Actor, Equals, a)
-		})
-	})
-
-	c.Specify("a get actors stream", func() {
+	buildDatabase := func() map[string][]filu.Actor {
 		database := map[string][]filu.Actor{
 			"jim":  makeActors("jim", "raynor", "samuel", "samwise"),
 			"mary": makeActors("mary", "little bits", "lamb"),
@@ -236,8 +197,76 @@ func DescribeStream(c gospec.Context) {
 			r := actor.NewSelectionRequest(a)
 			requestStream <- r
 			c.Assume((<-r.CreatedActor).Actor, Equals, a)
-			c.Assume((<-r.SelectedActor).Actor, Equals, filu.Actor{})
 		}
+
+		for _, a := range allActors {
+			r := actor.NewSelectionRequest(a)
+			requestStream <- r
+			c.Assume((<-r.SelectedActor).Actor, Equals, a)
+		}
+
+		return database
+	}
+
+	c.Specify("a selection stream", func() {
+		a := filu.Actor{
+			Username: "user",
+			Name:     "actor name",
+		}
+
+		r := actor.NewSelectionRequest(a)
+		requestStream <- r
+		c.Assume((<-r.CreatedActor).Actor, Equals, a)
+
+		c.Specify("will create an actor", func() {
+			a.Name = "another actor"
+			r = actor.NewSelectionRequest(a)
+			requestStream <- r
+			c.Expect((<-r.CreatedActor).Actor, Equals, a)
+		})
+
+		c.Specify("will create actors", func() {
+			buildDatabase()
+
+			actors := []filu.Actor{
+				{"jim", "jeremy"},
+				{"frog", "mr ribbit"},
+				{"bacon", "bacon master cletus"},
+			}
+
+			requests := make([]actor.SelectionRequest, 0, len(actors))
+			for _, a := range actors {
+				requests = append(requests, actor.NewSelectionRequest(a))
+			}
+
+			for i, r := range requests {
+				requestStream <- r
+				select {
+				case result := <-r.CreatedActor:
+					c.Expect(result.Actor, Equals, actors[i])
+				case <-r.SelectedActor:
+					panic(fmt.Sprintf("error: race condition closing channels on request {%s, %s}", r.Username, r.Name))
+				}
+			}
+		})
+
+		c.Specify("will select an actor", func() {
+			r = actor.NewSelectionRequest(a)
+			requestStream <- r
+			c.Expect((<-r.SelectedActor).Actor, Equals, a)
+		})
+
+		c.Specify("will log a request", func() {
+			c.Expect((<-log.selectionRequests).Actor, Equals, a)
+		})
+
+		c.Specify("will log a result", func() {
+			c.Expect((<-log.selectionResults).(actor.CreatedActor).Actor, Equals, a)
+		})
+	})
+
+	c.Specify("a get actors stream", func() {
+		database := buildDatabase()
 
 		requests := map[string]actor.GetActorsRequest{
 			"jim":  actor.NewGetActorsRequest("jim"),

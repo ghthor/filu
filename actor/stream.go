@@ -27,11 +27,6 @@ type SelectionRequest struct {
 	sendCreatedActor  chan<- CreatedActor
 }
 
-func (r SelectionRequest) closeResultChannels() {
-	close(r.sendSelectedActor)
-	close(r.sendCreatedActor)
-}
-
 func NewSelectionRequest(actor filu.Actor) SelectionRequest {
 	selectedActorCh := make(chan SelectedActor, 1)
 	createdActorCh := make(chan CreatedActor, 1)
@@ -184,12 +179,10 @@ func (terminator) Write(r SelectionResult) {
 
 func (e CreatedActor) respondToRequestor() {
 	e.SelectionRequest.sendCreatedActor <- e
-	e.SelectionRequest.closeResultChannels()
 }
 
 func (e SelectedActor) respondToRequestor() {
 	e.SelectionRequest.sendSelectedActor <- e
-	e.SelectionRequest.closeResultChannels()
 }
 
 // A GetActorsRequest is created for a specific Username and will
@@ -212,7 +205,6 @@ func NewGetActorsRequest(username string) GetActorsRequest {
 
 func (r GetActorsRequest) result(actors []filu.Actor) {
 	r.sendActors <- actors
-	close(r.sendActors)
 }
 
 // GetActorsResult will supply the list of actors for a given Username.
