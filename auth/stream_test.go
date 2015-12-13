@@ -3,6 +3,7 @@ package auth_test
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
 	"github.com/ghthor/filu/auth"
 	"github.com/ghthor/gospec"
@@ -152,23 +153,41 @@ func DescribeStream(c gospec.Context) {
 		c.Specify("will return", func() {
 			c.Specify("an invalid password", func() {
 				r := runRequest("mary", "invalid")
-				result := <-r.InvalidPassword
-				c.Expect(result.Username, Equals, "mary")
-				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
+				select {
+				case <-r.CreatedUser:
+					panic(fmt.Sprintf("error: race condition reading result to request {%s}", r.Username))
+				case <-r.AuthenticatedUser:
+					panic(fmt.Sprintf("error: race condition reading result to request {%s}", r.Username))
+				case result := <-r.InvalidPassword:
+					c.Expect(result.Username, Equals, "mary")
+					c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
+				}
 			})
 
 			c.Specify("a created user", func() {
 				r := runRequest("created", "user")
-				result := <-r.CreatedUser
-				c.Expect(result.Username, Equals, "created")
-				c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
+				select {
+				case result := <-r.CreatedUser:
+					c.Expect(result.Username, Equals, "created")
+					c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
+				case <-r.AuthenticatedUser:
+					panic(fmt.Sprintf("error: race condition reading result to request {%s}", r.Username))
+				case <-r.InvalidPassword:
+					panic(fmt.Sprintf("error: race condition reading result to request {%s}", r.Username))
+				}
 			})
 
 			c.Specify("an authenticated user", func() {
-				request := runRequest("test", "password")
-				result := <-request.AuthenticatedUser
-				c.Expect(result.Username, Equals, "test")
-				c.Expect(result.HappenedAt().After(request.HappenedAt()), IsTrue)
+				r := runRequest("test", "password")
+				select {
+				case <-r.CreatedUser:
+					panic(fmt.Sprintf("error: race condition reading result to request {%s}", r.Username))
+				case result := <-r.AuthenticatedUser:
+					c.Expect(result.Username, Equals, "test")
+					c.Expect(result.HappenedAt().After(r.HappenedAt()), IsTrue)
+				case <-r.InvalidPassword:
+					panic(fmt.Sprintf("error: race condition reading result to request {%s}", r.Username))
+				}
 			})
 		})
 

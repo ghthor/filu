@@ -52,12 +52,6 @@ func NewRequest(username, password string) Request {
 	}
 }
 
-func (r Request) closeResultChannels() {
-	close(r.sendInvalidPassword)
-	close(r.sendCreatedUser)
-	close(r.sendAuthenticatedUser)
-}
-
 // A RequestConsumer is used as the consumption end of a RequestStream.
 type RequestConsumer interface {
 	// The implementation of Write can assume in will never be called in parallel.
@@ -344,17 +338,14 @@ func (terminator) Write(r Result) {
 
 func (e InvalidPassword) respondToRequestor() {
 	e.Request.sendInvalidPassword <- e
-	e.Request.closeResultChannels()
 }
 
 func (e CreatedUser) respondToRequestor() {
 	e.Request.sendCreatedUser <- e
-	e.Request.closeResultChannels()
 }
 
 func (e AuthenticatedUser) respondToRequestor() {
 	e.Request.sendAuthenticatedUser <- e
-	e.Request.closeResultChannels()
 }
 
 // NewProcessor reads gob encoded Requests from io.Reader
