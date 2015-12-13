@@ -12,6 +12,11 @@ func init() {
 		UserLoginFailure{},
 		UserLoginSuccess{},
 		UserCreateSuccess{},
+
+		ActorsList{},
+		SelectActorRequest{},
+		CreateActorSuccess{},
+		SelectActorSuccess{},
 	}
 
 	for _, t := range types {

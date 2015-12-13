@@ -101,8 +101,8 @@ func (trip LoginRoundTrip) run(r net.UserLoginRequest) LoginRoundTrip {
 			}
 
 			createSuccess <- CreatedUser{
-				Name: r.Name,
-				//AuthenticatedConn: nil,
+				Name:           r.Name,
+				ActorsListConn: NewActorsListConn(trip.conn),
 			}
 
 		case net.ET_USER_LOGIN_FAILED:
@@ -124,8 +124,8 @@ func (trip LoginRoundTrip) run(r net.UserLoginRequest) LoginRoundTrip {
 			}
 
 			loginSuccess <- LoggedInUser{
-				Name: resp.Name,
-				//LoggedInConn: actorConnector{trip.conn},
+				Name:           resp.Name,
+				ActorsListConn: NewActorsListConn(trip.conn),
 			}
 
 		default:
@@ -138,18 +138,18 @@ func (trip LoginRoundTrip) run(r net.UserLoginRequest) LoginRoundTrip {
 
 // A LoggedInUser represents a successful login attempt by the client.
 // It contains the Username of the logged in user and a handle to an
-// AnthenticatedConn which allows the client to have more access to
+// ActorsListConn which allows the client to have more access to
 // functionality.
 type LoggedInUser struct {
 	Name string
-	AuthenticatedConn
+	ActorsListConn
 }
 
 // A CreatedUser represents a successful login attempt where the
 // requested user didn't exist, therefore it was created. It contains
-// the Username of the created user and a handlt to an AuthenticatedConn
+// the Username of the created user and a handle to an ActorsListConn
 // which allows the client to have more access to functionality.
 type CreatedUser struct {
 	Name string
-	AuthenticatedConn
+	ActorsListConn
 }
