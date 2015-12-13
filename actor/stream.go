@@ -292,9 +292,9 @@ func (db *existingActorsDB) ReadSelectionResultsFrom(results <-chan SelectionRes
 			})
 			db.actors[request.Username] = actors
 
-			out <- result
-
 			db.Unlock()
+
+			out <- result
 		}
 	}(out)
 
@@ -309,15 +309,16 @@ func (db *existingActorsDB) ProcessGetActorRequestsFrom(requests <-chan GetActor
 
 		for r := range requests {
 			db.RLock()
+			actors := db.actors[r.Username]
+			db.RUnlock()
 
 			out <- ExistingActors{
 				Time:   filu.Now(),
-				Actors: db.actors[r.Username],
+				Actors: actors,
 
 				GetActorsRequest: r,
 			}
 
-			db.RUnlock()
 		}
 	}(out)
 
