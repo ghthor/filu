@@ -1,0 +1,17 @@
+Sun Jan  3 16:04:33 EST 2016
+
+# Welcome Back - Loose Plans
+So it's been a year since I've last checked in here.
+Work has been moving forward with stream processing experimentation.
+Authentication and Actor selection has a streaming implementation.
+I have plans to make pass over Auth and unify the API interface to a
+consistent pattern, modeled off of the version used in Actor.
+
+A few weeks back I was working on porting the networking portion
+from aodd into filu. It has very little to do with the mechanics
+of aodd and making filu it's home makes perfect sense. I believe
+the next step in the process is porting the ActorConnection step
+in the protocol. Once that is completed aodd will require updating
+it's networking bits to use the filu packages.
+
+Sun Jan  3 16:14:16 EST 2016
