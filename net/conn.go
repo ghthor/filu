@@ -2,11 +2,8 @@ package net
 
 import "github.com/ghthor/filu"
 
-// Used to determine the next type that's in the
-// buffer so we can decode it into a real value.
-// We'll decode an encoded type and switch on its
-// value so we'll have the correct value to decode
-// into.
+// A EncodedType is used to mark the the following value's
+// type to enable decoding into a concrete value go value.
 type EncodedType int
 
 //go:generate stringer -type=EncodedType
