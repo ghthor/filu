@@ -100,8 +100,17 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		trip := client.NewUnauthenticatedConn(conn.client).AttemptLogin(username, password)
 		user, err := net.AuthenticateFrom(conn.server, authDB)
 		c.Assume(err, IsNil)
-		c.Assume(<-trip.Error, IsNil)
-		return user, <-trip.CreateSuccess
+		select {
+		case err := <-trip.Error:
+			panic(err)
+		case resp := <-trip.LoginFailure:
+			panic(resp)
+		case resp := <-trip.LoginSuccess:
+			panic(resp)
+
+		case resp := <-trip.CreateSuccess:
+			return user, resp
+		}
 	}
 
 	conn := newMockConn()

@@ -44,8 +44,8 @@ func (trip GetActorsRoundTrip) run() GetActorsRoundTrip {
 
 	closeChans := func() func() {
 		var (
-			selectActorCh = make(chan SelectActorConn, 1)
-			errorCh       = make(chan error, 1)
+			selectActorCh = make(chan SelectActorConn)
+			errorCh       = make(chan error)
 		)
 
 		trip.SelectActorConn, selectActor =
@@ -130,9 +130,9 @@ func (trip SelectActorRoundTrip) run(actorName string) SelectActorRoundTrip {
 
 	closeChans := func() func() {
 		var (
-			createdActorCh  = make(chan SelectedActorConn, 1)
-			selectedActorCh = make(chan SelectedActorConn, 1)
-			errorCh         = make(chan error, 1)
+			createdActorCh  = make(chan SelectedActorConn)
+			selectedActorCh = make(chan SelectedActorConn)
+			errorCh         = make(chan error)
 		)
 
 		trip.CreatedActor, createdActor =

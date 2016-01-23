@@ -53,10 +53,10 @@ func (trip LoginRoundTrip) run(r net.UserLoginRequest) LoginRoundTrip {
 
 	closeChans := func() func() {
 		var (
-			loginSuccessCh  = make(chan LoggedInUser, 1)
-			createSuccessCh = make(chan CreatedUser, 1)
-			loginFailureCh  = make(chan net.UserLoginFailure, 1)
-			errorCh         = make(chan error, 1)
+			loginSuccessCh  = make(chan LoggedInUser)
+			createSuccessCh = make(chan CreatedUser)
+			loginFailureCh  = make(chan net.UserLoginFailure)
+			errorCh         = make(chan error)
 		)
 
 		trip.LoginSuccess, loginSuccess =
