@@ -47,6 +47,7 @@ func AuthenticateFrom(conn Conn, authDB auth.Stream) (AuthenticatedUser, error) 
 
 	authReq := auth.NewRequest(r.Name, r.Password)
 	authDB.RequestAuthentication() <- authReq
+	defer authReq.Close()
 
 	select {
 	case user := <-authReq.CreatedUser:

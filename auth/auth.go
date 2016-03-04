@@ -52,6 +52,15 @@ func NewRequest(username, password string) Request {
 	}
 }
 
+// Close the response channels. Should be called after a response
+// has been received, else a send on a closed channel may trigger
+// a panic.
+func (r Request) Close() {
+	close(r.sendInvalidPassword)
+	close(r.sendCreatedUser)
+	close(r.sendAuthenticatedUser)
+}
+
 // A RequestConsumer is used as the consumption end of a RequestStream.
 type RequestConsumer interface {
 	// The implementation of Write can assume in will never be called in parallel.
