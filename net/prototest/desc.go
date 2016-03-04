@@ -100,17 +100,24 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		trip := client.NewUnauthenticatedConn(conn.client).AttemptLogin(username, password)
 		user, err := net.AuthenticateFrom(conn.server, authDB)
 		c.Assume(err, IsNil)
-		select {
-		case err := <-trip.Error:
-			panic(err)
-		case resp := <-trip.LoginFailure:
-			panic(resp)
-		case resp := <-trip.LoginSuccess:
-			panic(resp)
 
-		case resp := <-trip.CreateSuccess:
-			return user, resp
+		err = nil
+		var loginFailure net.UserLoginFailure
+		var loginSuccess client.LoggedInUser
+		var createdUser client.CreatedUser
+
+		select {
+		case err = <-trip.Error:
+		case loginFailure = <-trip.LoginFailure:
+		case loginSuccess = <-trip.LoginSuccess:
+		case createdUser = <-trip.CreateSuccess:
 		}
+
+		c.Assume(err, IsNil)
+		c.Assume(loginFailure, Equals, net.UserLoginFailure{})
+		c.Assume(loginSuccess, Equals, client.LoggedInUser{})
+
+		return user, createdUser
 	}
 
 	conn := newMockConn()
@@ -126,9 +133,22 @@ func DescribeClientServerProtocol(c gospec.Context) {
 				_, err := net.AuthenticateFrom(conn.server, authDB)
 				c.Expect(err, Equals, net.ErrInvalidLoginCredentials)
 
-				authFailure := <-trip.LoginFailure
-				c.Assume(<-trip.Error, IsNil)
-				c.Expect(authFailure.Name, Equals, "newUser")
+				err = nil
+				var loginFailure net.UserLoginFailure
+				var loginSuccess client.LoggedInUser
+				var createdUser client.CreatedUser
+
+				select {
+				case err = <-trip.Error:
+				case loginFailure = <-trip.LoginFailure:
+				case loginSuccess = <-trip.LoginSuccess:
+				case createdUser = <-trip.CreateSuccess:
+				}
+
+				c.Assume(err, IsNil)
+				c.Assume(loginSuccess, Equals, client.LoggedInUser{})
+				c.Assume(createdUser, Equals, client.CreatedUser{})
+				c.Expect(loginFailure.Name, Equals, "newUser")
 			})
 		})
 
@@ -138,17 +158,43 @@ func DescribeClientServerProtocol(c gospec.Context) {
 			authedUser, err := net.AuthenticateFrom(conn.server, authDB)
 			c.Assume(err, IsNil)
 
-			loggedInUser := <-trip.LoginSuccess
-			c.Assume(<-trip.Error, IsNil)
-			c.Expect(authedUser.Username, Equals, loggedInUser.Name)
+			err = nil
+			var loginFailure net.UserLoginFailure
+			var loginSuccess client.LoggedInUser
+			var createdUser client.CreatedUser
+
+			select {
+			case err = <-trip.Error:
+			case loginFailure = <-trip.LoginFailure:
+			case loginSuccess = <-trip.LoginSuccess:
+			case createdUser = <-trip.CreateSuccess:
+			}
+
+			c.Assume(err, IsNil)
+			c.Assume(loginFailure, Equals, net.UserLoginFailure{})
+			c.Assume(createdUser, Equals, client.CreatedUser{})
+			c.Expect(loginSuccess.Name, Equals, authedUser.Username)
 
 			c.Specify("unless the password is invalid", func() {
 				trip := client.NewUnauthenticatedConn(conn.client).AttemptLogin("username", "invalid")
 				_, err := net.AuthenticateFrom(conn.server, authDB)
 				c.Expect(err, Equals, net.ErrInvalidLoginCredentials)
 
-				loginFailure := <-trip.LoginFailure
-				c.Assume(<-trip.Error, IsNil)
+				err = nil
+				var loginFailure net.UserLoginFailure
+				var loginSuccess client.LoggedInUser
+				var createdUser client.CreatedUser
+
+				select {
+				case err = <-trip.Error:
+				case loginFailure = <-trip.LoginFailure:
+				case loginSuccess = <-trip.LoginSuccess:
+				case createdUser = <-trip.CreateSuccess:
+				}
+
+				c.Assume(err, IsNil)
+				c.Assume(loginSuccess, Equals, client.LoggedInUser{})
+				c.Assume(createdUser, Equals, client.CreatedUser{})
 				c.Expect(loginFailure.Name, Equals, "username")
 			})
 		})
@@ -169,44 +215,74 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		c.Specify("receives a list of actors", func() {
 			trip := createdUser.GetActors()
 			c.Expect(net.SendActors(conn.server, actorDB.Get, authenticatedUser), IsNil)
-			c.Expect((<-trip.SelectActorConn).Actors(), ContainsAll, []string{
+
+			var err error = nil
+			var selectConn client.SelectActorConn
+			select {
+			case err = <-trip.Error:
+			case selectConn = <-trip.SelectActorConn:
+			}
+
+			c.Assume(err, IsNil)
+			c.Expect(selectConn.Actors(), ContainsAll, []string{
 				"jim the slayer",
 				"jim the destroyer",
 				"jimmy shrimp steamer",
 			})
-			c.Assume(<-trip.Error, IsNil)
 		})
 
 		trip := createdUser.GetActors()
 		c.Assume(net.SendActors(conn.server, actorDB.Get, authenticatedUser), IsNil)
-		selectActorConn := <-trip.SelectActorConn
+
+		var err error = nil
+		var selectConn client.SelectActorConn
+		select {
+		case err = <-trip.Error:
+		case selectConn = <-trip.SelectActorConn:
+		}
+		c.Assume(err, IsNil)
 
 		c.Specify("can create a new actor", func() {
-			trip := selectActorConn.SelectActor("jay")
+			trip := selectConn.SelectActor("jay")
 
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
 			c.Assume(err, IsNil)
 
-			selectedActor := <-trip.CreatedActor
-			c.Assume(selectedActor, Not(IsNil))
-			c.Assume(<-trip.Error, IsNil)
+			var selectedActor client.SelectedActorConn
+			var createdActor client.SelectedActorConn
+			select {
+			case err = <-trip.Error:
+			case selectedActor = <-trip.SelectedActor:
+			case createdActor = <-trip.CreatedActor:
+			}
+			c.Assume(err, IsNil)
+			c.Assume(selectedActor, IsNil)
+			c.Assume(createdActor, Not(IsNil))
 
 			expectedActor := filu.Actor{
 				Username: "jim",
 				Name:     "jay",
 			}
 			c.Expect(actor, Equals, expectedActor)
-			c.Expect(selectedActor.Actor(), Equals, expectedActor)
+			c.Expect(createdActor.Actor(), Equals, expectedActor)
 		})
 
 		c.Specify("can select an actor", func() {
-			trip := selectActorConn.SelectActor("jim the slayer")
+			trip := selectConn.SelectActor("jim the slayer")
 
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
 			c.Assume(err, IsNil)
 
-			selectedActor := <-trip.SelectedActor
-			c.Assume(<-trip.Error, IsNil)
+			var selectedActor client.SelectedActorConn
+			var createdActor client.SelectedActorConn
+			select {
+			case err = <-trip.Error:
+			case selectedActor = <-trip.SelectedActor:
+			case createdActor = <-trip.CreatedActor:
+			}
+			c.Assume(err, IsNil)
+			c.Assume(selectedActor, Not(IsNil))
+			c.Assume(createdActor, IsNil)
 
 			expectedActor := filu.Actor{
 				Username: "jim",
