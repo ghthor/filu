@@ -93,6 +93,44 @@ func (db mockActorDB) createActor(username, actorname string) actor.CreatedActor
 	return <-r.CreatedActor
 }
 
+type loginTripResult struct {
+	err          error
+	failure      net.UserLoginFailure
+	loggedInUser client.LoggedInUser
+	createdUser  client.CreatedUser
+}
+
+func NewLoginResult(trip client.LoginRoundTrip) loginTripResult {
+	var result loginTripResult
+
+	select {
+	case result.err = <-trip.Error:
+	case result.failure = <-trip.LoginFailure:
+	case result.loggedInUser = <-trip.LoginSuccess:
+	case result.createdUser = <-trip.CreateSuccess:
+	}
+
+	return result
+}
+
+type selectActorResult struct {
+	err           error
+	selectedActor client.SelectedActorConn
+	createdActor  client.SelectedActorConn
+}
+
+func NewSelectActorResult(trip client.SelectActorRoundTrip) selectActorResult {
+	var result selectActorResult
+
+	select {
+	case result.err = <-trip.Error:
+	case result.selectedActor = <-trip.SelectedActor:
+	case result.createdActor = <-trip.CreatedActor:
+	}
+
+	return result
+}
+
 func DescribeClientServerProtocol(c gospec.Context) {
 	authDB := auth.NewStream(nil, nil, nil)
 
@@ -101,23 +139,13 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		user, err := net.AuthenticateFrom(conn.server, authDB)
 		c.Assume(err, IsNil)
 
-		err = nil
-		var loginFailure net.UserLoginFailure
-		var loginSuccess client.LoggedInUser
-		var createdUser client.CreatedUser
+		result := NewLoginResult(trip)
 
-		select {
-		case err = <-trip.Error:
-		case loginFailure = <-trip.LoginFailure:
-		case loginSuccess = <-trip.LoginSuccess:
-		case createdUser = <-trip.CreateSuccess:
-		}
+		c.Assume(result.err, IsNil)
+		c.Assume(result.failure, Equals, net.UserLoginFailure{})
+		c.Assume(result.loggedInUser, Equals, client.LoggedInUser{})
 
-		c.Assume(err, IsNil)
-		c.Assume(loginFailure, Equals, net.UserLoginFailure{})
-		c.Assume(loginSuccess, Equals, client.LoggedInUser{})
-
-		return user, createdUser
+		return user, result.createdUser
 	}
 
 	conn := newMockConn()
@@ -133,22 +161,11 @@ func DescribeClientServerProtocol(c gospec.Context) {
 				_, err := net.AuthenticateFrom(conn.server, authDB)
 				c.Expect(err, Equals, net.ErrInvalidLoginCredentials)
 
-				err = nil
-				var loginFailure net.UserLoginFailure
-				var loginSuccess client.LoggedInUser
-				var createdUser client.CreatedUser
-
-				select {
-				case err = <-trip.Error:
-				case loginFailure = <-trip.LoginFailure:
-				case loginSuccess = <-trip.LoginSuccess:
-				case createdUser = <-trip.CreateSuccess:
-				}
-
-				c.Assume(err, IsNil)
-				c.Assume(loginSuccess, Equals, client.LoggedInUser{})
-				c.Assume(createdUser, Equals, client.CreatedUser{})
-				c.Expect(loginFailure.Name, Equals, "newUser")
+				result := NewLoginResult(trip)
+				c.Assume(result.err, IsNil)
+				c.Assume(result.loggedInUser, Equals, client.LoggedInUser{})
+				c.Assume(result.createdUser, Equals, client.CreatedUser{})
+				c.Expect(result.failure.Name, Equals, "newUser")
 			})
 		})
 
@@ -158,44 +175,22 @@ func DescribeClientServerProtocol(c gospec.Context) {
 			authedUser, err := net.AuthenticateFrom(conn.server, authDB)
 			c.Assume(err, IsNil)
 
-			err = nil
-			var loginFailure net.UserLoginFailure
-			var loginSuccess client.LoggedInUser
-			var createdUser client.CreatedUser
-
-			select {
-			case err = <-trip.Error:
-			case loginFailure = <-trip.LoginFailure:
-			case loginSuccess = <-trip.LoginSuccess:
-			case createdUser = <-trip.CreateSuccess:
-			}
-
-			c.Assume(err, IsNil)
-			c.Assume(loginFailure, Equals, net.UserLoginFailure{})
-			c.Assume(createdUser, Equals, client.CreatedUser{})
-			c.Expect(loginSuccess.Name, Equals, authedUser.Username)
+			result := NewLoginResult(trip)
+			c.Assume(result.err, IsNil)
+			c.Assume(result.failure, Equals, net.UserLoginFailure{})
+			c.Assume(result.createdUser, Equals, client.CreatedUser{})
+			c.Expect(result.loggedInUser.Name, Equals, authedUser.Username)
 
 			c.Specify("unless the password is invalid", func() {
 				trip := client.NewUnauthenticatedConn(conn.client).AttemptLogin("username", "invalid")
 				_, err := net.AuthenticateFrom(conn.server, authDB)
 				c.Expect(err, Equals, net.ErrInvalidLoginCredentials)
 
-				err = nil
-				var loginFailure net.UserLoginFailure
-				var loginSuccess client.LoggedInUser
-				var createdUser client.CreatedUser
-
-				select {
-				case err = <-trip.Error:
-				case loginFailure = <-trip.LoginFailure:
-				case loginSuccess = <-trip.LoginSuccess:
-				case createdUser = <-trip.CreateSuccess:
-				}
-
-				c.Assume(err, IsNil)
-				c.Assume(loginSuccess, Equals, client.LoggedInUser{})
-				c.Assume(createdUser, Equals, client.CreatedUser{})
-				c.Expect(loginFailure.Name, Equals, "username")
+				result := NewLoginResult(trip)
+				c.Assume(result.err, IsNil)
+				c.Assume(result.loggedInUser, Equals, client.LoggedInUser{})
+				c.Assume(result.createdUser, Equals, client.CreatedUser{})
+				c.Expect(result.failure.Name, Equals, "username")
 			})
 		})
 	})
@@ -243,28 +238,23 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		c.Assume(err, IsNil)
 
 		c.Specify("can create a new actor", func() {
+			c.Assume(selectConn.Actors(), Not(Contains), []string{"jay"})
 			trip := selectConn.SelectActor("jay")
 
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
 			c.Assume(err, IsNil)
 
-			var selectedActor client.SelectedActorConn
-			var createdActor client.SelectedActorConn
-			select {
-			case err = <-trip.Error:
-			case selectedActor = <-trip.SelectedActor:
-			case createdActor = <-trip.CreatedActor:
-			}
-			c.Assume(err, IsNil)
-			c.Assume(selectedActor, IsNil)
-			c.Assume(createdActor, Not(IsNil))
+			result := NewSelectActorResult(trip)
+			c.Assume(result.err, IsNil)
+			c.Assume(result.selectedActor, IsNil)
+			c.Assume(result.createdActor, Not(IsNil))
 
 			expectedActor := filu.Actor{
 				Username: "jim",
 				Name:     "jay",
 			}
 			c.Expect(actor, Equals, expectedActor)
-			c.Expect(createdActor.Actor(), Equals, expectedActor)
+			c.Expect(result.createdActor.Actor(), Equals, expectedActor)
 		})
 
 		c.Specify("can select an actor", func() {
@@ -273,23 +263,17 @@ func DescribeClientServerProtocol(c gospec.Context) {
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
 			c.Assume(err, IsNil)
 
-			var selectedActor client.SelectedActorConn
-			var createdActor client.SelectedActorConn
-			select {
-			case err = <-trip.Error:
-			case selectedActor = <-trip.SelectedActor:
-			case createdActor = <-trip.CreatedActor:
-			}
-			c.Assume(err, IsNil)
-			c.Assume(selectedActor, Not(IsNil))
-			c.Assume(createdActor, IsNil)
+			result := NewSelectActorResult(trip)
+			c.Assume(result.err, IsNil)
+			c.Assume(result.selectedActor, Not(IsNil))
+			c.Assume(result.createdActor, IsNil)
 
 			expectedActor := filu.Actor{
 				Username: "jim",
 				Name:     "jim the slayer",
 			}
 			c.Expect(actor, Equals, expectedActor)
-			c.Expect(selectedActor.Actor(), Equals, expectedActor)
+			c.Expect(result.selectedActor.Actor(), Equals, expectedActor)
 		})
 	})
 }
