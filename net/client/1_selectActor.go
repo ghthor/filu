@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 
-	"github.com/ghthor/filu"
 	"github.com/ghthor/filu/net"
 )
 
@@ -200,14 +199,3 @@ func (trip SelectActorRoundTrip) run(actorName string) SelectActorRoundTrip {
 
 	return trip
 }
-
-type SelectedActorConn interface {
-	Actor() filu.Actor
-}
-
-type selectedActorConn struct {
-	conn  net.Conn
-	actor filu.Actor
-}
-
-func (c selectedActorConn) Actor() filu.Actor { return c.actor }
