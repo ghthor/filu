@@ -220,6 +220,7 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		c.Assume(err, IsNil)
 
 		c.Specify("can create a new actor", func() {
+			c.Assume(selectConn.Actors(), Not(Contains), []string{"jay"})
 			trip := selectConn.SelectActor("jay")
 
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
