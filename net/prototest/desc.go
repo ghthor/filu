@@ -93,6 +93,26 @@ func (db mockActorDB) createActor(username, actorname string) actor.CreatedActor
 	return <-r.CreatedActor
 }
 
+type loginTripResult struct {
+	err          error
+	failure      net.UserLoginFailure
+	loggedInUser client.LoggedInUser
+	createdUser  client.CreatedUser
+}
+
+func NewLoginResult(trip client.LoginRoundTrip) loginTripResult {
+	var result loginTripResult
+
+	select {
+	case result.err = <-trip.Error:
+	case result.failure = <-trip.LoginFailure:
+	case result.loggedInUser = <-trip.LoginSuccess:
+	case result.createdUser = <-trip.CreateSuccess:
+	}
+
+	return result
+}
+
 func DescribeClientServerProtocol(c gospec.Context) {
 	authDB := auth.NewStream(nil, nil, nil)
 
@@ -101,23 +121,13 @@ func DescribeClientServerProtocol(c gospec.Context) {
 		user, err := net.AuthenticateFrom(conn.server, authDB)
 		c.Assume(err, IsNil)
 
-		err = nil
-		var loginFailure net.UserLoginFailure
-		var loginSuccess client.LoggedInUser
-		var createdUser client.CreatedUser
+		result := NewLoginResult(trip)
 
-		select {
-		case err = <-trip.Error:
-		case loginFailure = <-trip.LoginFailure:
-		case loginSuccess = <-trip.LoginSuccess:
-		case createdUser = <-trip.CreateSuccess:
-		}
+		c.Assume(result.err, IsNil)
+		c.Assume(result.failure, Equals, net.UserLoginFailure{})
+		c.Assume(result.loggedInUser, Equals, client.LoggedInUser{})
 
-		c.Assume(err, IsNil)
-		c.Assume(loginFailure, Equals, net.UserLoginFailure{})
-		c.Assume(loginSuccess, Equals, client.LoggedInUser{})
-
-		return user, createdUser
+		return user, result.createdUser
 	}
 
 	conn := newMockConn()
@@ -133,22 +143,11 @@ func DescribeClientServerProtocol(c gospec.Context) {
 				_, err := net.AuthenticateFrom(conn.server, authDB)
 				c.Expect(err, Equals, net.ErrInvalidLoginCredentials)
 
-				err = nil
-				var loginFailure net.UserLoginFailure
-				var loginSuccess client.LoggedInUser
-				var createdUser client.CreatedUser
-
-				select {
-				case err = <-trip.Error:
-				case loginFailure = <-trip.LoginFailure:
-				case loginSuccess = <-trip.LoginSuccess:
-				case createdUser = <-trip.CreateSuccess:
-				}
-
-				c.Assume(err, IsNil)
-				c.Assume(loginSuccess, Equals, client.LoggedInUser{})
-				c.Assume(createdUser, Equals, client.CreatedUser{})
-				c.Expect(loginFailure.Name, Equals, "newUser")
+				result := NewLoginResult(trip)
+				c.Assume(result.err, IsNil)
+				c.Assume(result.loggedInUser, Equals, client.LoggedInUser{})
+				c.Assume(result.createdUser, Equals, client.CreatedUser{})
+				c.Expect(result.failure.Name, Equals, "newUser")
 			})
 		})
 
@@ -158,44 +157,22 @@ func DescribeClientServerProtocol(c gospec.Context) {
 			authedUser, err := net.AuthenticateFrom(conn.server, authDB)
 			c.Assume(err, IsNil)
 
-			err = nil
-			var loginFailure net.UserLoginFailure
-			var loginSuccess client.LoggedInUser
-			var createdUser client.CreatedUser
-
-			select {
-			case err = <-trip.Error:
-			case loginFailure = <-trip.LoginFailure:
-			case loginSuccess = <-trip.LoginSuccess:
-			case createdUser = <-trip.CreateSuccess:
-			}
-
-			c.Assume(err, IsNil)
-			c.Assume(loginFailure, Equals, net.UserLoginFailure{})
-			c.Assume(createdUser, Equals, client.CreatedUser{})
-			c.Expect(loginSuccess.Name, Equals, authedUser.Username)
+			result := NewLoginResult(trip)
+			c.Assume(result.err, IsNil)
+			c.Assume(result.failure, Equals, net.UserLoginFailure{})
+			c.Assume(result.createdUser, Equals, client.CreatedUser{})
+			c.Expect(result.loggedInUser.Name, Equals, authedUser.Username)
 
 			c.Specify("unless the password is invalid", func() {
 				trip := client.NewUnauthenticatedConn(conn.client).AttemptLogin("username", "invalid")
 				_, err := net.AuthenticateFrom(conn.server, authDB)
 				c.Expect(err, Equals, net.ErrInvalidLoginCredentials)
 
-				err = nil
-				var loginFailure net.UserLoginFailure
-				var loginSuccess client.LoggedInUser
-				var createdUser client.CreatedUser
-
-				select {
-				case err = <-trip.Error:
-				case loginFailure = <-trip.LoginFailure:
-				case loginSuccess = <-trip.LoginSuccess:
-				case createdUser = <-trip.CreateSuccess:
-				}
-
-				c.Assume(err, IsNil)
-				c.Assume(loginSuccess, Equals, client.LoggedInUser{})
-				c.Assume(createdUser, Equals, client.CreatedUser{})
-				c.Expect(loginFailure.Name, Equals, "username")
+				result := NewLoginResult(trip)
+				c.Assume(result.err, IsNil)
+				c.Assume(result.loggedInUser, Equals, client.LoggedInUser{})
+				c.Assume(result.createdUser, Equals, client.CreatedUser{})
+				c.Expect(result.failure.Name, Equals, "username")
 			})
 		})
 	})
