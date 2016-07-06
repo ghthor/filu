@@ -113,6 +113,24 @@ func NewLoginResult(trip client.LoginRoundTrip) loginTripResult {
 	return result
 }
 
+type selectActorResult struct {
+	err           error
+	selectedActor client.SelectedActorConn
+	createdActor  client.SelectedActorConn
+}
+
+func NewSelectActorResult(trip client.SelectActorRoundTrip) selectActorResult {
+	var result selectActorResult
+
+	select {
+	case result.err = <-trip.Error:
+	case result.selectedActor = <-trip.SelectedActor:
+	case result.createdActor = <-trip.CreatedActor:
+	}
+
+	return result
+}
+
 func DescribeClientServerProtocol(c gospec.Context) {
 	authDB := auth.NewStream(nil, nil, nil)
 
@@ -226,23 +244,17 @@ func DescribeClientServerProtocol(c gospec.Context) {
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
 			c.Assume(err, IsNil)
 
-			var selectedActor client.SelectedActorConn
-			var createdActor client.SelectedActorConn
-			select {
-			case err = <-trip.Error:
-			case selectedActor = <-trip.SelectedActor:
-			case createdActor = <-trip.CreatedActor:
-			}
-			c.Assume(err, IsNil)
-			c.Assume(selectedActor, IsNil)
-			c.Assume(createdActor, Not(IsNil))
+			result := NewSelectActorResult(trip)
+			c.Assume(result.err, IsNil)
+			c.Assume(result.selectedActor, IsNil)
+			c.Assume(result.createdActor, Not(IsNil))
 
 			expectedActor := filu.Actor{
 				Username: "jim",
 				Name:     "jay",
 			}
 			c.Expect(actor, Equals, expectedActor)
-			c.Expect(createdActor.Actor(), Equals, expectedActor)
+			c.Expect(result.createdActor.Actor(), Equals, expectedActor)
 		})
 
 		c.Specify("can select an actor", func() {
@@ -251,23 +263,17 @@ func DescribeClientServerProtocol(c gospec.Context) {
 			actor, err := net.SelectActorFrom(conn.server, actorDB.Select, authenticatedUser)
 			c.Assume(err, IsNil)
 
-			var selectedActor client.SelectedActorConn
-			var createdActor client.SelectedActorConn
-			select {
-			case err = <-trip.Error:
-			case selectedActor = <-trip.SelectedActor:
-			case createdActor = <-trip.CreatedActor:
-			}
-			c.Assume(err, IsNil)
-			c.Assume(selectedActor, Not(IsNil))
-			c.Assume(createdActor, IsNil)
+			result := NewSelectActorResult(trip)
+			c.Assume(result.err, IsNil)
+			c.Assume(result.selectedActor, Not(IsNil))
+			c.Assume(result.createdActor, IsNil)
 
 			expectedActor := filu.Actor{
 				Username: "jim",
 				Name:     "jim the slayer",
 			}
 			c.Expect(actor, Equals, expectedActor)
-			c.Expect(selectedActor.Actor(), Equals, expectedActor)
+			c.Expect(result.selectedActor.Actor(), Equals, expectedActor)
 		})
 	})
 }
