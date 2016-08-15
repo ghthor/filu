@@ -6,24 +6,6 @@ import (
 	"io"
 )
 
-func init() {
-	types := []interface{}{
-		UserLoginRequest{},
-		UserLoginFailure{},
-		UserLoginSuccess{},
-		UserCreateSuccess{},
-
-		ActorsList{},
-		SelectActorRequest{},
-		CreateActorSuccess{},
-		SelectActorSuccess{},
-	}
-
-	for _, t := range types {
-		gob.Register(t)
-	}
-}
-
 type gobConn struct {
 	enc  *gob.Encoder
 	wbuf *bufio.Writer
