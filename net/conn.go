@@ -1,75 +1,70 @@
 package net
 
-import "github.com/ghthor/filu"
-
-// A EncodedType is used to mark the the following value's
-// type to enable decoding into a concrete value go value.
+// A EncodedType is used to mark the following value's
+// type to enable decoding into a concrete go value.
 type EncodedType int
 
 //go:generate stringer -type=EncodedType
 const (
 	ET_ERROR EncodedType = iota
+
+	// The Server or the Client can send an ET_PROTOCOL_ERROR if it
+	// receives a packet that it wasn't expecting.
 	ET_PROTOCOL_ERROR
+
+	// The Server or the Client can send an ET_DISCONNECT message
+	// to signal that the connection will be closed.
 	ET_DISCONNECT
 
-	ET_USER_LOGIN_REQUEST
+	// The client sends an ET_CONNECT_ACTOR message immediately
+	// after a connection is established.
+	ET_CONNECT_ACTOR
 
-	ET_USER_LOGIN_FAILED
-	ET_USER_LOGIN_SUCCESS
-	ET_USER_CREATE_SUCCESS
+	// The Server will respond with an ET_CONNECTED_ACTOR which will
+	// contain an implementation specific structure that describes the
+	// actor.
+	ET_CONNECTED_ACTOR
 
-	ET_ACTORS
-	ET_SELECT_ACTOR
-	ET_SELECT_ACTOR_SUCCESS
-	ET_CREATE_ACTOR_SUCCESS
+	// Immediately following an ET_CONNECTED_ACTOR will be an ET_WORLD_STATE
+	// that the client can use to render the world around the actor.
+	ET_WORLD_STATE
 
-	// Used to entend the EncodedType enumeration in other packages.
-	// WARNING: Only reccomended to extend in one place, else
+	// As the world changes the server will send ET_WORLD_STATE_DIFF packets
+	// enabling the client to update it's view of the world and render this
+	// to the user.
+	ET_WORLD_STATE_DIFF
+
+	// Used to extend the EncodedType enumeration in other packages.
+	// WARNING: Only recommended to extend in one place, else
 	// the values taken by the enumeration cases could overlap.
 	ET_EXTEND
 )
 
+// An EncodableType is a value that can be represented by a
+// EncodedType and sent/received over a Conn.
 type EncodableType interface {
 	Type() EncodedType
 }
 
+// A ProtocolError is used to respond to the client or server
+// that it sent and unexpected packet type.
 type ProtocolError string
-
-type UserLoginRequest struct{ Name, Password string }
-type UserLoginFailure struct{ Name string }
-type UserLoginSuccess struct{ Name string }
-type UserCreateSuccess UserLoginSuccess
-
-type ActorsList []string
-type SelectActorRequest struct{ Name string }
-type SelectActorSuccess struct{ Actor filu.Actor }
-type CreateActorSuccess struct{ Actor filu.Actor }
-
-const DisconnectResponse = "disconnected"
 
 func (ProtocolError) Type() EncodedType { return ET_PROTOCOL_ERROR }
 func (e ProtocolError) Error() string   { return string(e) }
-func (e ProtocolError) String() string  { return string(e) }
 
-func (UserLoginRequest) Type() EncodedType  { return ET_USER_LOGIN_REQUEST }
-func (UserLoginFailure) Type() EncodedType  { return ET_USER_LOGIN_FAILED }
-func (UserLoginSuccess) Type() EncodedType  { return ET_USER_LOGIN_SUCCESS }
-func (UserCreateSuccess) Type() EncodedType { return ET_USER_CREATE_SUCCESS }
-
-func (ActorsList) Type() EncodedType         { return ET_ACTORS }
-func (SelectActorRequest) Type() EncodedType { return ET_SELECT_ACTOR }
-func (SelectActorSuccess) Type() EncodedType { return ET_SELECT_ACTOR_SUCCESS }
-func (CreateActorSuccess) Type() EncodedType { return ET_CREATE_ACTOR_SUCCESS }
-
+// An Encoder is used to send EncodableType values.
 type Encoder interface {
 	Encode(EncodableType) error
 }
 
+// A Decoder is used to receive EncodableType values.
 type Decoder interface {
 	NextType() (EncodedType, error)
 	Decode(EncodableType) error
 }
 
+// A Conn is used to send and receive EncodableType values.
 type Conn interface {
 	Encoder
 	Decoder
