@@ -2,6 +2,7 @@ package rpg2dtest
 
 import (
 	"github.com/ghthor/filu/rpg2d"
+	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/gospec"
 )
 
@@ -59,22 +60,40 @@ func (s worldState) isEqual(other worldState) bool {
 	return true
 }
 
-func (s worldState) hasSameEntities(other worldState) bool {
-nextEntity:
-	for _, e1 := range s.Entities {
-		for _, e2 := range other.Entities {
-			if e1.EntityId() == e2.EntityId() {
-				if e1.IsDifferentFrom(e2) {
-					return false
-				}
+func entitiesAreEqual(a, b entity.StateSlice) bool {
+	matched := make(map[entity.Id]entity.State, len(a))
 
-				continue nextEntity
+nextEntity:
+	for _, e1 := range a {
+		for _, e2 := range b {
+			// Skip checking against b entities that we've already matched
+			if _, matched := matched[e2.EntityId()]; matched {
+				continue
 			}
+
+			// Skip deep compare if Id's don't match
+			if e1.EntityId() != e2.EntityId() {
+				continue
+			}
+
+			if e1.IsDifferentFrom(e2) {
+				return false
+			}
+
+			// Cached that we've verified Equality for the EntityID
+			matched[e1.EntityId()] = e1
+			continue nextEntity
 		}
+
+		// We didn't find an instance of e1.EntityId() in slice b
 		return false
 	}
 
 	return true
+}
+
+func (s worldState) hasSameEntities(other worldState) bool {
+	return entitiesAreEqual(s.Entities, other.Entities)
 }
 
 func (m *terrainMapState) isEqualTo(other *terrainMapState) bool {
@@ -111,35 +130,8 @@ func (s worldStateDiff) isEqual(other worldStateDiff) bool {
 }
 
 func (s worldStateDiff) hasSameEntities(other worldStateDiff) bool {
-nextEntity:
-	for _, e1 := range s.Entities {
-		for _, e2 := range other.Entities {
-			if e1.EntityId() == e2.EntityId() {
-				if e1.IsDifferentFrom(e2) {
-					return false
-				}
-
-				continue nextEntity
-			}
-		}
-		return false
-	}
-
-nextRemovedEntity:
-	for _, e1 := range s.Removed {
-		for _, e2 := range other.Removed {
-			if e1.EntityId() == e2.EntityId() {
-				if e1.IsDifferentFrom(e2) {
-					return false
-				}
-
-				continue nextRemovedEntity
-			}
-		}
-		return false
-	}
-
-	return true
+	return entitiesAreEqual(s.Entities, other.Entities) &&
+		entitiesAreEqual(s.Removed, other.Removed)
 }
 
 func (s terrainMapStateSlices) isEqual(other terrainMapStateSlices) bool {
