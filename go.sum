@@ -1,0 +1,4 @@
+github.com/ghthor/gospec v0.0.0-20150305022215-c3bd6471e5bd h1:R7ITWneIKHD7Wzb9q6SEHLC67BoD1b2nk8jQ149crLI=
+github.com/ghthor/gospec v0.0.0-20150305022215-c3bd6471e5bd/go.mod h1:ssB9epY+FXcYkhuVdh65wkjs0iMJzGsM05k7Nu7tc94=
+github.com/orfjackal/nanospec.go v0.0.0-20120727230329-de4694c1d701 h1:yOXfzNV7qkZ3nf2NPqy4BMzlCmnQzIEbI1vuqKb2FkQ=
+github.com/orfjackal/nanospec.go v0.0.0-20120727230329-de4694c1d701/go.mod h1:VtBIF1XX0c1nKkeAPk8i4aXkYopqQgfDqolHUIHPwNI=
