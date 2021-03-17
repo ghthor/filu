@@ -46,6 +46,8 @@ type State interface {
 
 type StateSlice []State
 
+type StateById map[Id]State
+
 // Returns a function to generate consecutive
 // entity Id's that is safe to call concurrently.
 func NewIdGenerator() func() Id {

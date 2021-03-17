@@ -150,7 +150,9 @@ func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
 	culled.Time = s.Time
 	culled.Bounds = bounds
 
-	// Cull Entities
+	culled.Entities = make(entity.StateSlice, 0, len(s.Entities))
+
+	// Cull Entities by
 	for _, e := range s.Entities {
 		if bounds.Overlaps(e.Bounds()) {
 			culled.Entities = append(culled.Entities, e)
@@ -177,30 +179,33 @@ func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
 	if len(state.Entities) == 0 && len(other.Entities) > 0 {
 		diff.Entities = other.Entities
 	} else {
-		// Find the entities that have changed from the old state to the new one
-	nextEntity:
+		newById := make(entity.StateById, len(other.Entities))
 		for _, entity := range other.Entities {
-			for _, old := range state.Entities {
-				if entity.EntityId() == old.EntityId() {
-					if old.IsDifferentFrom(entity) {
-						diff.Entities = append(diff.Entities, entity)
-					}
-					continue nextEntity
-				}
-			}
-			// This is a new Entity
-			diff.Entities = append(diff.Entities, entity)
+			newById[entity.EntityId()] = entity
 		}
 
 		// Check if all the entities in old state exist in the new state
-	entityStillExists:
 		for _, old := range state.Entities {
-			for _, entity := range other.Entities {
-				if old.EntityId() == entity.EntityId() {
-					continue entityStillExists
-				}
+			entity, exists := newById[old.EntityId()]
+			if !exists {
+				diff.Removed = append(diff.Removed, old)
+				continue
 			}
-			diff.Removed = append(diff.Removed, old)
+
+			if old.IsDifferentFrom(entity) {
+				diff.Entities = append(diff.Entities, entity)
+				goto cleanup
+			}
+
+		cleanup:
+			delete(newById, old.EntityId())
+		}
+
+		// Find the entities that have changed from the old state to the new one
+		for _, entity := range newById {
+			// This is a new Entity
+			diff.Entities = append(diff.Entities, entity)
+
 		}
 	}
 
