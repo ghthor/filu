@@ -2,6 +2,7 @@ package rpg2d
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/ghthor/filu/rpg2d/entity"
@@ -250,6 +251,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	go func() {
 		var hasHalted chan<- HaltedSimulation
 
+		var multiWrite sync.WaitGroup
 		var worldState WorldState
 
 	communicationLoop:
@@ -311,9 +313,14 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 
 		worldState = world.ToState()
 
+		multiWrite.Add(len(actors))
 		for _, a := range actors {
-			a.WriteState(worldState)
+			go func(a Actor) {
+				a.WriteState(worldState)
+				multiWrite.Done()
+			}(a)
 		}
+		multiWrite.Wait()
 
 		goto communicationLoop
 
