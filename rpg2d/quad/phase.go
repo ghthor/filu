@@ -407,7 +407,17 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 	cgroups = make([]*CollisionGroup, 0, len(q.entities))
 
 	for _, e1 := range q.entities {
+		// TODO Add test cases for no collisions
+		// Ignore entities that have no collisions
+		if e1.Flags()&entity.FlagNoCollide != 0 {
+			continue
+		}
+
 		for _, e2 := range q.entities {
+			// Ignore entities that have no collisions
+			if e2.Flags()&entity.FlagNoCollide != 0 {
+				continue
+			}
 			// Check for self
 			if e1 == e2 {
 				continue
