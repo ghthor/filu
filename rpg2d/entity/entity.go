@@ -9,6 +9,23 @@ import (
 // A unique Id for an entity
 type Id int64
 
+type Flag uint64
+
+const (
+	FlagNew = 1 << iota
+	FlagChanged
+	FlagNoCollide
+	FlagUserDefined
+)
+
+func (f Flag) Set(bits Flag) Flag {
+	return f | bits
+}
+
+func (f Flag) Unset(bits Flag) Flag {
+	return f &^ bits
+}
+
 // A basic entity in the world.
 type Entity interface {
 	// Unique ID
@@ -21,6 +38,11 @@ type Entity interface {
 	// the entities potential interaction with
 	// the other entities in the world.
 	Bounds() coord.Bounds
+
+	// Returns the set of entity flags that can
+	// set whether something collides or whether
+	// an entity has been changed or not.
+	Flags() Flag
 
 	// Returns a state value that represents
 	// the entity in its current state.

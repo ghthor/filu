@@ -33,9 +33,9 @@ func DescribeQuadInsert(c gospec.Context) {
 			})
 
 			c.Specify("some entities", func() {
-				e1 := entitytest.MockEntity{0, coord.Cell{-8, 8}}
-				e2 := entitytest.MockEntity{2, coord.Cell{5, -1}}
-				e3 := entitytest.MockEntity{1, coord.Cell{7, -7}}
+				e1 := entitytest.MockEntity{0, coord.Cell{-8, 8}, 0}
+				e2 := entitytest.MockEntity{2, coord.Cell{5, -1}, 0}
+				e3 := entitytest.MockEntity{1, coord.Cell{7, -7}, 0}
 
 				q = q.Insert(e1)
 				q = q.Insert(e2)

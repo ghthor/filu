@@ -15,14 +15,17 @@ func DescribeChunkMatching(c gospec.Context) {
 		c.Specify("will be equal to another chunk", func() {
 			cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 			bnds := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
+			e := func(id entity.Id, cell coord.Cell) *entitytest.MockEntity {
+				return &entitytest.MockEntity{id, cell, 0}
+			}
 
 			entities := []entity.Entity{
-				&entitytest.MockEntity{0, cell(0, 0)},
-				&entitytest.MockEntity{1, cell(1, 1)},
-				&entitytest.MockEntity{2, cell(2, 2)},
-				&entitytest.MockEntity{3, cell(3, 3)},
-				&entitytest.MockEntity{4, cell(4, 4)},
-				&entitytest.MockEntity{5, cell(5, 5)},
+				e(0, cell(0, 0)),
+				e(1, cell(1, 1)),
+				e(2, cell(2, 2)),
+				e(3, cell(3, 3)),
+				e(4, cell(4, 4)),
+				e(5, cell(5, 5)),
 			}
 
 			chunks := []quad.Chunk{{

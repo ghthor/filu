@@ -12,8 +12,9 @@ import (
 )
 
 type mockActorEntity struct {
-	id   entity.Id
-	cell coord.Cell
+	id    entity.Id
+	cell  coord.Cell
+	flags entity.Flag
 }
 
 type mockActor struct {
@@ -30,6 +31,7 @@ func (a mockActor) Entity() entity.Entity     { return a.mockActorEntity }
 func (a mockActorEntity) Id() entity.Id       { return a.id }
 func (a mockActorEntity) EntityId() entity.Id { return a.id }
 func (a mockActorEntity) Cell() coord.Cell    { return a.cell }
+func (a mockActorEntity) Flags() entity.Flag  { return a.flags }
 func (a mockActorEntity) Bounds() coord.Bounds {
 	return coord.Bounds{a.cell, a.cell}
 }

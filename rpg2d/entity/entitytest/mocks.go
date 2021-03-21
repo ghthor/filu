@@ -11,12 +11,14 @@ type (
 	MockEntity struct {
 		EntityId   entity.Id
 		EntityCell coord.Cell
+		Flagset    entity.Flag
 	}
 
 	MockEntityWithBounds struct {
 		EntityId     entity.Id
 		EntityCell   coord.Cell
 		EntityBounds coord.Bounds
+		Flagset      entity.Flag
 	}
 
 	MockEntityState struct {
@@ -32,6 +34,7 @@ func (e MockEntity) String() string       { return fmt.Sprintf("MockEntity%v", e
 func (e MockEntity) Id() entity.Id        { return e.EntityId }
 func (e MockEntity) Cell() coord.Cell     { return e.EntityCell }
 func (e MockEntity) Bounds() coord.Bounds { return coord.Bounds{e.EntityCell, e.EntityCell} }
+func (e MockEntity) Flags() entity.Flag   { return e.Flagset }
 func (e MockEntity) ToState() entity.State {
 	return MockEntityState{
 		Id:   e.EntityId,
@@ -48,6 +51,7 @@ func (e MockEntityWithBounds) String() string       { return fmt.Sprintf("MockEn
 func (e MockEntityWithBounds) Id() entity.Id        { return e.EntityId }
 func (e MockEntityWithBounds) Cell() coord.Cell     { return e.EntityCell }
 func (e MockEntityWithBounds) Bounds() coord.Bounds { return e.EntityBounds }
+func (e MockEntityWithBounds) Flags() entity.Flag   { return e.Flagset }
 func (e MockEntityWithBounds) ToState() entity.State {
 	return MockEntityState{
 		Id:   e.EntityId,

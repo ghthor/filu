@@ -60,14 +60,14 @@ func DescribeQuad(c gospec.Context) {
 
 		c.Specify("will subdivide", func() {
 			c.Assume(len(q.Children()), Equals, 0)
-			q = q.Insert(entitytest.MockEntity{0, coord.Cell{0, 0}})
-			q = q.Insert(entitytest.MockEntity{1, coord.Cell{5, 5}})
-			q = q.Insert(entitytest.MockEntity{3, coord.Cell{6, 6}})
+			q = q.Insert(entitytest.MockEntity{0, coord.Cell{0, 0}, 0})
+			q = q.Insert(entitytest.MockEntity{1, coord.Cell{5, 5}, 0})
+			q = q.Insert(entitytest.MockEntity{3, coord.Cell{6, 6}, 0})
 			c.Expect(len(q.Children()), Equals, 4)
 		})
 
 		c.Specify("can remove an entity", func() {
-			e := entitytest.MockEntity{0, coord.Cell{0, 0}}
+			e := entitytest.MockEntity{0, coord.Cell{0, 0}, 0}
 
 			c.Assume(len(q.QueryCell(e.Cell())), Equals, 0)
 
@@ -91,7 +91,7 @@ func DescribeQuad(c gospec.Context) {
 				id := entity.Id(0)
 				for j := 4; j > -4; j-- {
 					for i := -4; i < 4; i++ {
-						q = q.Insert(entitytest.MockEntity{id, coord.Cell{i, j}})
+						q = q.Insert(entitytest.MockEntity{id, coord.Cell{i, j}, 0})
 						id++
 					}
 				}

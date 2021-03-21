@@ -25,106 +25,53 @@ func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, [
 	entities := func() []entitytest.MockEntityWithBounds {
 		c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 		b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
+		e := func(id entity.Id, cell coord.Cell, bounds coord.Bounds) entitytest.MockEntityWithBounds {
+			return entitytest.MockEntityWithBounds{
+				id, cell, bounds, 0,
+			}
+		}
 
 		return []entitytest.MockEntityWithBounds{
-			{ // CollisionGroup 0
-				0, c(0, 0),
-				b(c(0, 0), c(1, 0)),
-			}, {
-				1, c(1, 0),
-				b(c(1, 0), c(2, 0)),
-			},
+			// CollisionGroup 0
+			e(0, c(0, 0), b(c(0, 0), c(1, 0))),
+			e(1, c(1, 0), b(c(1, 0), c(2, 0))),
 
-			{ // CollisionGroup 1
-				2, c(1, 1),
-				b(c(1, 2), c(1, 1)),
-			}, {
-				3, c(1, 3),
-				b(c(1, 3), c(1, 2)),
-			}, {
-				4, c(2, 2),
-				b(c(1, 2), c(2, 2)),
-			},
+			// CollisionGroup 1
+			e(2, c(1, 1), b(c(1, 2), c(1, 1))),
+			e(3, c(1, 3), b(c(1, 3), c(1, 2))),
+			e(4, c(2, 2), b(c(1, 2), c(2, 2))),
 
-			{ // CollisionGroup 2
-				5, c(-1, 0),
-				b(c(-2, 0), c(-2, 0)),
-			}, {
-				6, c(-2, 0),
-				b(c(-2, 0), c(-2, -1)),
-			}, {
-				7, c(-2, -1),
-				b(c(-2, -1), c(-1, -1)),
-			}, {
-				8, c(-1, -1),
-				b(c(-1, -1), c(0, -1)),
-			}, {
-				9, c(0, -1),
-				b(c(0, -1), c(1, -1)),
-			}, {
-				10, c(1, -1),
-				b(c(1, -1), c(1, -2)),
-			}, {
-				11, c(1, -2),
-				b(c(-2, -2), c(1, -2)),
-			},
+			// CollisionGroup 2
+			e(5, c(-1, 0), b(c(-2, 0), c(-2, 0))),
+			e(6, c(-2, 0), b(c(-2, 0), c(-2, -1))),
+			e(7, c(-2, -1), b(c(-2, -1), c(-1, -1))),
+			e(8, c(-1, -1), b(c(-1, -1), c(0, -1))),
+			e(9, c(0, -1), b(c(0, -1), c(1, -1))),
+			e(10, c(1, -1), b(c(1, -1), c(1, -2))),
+			e(11, c(1, -2), b(c(-2, -2), c(1, -2))),
 
-			{ // CollisionGroup 3
-				12, c(0, 5),
-				b(c(0, 5), c(1, 5)),
-			}, {
-				13, c(1, 5),
-				b(c(1, 5), c(2, 5)),
-			}, {
-				14, c(2, 5),
-				b(c(2, 5), c(3, 5)),
-			}, {
-				15, c(0, 6),
-				b(c(0, 6), c(1, 6)),
-			}, {
-				16, c(1, 6),
-				b(c(1, 6), c(2, 6)),
-			}, {
-				17, c(2, 6),
-				b(c(2, 6), c(3, 6)),
-			}, {
-				18, c(3, 6),
-				b(c(3, 6), c(3, 5)),
-			},
+			// CollisionGroup 3
+			e(12, c(0, 5), b(c(0, 5), c(1, 5))),
+			e(13, c(1, 5), b(c(1, 5), c(2, 5))),
+			e(14, c(2, 5), b(c(2, 5), c(3, 5))),
+			e(15, c(0, 6), b(c(0, 6), c(1, 6))),
+			e(16, c(1, 6), b(c(1, 6), c(2, 6))),
+			e(17, c(2, 6), b(c(2, 6), c(3, 6))),
+			e(18, c(3, 6), b(c(3, 6), c(3, 5))),
 
-			{ // CollisionGroup 4
-				19, c(4, 1),
-				b(c(4, 1), c(5, 1)),
-			}, {
-				20, c(4, 2),
-				b(c(4, 2), c(5, 2)),
-			}, {
-				21, c(5, 1),
-				b(c(5, 2), c(5, 1)),
-			},
+			// CollisionGroup 4
+			e(19, c(4, 1), b(c(4, 1), c(5, 1))),
+			e(20, c(4, 2), b(c(4, 2), c(5, 2))),
+			e(21, c(5, 1), b(c(5, 2), c(5, 1))),
 
-			{ // CollisionGroup 5
-				22, c(0, -3),
-				b(c(-1, -3), c(0, -3)),
-			}, {
-				23, c(-1, -3),
-				b(c(-1, -3), c(0, -3)),
-			},
+			// CollisionGroup 5
+			e(22, c(0, -3), b(c(-1, -3), c(0, -3))),
+			e(23, c(-1, -3), b(c(-1, -3), c(0, -3))),
 
-			{ // Non Collision Group Entities
-				24, quadBounds.TopL,
-				b(
-					c(quadBounds.TopL.X-1, quadBounds.TopL.Y),
-					quadBounds.TopL,
-				),
-			}, {
-
-				25, c(-5, -6),
-				b(c(-5, -6), c(-5, -6)),
-			}, {
-				26, c(-5, -7),
-				b(c(-5, -7), c(5, -7)),
-			},
+			// Non Collision Group Entities
+			e(24, quadBounds.TopL, b(c(quadBounds.TopL.X-1, quadBounds.TopL.Y), quadBounds.TopL)),
+			e(25, c(-5, -6), b(c(-5, -6), c(-5, -6))),
+			e(26, c(-5, -7), b(c(-5, -7), c(5, -7))),
 		}
 	}()
 
@@ -199,6 +146,7 @@ func DescribePhase(c gospec.Context) {
 		return entitytest.MockEntity{
 			id,
 			coord.Cell{x, y},
+			0,
 		}
 	}
 	cell := func(x, y int) coord.Cell { return coord.Cell{x, y} }
@@ -256,13 +204,13 @@ func DescribePhase(c gospec.Context) {
 			c.Assume(err, IsNil)
 
 			// A Single Entity
-			q = q.Insert(entitytest.MockEntity{0, coord.Cell{-16, 16}})
+			q = q.Insert(entitytest.MockEntity{0, coord.Cell{-16, 16}, 0})
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
 
 			q, _ = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(e entity.Entity, now stime.Time) []entity.Entity {
 				return []entity.Entity{
 					e,
-					entitytest.MockEntity{1, coord.Cell{-15, 16}},
+					entitytest.MockEntity{1, coord.Cell{-15, 16}, 0},
 				}
 			}), stime.Time(0))
 

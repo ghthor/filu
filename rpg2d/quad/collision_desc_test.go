@@ -96,24 +96,19 @@ func DescribeCollisionGroup(c gospec.Context) {
 	entities := func() []entitytest.MockEntityWithBounds {
 		c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 		b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
+		e := func(id entity.Id, cell coord.Cell, bounds coord.Bounds) entitytest.MockEntityWithBounds {
+			return entitytest.MockEntityWithBounds{
+				id, cell, bounds, 0,
+			}
+		}
 
-		return []entitytest.MockEntityWithBounds{{
-			0, c(0, 0),
-			b(c(0, 1), c(0, 0)),
-		}, {
-			1, c(0, 1),
-			b(c(0, 1), c(0, 0)),
-		}, {
-			2, c(1, 1),
-			b(c(0, 1), c(1, 1)),
-		}, {
-
-			3, c(5, 5),
-			b(c(5, 5), c(6, 5)),
-		}, {
-			4, c(7, 5),
-			b(c(6, 5), c(7, 5)),
-		}}
+		return []entitytest.MockEntityWithBounds{
+			e(0, c(0, 0), b(c(0, 1), c(0, 0))),
+			e(1, c(0, 1), b(c(0, 1), c(0, 0))),
+			e(2, c(1, 1), b(c(0, 1), c(1, 1))),
+			e(3, c(5, 5), b(c(5, 5), c(6, 5))),
+			e(4, c(7, 5), b(c(6, 5), c(7, 5))),
+		}
 	}()
 
 	collisions := func(e []entitytest.MockEntityWithBounds) []quad.Collision {
