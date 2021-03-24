@@ -239,6 +239,11 @@ GRRG
 				c.Specify("north", func() {
 					nextState = worldState.Cull(north)
 
+					c.Assume(north.Contains(mockEntity0.EntityCell), IsFalse)
+					c.Assume(north.Contains(mockEntity1.EntityCell), IsFalse)
+					c.Assume(north.Contains(mockEntity2.EntityCell), IsTrue)
+					c.Assume(north.Contains(mockEntity3.EntityCell), IsTrue)
+
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: north,
 						Removed: entity.StateSlice{
@@ -258,6 +263,11 @@ GRRG
 
 				c.Specify("north & east", func() {
 					nextState = worldState.Cull(northEast)
+
+					c.Assume(northEast.Contains(mockEntity0.EntityCell), IsFalse)
+					c.Assume(northEast.Contains(mockEntity1.EntityCell), IsFalse)
+					c.Assume(northEast.Contains(mockEntity2.EntityCell), IsFalse)
+					c.Assume(northEast.Contains(mockEntity3.EntityCell), IsTrue)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: northEast,
@@ -291,6 +301,11 @@ GRRG
 				c.Specify("east", func() {
 					nextState = worldState.Cull(east)
 
+					c.Assume(east.Contains(mockEntity0.EntityCell), IsTrue)
+					c.Assume(east.Contains(mockEntity1.EntityCell), IsFalse)
+					c.Assume(east.Contains(mockEntity2.EntityCell), IsFalse)
+					c.Assume(east.Contains(mockEntity3.EntityCell), IsTrue)
+
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: east,
 						Removed: entity.StateSlice{
@@ -309,6 +324,11 @@ GRRG
 
 				c.Specify("south & east", func() {
 					nextState = worldState.Cull(southEast)
+
+					c.Assume(southEast.Contains(mockEntity0.EntityCell), IsTrue)
+					c.Assume(southEast.Contains(mockEntity1.EntityCell), IsFalse)
+					c.Assume(southEast.Contains(mockEntity2.EntityCell), IsFalse)
+					c.Assume(southEast.Contains(mockEntity3.EntityCell), IsFalse)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: southEast,
@@ -342,6 +362,11 @@ GRRG
 				c.Specify("south", func() {
 					nextState = worldState.Cull(south)
 
+					c.Assume(south.Contains(mockEntity0.EntityCell), IsTrue)
+					c.Assume(south.Contains(mockEntity1.EntityCell), IsTrue)
+					c.Assume(south.Contains(mockEntity2.EntityCell), IsFalse)
+					c.Assume(south.Contains(mockEntity3.EntityCell), IsFalse)
+
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: south,
 						Removed: entity.StateSlice{
@@ -360,6 +385,11 @@ GRRG
 
 				c.Specify("south & west", func() {
 					nextState = worldState.Cull(southWest)
+
+					c.Assume(southWest.Contains(mockEntity0.EntityCell), IsFalse)
+					c.Assume(southWest.Contains(mockEntity1.EntityCell), IsTrue)
+					c.Assume(southWest.Contains(mockEntity2.EntityCell), IsFalse)
+					c.Assume(southWest.Contains(mockEntity3.EntityCell), IsFalse)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: southWest,
@@ -393,6 +423,11 @@ GRRG
 				c.Specify("west", func() {
 					nextState = worldState.Cull(west)
 
+					c.Assume(west.Contains(mockEntity0.EntityCell), IsFalse)
+					c.Assume(west.Contains(mockEntity1.EntityCell), IsTrue)
+					c.Assume(west.Contains(mockEntity2.EntityCell), IsTrue)
+					c.Assume(west.Contains(mockEntity3.EntityCell), IsFalse)
+
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: west,
 						Removed: entity.StateSlice{
@@ -411,6 +446,11 @@ GRRG
 
 				c.Specify("north & west", func() {
 					nextState = worldState.Cull(northWest)
+
+					c.Assume(northWest.Contains(mockEntity0.EntityCell), IsFalse)
+					c.Assume(northWest.Contains(mockEntity1.EntityCell), IsFalse)
+					c.Assume(northWest.Contains(mockEntity2.EntityCell), IsTrue)
+					c.Assume(northWest.Contains(mockEntity3.EntityCell), IsFalse)
 
 					expectDiffEquals(rpg2d.WorldStateDiff{
 						Bounds: northWest,
@@ -582,7 +622,8 @@ GRRG
 					mockEntity0.EntityCell = coord.Cell{2, 3}
 					world.Insert(mockEntity0)
 
-					nextState := world.ToState().Cull(coord.Bounds{
+					nextState := world.ToState()
+					nextState = nextState.Cull(coord.Bounds{
 						coord.Cell{1, 4},
 						coord.Cell{3, 2},
 					})

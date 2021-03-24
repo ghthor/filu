@@ -252,7 +252,6 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		var hasHalted chan<- HaltedSimulation
 
 		var multiWrite sync.WaitGroup
-		var worldState WorldState
 
 	communicationLoop:
 		// # This select prioritizes the following communication events
@@ -311,12 +310,12 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		clock = clock.Tick()
 		world.stepTo(clock.Now(), runTick)
 
-		worldState = world.ToState()
+		world.state = world.ToState()
 
 		multiWrite.Add(len(actors))
 		for _, a := range actors {
 			go func(a Actor) {
-				a.WriteState(worldState)
+				a.WriteState(world.state)
 				multiWrite.Done()
 			}(a)
 		}

@@ -68,6 +68,23 @@ type State interface {
 
 type StateSlice []State
 
+func (s StateSlice) FilterByBounds(result StateSlice, bounds coord.Bounds) StateSlice {
+	if result == nil {
+		result = make(StateSlice, 0, len(s))
+	} else {
+		result = result[:0]
+	}
+
+	for _, e := range s {
+		if bounds.Overlaps(e.Bounds()) {
+			result = append(result, e)
+			continue
+		}
+	}
+
+	return result
+}
+
 type StateById map[Id]State
 
 // Returns a function to generate consecutive

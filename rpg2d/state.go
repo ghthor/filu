@@ -146,71 +146,79 @@ func (s WorldState) Clone() WorldState {
 // Returns a world state that only contains
 // entities and terrain within bounds.
 // Does NOT change world state type.
-func (s WorldState) Cull(bounds coord.Bounds) (culled WorldState) {
-	culled.Time = s.Time
-	culled.Bounds = bounds
+func (s WorldState) Cull(bounds coord.Bounds) (other WorldState) {
+	other.Entities = make(entity.StateSlice, 0, len(s.Entities))
+	return s.CullInto(other, bounds)
+}
 
-	culled.Entities = make(entity.StateSlice, 0, len(s.Entities))
+func (s WorldState) CullInto(other WorldState, bounds coord.Bounds) WorldState {
+	other.Time = s.Time
+	other.Bounds = bounds
 
-	// Cull Entities by
-	for _, e := range s.Entities {
-		if bounds.Overlaps(e.Bounds()) {
-			culled.Entities = append(culled.Entities, e)
-		}
-	}
+	other.Entities = other.Entities[:0]
+	other.Entities = s.Entities.FilterByBounds(other.Entities, bounds)
 
 	// Cull Terrain
 	// TODO Maybe remove the ability to have an empty TerrainMap
 	// Requires updating some tests to have a terrain map that don't have one
 	if !s.TerrainMap.IsEmpty() {
-		culled.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+		other.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+	} else {
+		other.TerrainMap = nil
 	}
-	return
+
+	return other
 }
 
 // Returns a world state that only contains
 // entities and terrain that is different such
 // that state + diff == other. Diff is therefor
 // the changes necessary to get from state to other.
-func (state WorldState) Diff(other WorldState) (diff WorldStateDiff) {
-	diff.Time = other.Time
-	diff.Bounds = other.Bounds
+func (prev WorldState) Diff(next WorldState) (diff WorldStateDiff) {
+	diff.Entities = make(entity.StateSlice, 0, len(next.Entities))
+	diff.Removed = make(entity.StateSlice, 0, len(next.Entities))
+	diff.Between(prev, next)
+	return diff
+}
 
-	if len(state.Entities) == 0 && len(other.Entities) > 0 {
-		diff.Entities = other.Entities
-	} else {
-		newById := make(entity.StateById, len(other.Entities))
-		for _, entity := range other.Entities {
-			newById[entity.EntityId()] = entity
+// TODO Figure out a way to reuse the maps
+func (diff *WorldStateDiff) Between(prev, next WorldState) {
+	diff.Time = next.Time
+	diff.Bounds = next.Bounds
+
+	diff.Entities = diff.Entities[:0]
+	diff.Removed = diff.Removed[:0]
+	diff.TerrainMapSlices = nil
+
+	newById := make(entity.StateById, len(next.Entities))
+	for _, entity := range next.Entities {
+		newById[entity.EntityId()] = entity
+	}
+
+	// Check if all the entities in old state exist in the new state
+	for _, old := range prev.Entities {
+		e, exists := newById[old.EntityId()]
+		if !exists {
+			diff.Removed = append(diff.Removed, old)
+			continue
 		}
 
-		// Check if all the entities in old state exist in the new state
-		for _, old := range state.Entities {
-			entity, exists := newById[old.EntityId()]
-			if !exists {
-				diff.Removed = append(diff.Removed, old)
-				continue
-			}
-
-			if old.IsDifferentFrom(entity) {
-				diff.Entities = append(diff.Entities, entity)
-				goto cleanup
-			}
-
-		cleanup:
-			delete(newById, old.EntityId())
+		if old.IsDifferentFrom(e) {
+			diff.Entities = append(diff.Entities, e)
+			goto cleanup
 		}
 
-		// Find the entities that have changed from the old state to the new one
-		for _, entity := range newById {
-			// This is a new Entity
-			diff.Entities = append(diff.Entities, entity)
+	cleanup:
+		delete(newById, old.EntityId())
+	}
 
-		}
+	for _, entity := range newById {
+		// This is a new Entity
+		diff.Entities = append(diff.Entities, entity)
 	}
 
 	// Diff the TerrainMap
-	diff.TerrainMapSlices = state.TerrainMap.Diff(other.TerrainMap)
+	diff.TerrainMapSlices = prev.TerrainMap.Diff(next.TerrainMap)
 	return
 }
 
@@ -229,15 +237,15 @@ nextRemoved:
 	}
 
 nextAddedOrModified:
-	for _, added := range diff.Entities {
-		for i, e := range state.Entities {
-			if added.EntityId() == e.EntityId() {
-				state.Entities[i] = added
+	for _, e := range diff.Entities {
+		for i, old := range state.Entities {
+			if old.EntityId() == e.EntityId() {
+				state.Entities[i] = e
 				continue nextAddedOrModified
 			}
 		}
 
-		state.Entities = append(state.Entities, added)
+		state.Entities = append(state.Entities, e)
 	}
 
 	switch len(diff.TerrainMapSlices) {

@@ -10,13 +10,20 @@ type World struct {
 	time     stime.Time
 	quadTree quad.Quad
 	terrain  TerrainMap
+
+	state WorldState
 }
 
 func NewWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
+	const defaultEntitiesSize = 300
 	return &World{
 		time:     now,
 		quadTree: quad,
 		terrain:  terrain,
+
+		state: WorldState{
+			Entities: make(entity.StateSlice, 0, defaultEntitiesSize),
+		},
 	}
 }
 
@@ -36,23 +43,24 @@ func (w *World) Remove(e entity.Entity) {
 	w.quadTree = w.quadTree.Remove(e)
 }
 
-func (w World) ToState() WorldState {
-	entities := w.quadTree.QueryBounds(w.quadTree.Bounds())
-	s := WorldState{
-		Time:     w.time,
-		Bounds:   w.quadTree.Bounds(),
-		Entities: make(entity.StateSlice, len(entities)),
+func (world World) ToState() WorldState {
+	// Reuse existing slices
+	state := WorldState{
+		Time:     world.time,
+		Bounds:   world.quadTree.Bounds(),
+		Entities: world.state.Entities[:0],
 	}
 
-	i := 0
+	entities := world.quadTree.QueryBounds(world.quadTree.Bounds())
 	for _, e := range entities {
-		s.Entities[i] = e.ToState()
-		i++
+		state.Entities = append(state.Entities, e.ToState())
 	}
 
-	terrain := w.terrain.ToState()
+	terrain := world.terrain.ToState()
 	if !terrain.IsEmpty() {
-		s.TerrainMap = terrain
+		// Handle TerrainMap
+		state.TerrainMap = terrain
 	}
-	return s
+
+	return state
 }
