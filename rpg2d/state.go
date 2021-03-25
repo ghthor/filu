@@ -213,7 +213,45 @@ func (s WorldState) CullInto(other WorldState, bounds coord.Bounds) (result Worl
 func (prev WorldState) Diff(next WorldState) (diff WorldStateDiff) {
 	diff.Entities = make(entity.StateSlice, 0, len(next.Entities))
 	diff.Removed = make(entity.StateSlice, 0, len(next.Entities))
-	diff.Between(prev, next)
+	return prev.diffExpensive(next, diff)
+}
+
+func (prev WorldState) diffExpensive(next WorldState, diff WorldStateDiff) WorldStateDiff {
+	diff.Time = next.Time
+	diff.Bounds = next.Bounds
+	diff.Entities = diff.Entities[:0]
+	diff.Removed = diff.Removed[:0]
+	diff.TerrainMapSlices = nil
+
+	newById := make(entity.StateById, len(next.Entities))
+	for _, entity := range next.Entities {
+		newById[entity.EntityId()] = entity
+	}
+
+	// Check if all the entities in old state exist in the new state
+	for _, old := range prev.Entities {
+		e, exists := newById[old.EntityId()]
+		if !exists {
+			diff.Removed = append(diff.Removed, old)
+			continue
+		}
+
+		if old.IsDifferentFrom(e) {
+			diff.Entities = append(diff.Entities, e)
+			goto cleanup
+		}
+
+	cleanup:
+		delete(newById, old.EntityId())
+	}
+
+	for _, entity := range newById {
+		// This is a new Entity
+		diff.Entities = append(diff.Entities, entity)
+	}
+
+	// Diff the TerrainMap
+	diff.TerrainMapSlices = prev.TerrainMap.Diff(next.TerrainMap)
 	return diff
 }
 

@@ -54,7 +54,7 @@ DDDDDDDD
 		c.Specify("can be encoded as json", func() {
 			jsonBytes, err := json.Marshal(worldState)
 			c.Expect(err, IsNil)
-			c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nDDDDDDDD\nDGGGGGGD\nDGGRRGGD\nDGRRRRGD\nDGRRRRGD\nDGGRRGGD\nDGGGGGGD\nDDDDDDDD\n"}}`)
+			c.Expect(string(jsonBytes), Equals, `{"time":0,"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"entities":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"entitiesRemoved":[],"entitiesNew":[],"entitiesChanged":[],"entitiesUnchanged":[{"id":0,"name":"MockEntity0","cell":{"x":0,"y":0}}],"terrainMap":{"bounds":{"tl":{"x":-4,"y":4},"br":{"x":3,"y":-3}},"terrain":"\nDDDDDDDD\nDGGGGGGD\nDGGRRGGD\nDGRRRRGD\nDGRRRRGD\nDGGRRGGD\nDGGGGGGD\nDDDDDDDD\n"}}`)
 		})
 
 		func() {
