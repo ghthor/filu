@@ -292,7 +292,14 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			// a is the new sim.Actor{} to be removed from the sim
 			a := <-actor.toBeRemoved
 
-			world.Insert(entity.Removed{a.Entity(), clock.Now()})
+			// We use the NextTick of the clock here because we're in between
+			// ticks at the moment and the first part of the next cycle is to
+			// tick the clock forward. So we want our new entity to appear to
+			// be removed on that clock cycle, instead of Now() which has already
+			// been evaluated.
+			world.Insert(entity.Removed{
+				Entity:    a.Entity(),
+				RemovedAt: clock.NextTick()})
 			delete(actors, a.Id())
 
 			// signal that the operation was a success

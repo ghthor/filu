@@ -22,7 +22,11 @@ func NewWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
 		terrain:  terrain,
 
 		state: WorldState{
-			Entities: make(entity.StateSlice, 0, defaultEntitiesSize),
+			Entities:          make(entity.StateSlice, 0, defaultEntitiesSize),
+			EntitiesNew:       make(entity.StateSlice, 0, defaultEntitiesSize),
+			EntitiesChanged:   make(entity.StateSlice, 0, defaultEntitiesSize),
+			EntitiesUnchanged: make(entity.StateSlice, 0, defaultEntitiesSize),
+			EntitiesRemoved:   make(entity.StateSlice, 0, defaultEntitiesSize),
 		},
 	}
 }
@@ -44,23 +48,52 @@ func (w *World) Remove(e entity.Entity) {
 }
 
 func (world World) ToState() WorldState {
+	now := world.time
+
 	// Reuse existing slices
-	state := WorldState{
-		Time:     world.time,
-		Bounds:   world.quadTree.Bounds(),
-		Entities: world.state.Entities[:0],
+	nextState := WorldState{
+		Time:              now,
+		Bounds:            world.quadTree.Bounds(),
+		EntitiesRemoved:   world.state.EntitiesRemoved[:0],
+		EntitiesNew:       world.state.EntitiesNew[:0],
+		EntitiesChanged:   world.state.EntitiesChanged[:0],
+		EntitiesUnchanged: world.state.EntitiesUnchanged[:0],
+		Entities:          world.state.Entities[:0],
 	}
 
 	entities := world.quadTree.QueryBounds(world.quadTree.Bounds())
 	for _, e := range entities {
-		state.Entities = append(state.Entities, e.ToState())
+		flags := e.Flags()
+		entityState := e.ToState()
+		nextState.Entities = append(nextState.Entities, entityState)
+
+		if flags&entity.FlagRemoved != 0 {
+			if e.(entity.Removed).RemovedAt == now {
+				nextState.EntitiesRemoved = append(nextState.EntitiesRemoved, entityState)
+			}
+			continue
+		}
+
+		if flags&entity.FlagNew != 0 {
+			nextState.EntitiesNew = append(nextState.EntitiesNew, entityState)
+			continue
+		}
+
+		if entity, canChange := e.(entity.CanChange); canChange {
+			if entity.HasChanged(entityState, now) {
+				nextState.EntitiesChanged = append(nextState.EntitiesChanged, entityState)
+				continue
+			}
+		}
+
+		nextState.EntitiesUnchanged = append(nextState.EntitiesUnchanged, entityState)
 	}
 
 	terrain := world.terrain.ToState()
 	if !terrain.IsEmpty() {
 		// Handle TerrainMap
-		state.TerrainMap = terrain
+		nextState.TerrainMap = terrain
 	}
 
-	return state
+	return nextState
 }

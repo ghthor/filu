@@ -11,6 +11,10 @@ func (c Clock) Now() Time {
 	return Time(c)
 }
 
+func (c Clock) NextTick() Time {
+	return Time(c) + 1
+}
+
 func (c Clock) Tick() Clock {
 	return Clock(int64(c) + 1)
 }

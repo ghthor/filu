@@ -113,7 +113,11 @@ type WorldState struct {
 	Time   stime.Time   `json:"time"`
 	Bounds coord.Bounds `json:"bounds"`
 
-	Entities entity.StateSlice `json:"entities"`
+	Entities          entity.StateSlice `json:"entities"`
+	EntitiesRemoved   entity.StateSlice `json:"entitiesRemoved"`
+	EntitiesNew       entity.StateSlice `json:"entitiesNew"`
+	EntitiesChanged   entity.StateSlice `json:"entitiesChanged"`
+	EntitiesUnchanged entity.StateSlice `json:"entitiesUnchanged"`
 
 	TerrainMap *TerrainMapState `json:"terrainMap,omitempty"`
 }
@@ -134,12 +138,20 @@ func (s WorldState) Clone() WorldState {
 		panic("error cloning terrain map: " + err.Error())
 	}
 	clone := WorldState{
-		Time:       s.Time,
-		Bounds:     s.Bounds,
-		Entities:   make(entity.StateSlice, len(s.Entities)),
-		TerrainMap: terrainMap,
+		Time:              s.Time,
+		Bounds:            s.Bounds,
+		Entities:          make(entity.StateSlice, len(s.Entities)),
+		EntitiesRemoved:   make(entity.StateSlice, len(s.EntitiesRemoved)),
+		EntitiesNew:       make(entity.StateSlice, len(s.EntitiesNew)),
+		EntitiesChanged:   make(entity.StateSlice, len(s.EntitiesChanged)),
+		EntitiesUnchanged: make(entity.StateSlice, len(s.EntitiesUnchanged)),
+		TerrainMap:        terrainMap,
 	}
 	copy(clone.Entities, s.Entities)
+	copy(clone.EntitiesRemoved, s.EntitiesRemoved)
+	copy(clone.EntitiesNew, s.EntitiesNew)
+	copy(clone.EntitiesChanged, s.EntitiesChanged)
+	copy(clone.EntitiesUnchanged, s.EntitiesUnchanged)
 	return clone
 }
 
@@ -151,23 +163,47 @@ func (s WorldState) Cull(bounds coord.Bounds) (other WorldState) {
 	return s.CullInto(other, bounds)
 }
 
-func (s WorldState) CullInto(other WorldState, bounds coord.Bounds) WorldState {
-	other.Time = s.Time
-	other.Bounds = bounds
-
-	other.Entities = other.Entities[:0]
-	other.Entities = s.Entities.FilterByBounds(other.Entities, bounds)
+func (s WorldState) CullForInitialState(bounds coord.Bounds) (result WorldState) {
+	result = WorldState{
+		Time:     s.Time,
+		Bounds:   bounds,
+		Entities: s.Entities.FilterByBounds(make(entity.StateSlice, 0, len(s.Entities)), bounds),
+	}
 
 	// Cull Terrain
 	// TODO Maybe remove the ability to have an empty TerrainMap
 	// Requires updating some tests to have a terrain map that don't have one
 	if !s.TerrainMap.IsEmpty() {
-		other.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+		result.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
 	} else {
-		other.TerrainMap = nil
+		result.TerrainMap = nil
 	}
 
-	return other
+	return result
+}
+
+func (s WorldState) CullInto(other WorldState, bounds coord.Bounds) (result WorldState) {
+	result = WorldState{
+		Time:   s.Time,
+		Bounds: bounds,
+
+		Entities:          s.Entities.FilterByBounds(other.Entities[:0], bounds),
+		EntitiesRemoved:   s.EntitiesRemoved.FilterByBounds(other.EntitiesRemoved[:0], bounds),
+		EntitiesNew:       s.EntitiesNew.FilterByBounds(other.EntitiesNew[:0], bounds),
+		EntitiesChanged:   s.EntitiesChanged.FilterByBounds(other.EntitiesChanged[:0], bounds),
+		EntitiesUnchanged: s.EntitiesUnchanged.FilterByBounds(other.EntitiesUnchanged[:0], bounds),
+	}
+
+	// Cull Terrain
+	// TODO Maybe remove the ability to have an empty TerrainMap
+	// Requires updating some tests to have a terrain map that don't have one
+	if !s.TerrainMap.IsEmpty() {
+		result.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+	} else {
+		result.TerrainMap = nil
+	}
+
+	return result
 }
 
 // Returns a world state that only contains
@@ -186,36 +222,11 @@ func (diff *WorldStateDiff) Between(prev, next WorldState) {
 	diff.Time = next.Time
 	diff.Bounds = next.Bounds
 
-	diff.Entities = diff.Entities[:0]
-	diff.Removed = diff.Removed[:0]
 	diff.TerrainMapSlices = nil
 
-	newById := make(entity.StateById, len(next.Entities))
-	for _, entity := range next.Entities {
-		newById[entity.EntityId()] = entity
-	}
-
-	// Check if all the entities in old state exist in the new state
-	for _, old := range prev.Entities {
-		e, exists := newById[old.EntityId()]
-		if !exists {
-			diff.Removed = append(diff.Removed, old)
-			continue
-		}
-
-		if old.IsDifferentFrom(e) {
-			diff.Entities = append(diff.Entities, e)
-			goto cleanup
-		}
-
-	cleanup:
-		delete(newById, old.EntityId())
-	}
-
-	for _, entity := range newById {
-		// This is a new Entity
-		diff.Entities = append(diff.Entities, entity)
-	}
+	diff.Entities = append(diff.Entities[:0], next.EntitiesChanged...)
+	diff.Entities = append(diff.Entities, next.EntitiesNew...)
+	diff.Removed = append(diff.Removed[:0], next.EntitiesRemoved...)
 
 	// Diff the TerrainMap
 	diff.TerrainMapSlices = prev.TerrainMap.Diff(next.TerrainMap)

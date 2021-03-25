@@ -14,7 +14,6 @@ type Flag uint64
 
 const (
 	FlagNew = 1 << iota
-	FlagChanged
 	FlagNoCollide
 	FlagRemoved
 	FlagUserDefined
@@ -49,6 +48,10 @@ type Entity interface {
 	// Returns a state value that represents
 	// the entity in its current state.
 	ToState() State
+}
+
+type CanChange interface {
+	HasChanged(nextState State, now stime.Time) bool
 }
 
 // Used by the world state to calculate
