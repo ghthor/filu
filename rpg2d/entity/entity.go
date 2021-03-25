@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/ghthor/filu/rpg2d/coord"
+	"github.com/ghthor/filu/sim/stime"
 )
 
 // A unique Id for an entity
@@ -15,6 +16,7 @@ const (
 	FlagNew = 1 << iota
 	FlagChanged
 	FlagNoCollide
+	FlagRemoved
 	FlagUserDefined
 )
 
@@ -103,4 +105,40 @@ func NewIdGenerator() func() Id {
 		}()
 		return nextId
 	}
+}
+
+var _ Entity = Removed{}
+var _ State = RemovedState{}
+
+type Removed struct {
+	Entity
+	RemovedAt stime.Time
+}
+
+type RemovedState struct {
+	Id           Id
+	EntityBounds coord.Bounds
+}
+
+func (e Removed) Flags() Flag {
+	return e.Entity.Flags() | FlagRemoved | FlagNoCollide
+}
+
+func (e Removed) ToState() State {
+	return RemovedState{
+		Id:           e.Id(),
+		EntityBounds: e.Bounds(),
+	}
+}
+
+func (e RemovedState) EntityId() Id         { return e.Id }
+func (e RemovedState) Bounds() coord.Bounds { return e.EntityBounds }
+func (e RemovedState) IsDifferentFrom(other State) bool {
+	switch other := other.(type) {
+	case RemovedState:
+		return e.Id != other.Id || e.EntityBounds != other.EntityBounds
+	default:
+	}
+
+	return true
 }

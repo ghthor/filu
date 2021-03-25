@@ -292,7 +292,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			// a is the new sim.Actor{} to be removed from the sim
 			a := <-actor.toBeRemoved
 
-			world.Remove(a.Entity())
+			world.Insert(entity.Removed{a.Entity(), clock.Now()})
 			delete(actors, a.Id())
 
 			// signal that the operation was a success
