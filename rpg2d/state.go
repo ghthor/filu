@@ -1,114 +1,13 @@
 package rpg2d
 
 import (
-	"bytes"
-	"encoding/gob"
-	"encoding/json"
 	"fmt"
 
 	"github.com/ghthor/filu/rpg2d/coord"
 	"github.com/ghthor/filu/rpg2d/entity"
-	"github.com/ghthor/filu/rpg2d/quad/quadstate"
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
 )
-
-// Used to calculate diff's
-type TerrainMapState struct {
-	TerrainMap
-}
-
-func (m TerrainMapState) MarshalJSON() ([]byte, error) {
-	return json.Marshal(TerrainMapStateSlice{
-		Bounds:  m.TerrainMap.Bounds,
-		Terrain: m.TerrainMap.String(),
-	})
-}
-
-func (m TerrainMapState) MarshalBinary() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, 1024))
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(TerrainMapStateSlice{
-		Bounds:  m.TerrainMap.Bounds,
-		Terrain: m.TerrainMap.String(),
-	})
-
-	return buf.Bytes(), err
-}
-
-func (m *TerrainMapState) UnmarshalBinary(data []byte) error {
-	dec := gob.NewDecoder(bytes.NewReader(data))
-	slice := TerrainMapStateSlice{}
-	err := dec.Decode(&slice)
-	if err != nil {
-		return err
-	}
-
-	m.TerrainMap, err = NewTerrainMap(slice.Bounds, slice.Terrain)
-	return err
-}
-
-type TerrainMapStateSlice struct {
-	Bounds  coord.Bounds `json:"bounds"`
-	Terrain string       `json:"terrain"`
-}
-
-type TerrainMapStateDiff struct {
-	Bounds  coord.Bounds        `json:"bounds"`
-	Changes []TerrainTypeChange `json:"changes"`
-}
-
-func (m *TerrainMapState) IsEmpty() bool {
-	if m == nil {
-		return true
-	}
-	return m.TerrainMap.TerrainTypes == nil
-}
-
-func (m *TerrainMapState) Diff(other *TerrainMapState) []TerrainMapStateSlice {
-	if m.IsEmpty() || !m.Bounds.Overlaps(other.Bounds) {
-		return []TerrainMapStateSlice{{
-			Bounds:  other.Bounds,
-			Terrain: other.String(),
-		}}
-	}
-
-	mBounds, oBounds := m.TerrainMap.Bounds, other.TerrainMap.Bounds
-	rects := mBounds.DiffFrom(oBounds)
-
-	// mBounds == oBounds
-	if len(rects) == 0 {
-		// TODO Still need to calc changes to map types in cells
-		return nil
-	}
-
-	slices := make([]TerrainMapStateSlice, 0, len(rects))
-	for _, r := range rects {
-		slice := other.Slice(r)
-		slices = append(slices, TerrainMapStateSlice{
-			Bounds:  r,
-			Terrain: slice.String(),
-		})
-	}
-
-	return slices
-}
-
-func (m *TerrainMapState) Clone() (*TerrainMapState, error) {
-	if m == nil {
-		return m, nil
-	}
-
-	tm, err := m.TerrainMap.Clone()
-	if err != nil {
-		return nil, err
-	}
-
-	return &TerrainMapState{TerrainMap: tm}, nil
-}
-
-func (m TerrainMapStateSlice) IsEmpty() bool {
-	return m.Bounds == coord.Bounds{}
-}
 
 type WorldState struct {
 	Time   stime.Time   `json:"time"`
@@ -120,7 +19,7 @@ type WorldState struct {
 	EntitiesChanged   entity.StateSlice `json:"entitiesChanged"`
 	EntitiesUnchanged entity.StateSlice `json:"entitiesUnchanged"`
 
-	TerrainMap *TerrainMapState `json:"terrainMap,omitempty"`
+	TerrainMap *worldterrain.MapState `json:"terrainMap,omitempty"`
 }
 
 type WorldStateDiff struct {
@@ -130,7 +29,7 @@ type WorldStateDiff struct {
 	Entities entity.StateSlice `json:"entities"`
 	Removed  entity.StateSlice `json:"removed"`
 
-	TerrainMapSlices []TerrainMapStateSlice `json:"terrainMapSlices,omitempty"`
+	TerrainMapSlices []worldterrain.MapStateSlice `json:"terrainMapSlices,omitempty"`
 }
 
 func (s WorldState) Clone() WorldState {
@@ -175,7 +74,7 @@ func (s WorldState) CullForInitialState(bounds coord.Bounds) (result WorldState)
 	// TODO Maybe remove the ability to have an empty TerrainMap
 	// Requires updating some tests to have a terrain map that don't have one
 	if !s.TerrainMap.IsEmpty() {
-		result.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+		result.TerrainMap = &worldterrain.MapState{Map: s.TerrainMap.Slice(bounds)}
 	} else {
 		result.TerrainMap = nil
 	}
@@ -199,7 +98,7 @@ func (s WorldState) CullInto(other WorldState, bounds coord.Bounds) (result Worl
 	// TODO Maybe remove the ability to have an empty TerrainMap
 	// Requires updating some tests to have a terrain map that don't have one
 	if !s.TerrainMap.IsEmpty() {
-		result.TerrainMap = &TerrainMapState{TerrainMap: s.TerrainMap.Slice(bounds)}
+		result.TerrainMap = &worldterrain.MapState{Map: s.TerrainMap.Slice(bounds)}
 	} else {
 		result.TerrainMap = nil
 	}
@@ -308,11 +207,11 @@ nextAddedOrModified:
 			state.TerrainMap.MergeDiff(diff.Bounds, diff.TerrainMapSlices...)
 		} else {
 			slice := diff.TerrainMapSlices[0]
-			tm, err := NewTerrainMap(slice.Bounds, slice.Terrain)
+			tm, err := worldterrain.NewMap(slice.Bounds, slice.Terrain)
 			if err != nil {
 				panic(fmt.Sprintf("error applying diff: %v", err))
 			}
-			state.TerrainMap.TerrainMap = tm
+			state.TerrainMap.Map = tm
 		}
 	case 0:
 	}

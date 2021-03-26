@@ -1,4 +1,4 @@
-package rpg2d
+package worldterrain
 
 import (
 	"bufio"
@@ -11,47 +11,47 @@ import (
 )
 
 // Represents a type of terrain in the world.
-type TerrainType rune
+type Type rune
 
 const (
-	TT_UNKNOWN TerrainType = 'U'
-	TT_GRASS   TerrainType = 'G'
-	TT_DIRT    TerrainType = 'D'
-	TT_ROCK    TerrainType = 'R'
+	TT_UNKNOWN Type = 'U'
+	TT_GRASS   Type = 'G'
+	TT_DIRT    Type = 'D'
+	TT_ROCK    Type = 'R'
 )
 
-type TerrainType2dArray [][]TerrainType
+type Type2dArray [][]Type
 
 // A terrain map is a dense store of terrain state.
 // Ever cell in the world has a terrain type.
-type TerrainMap struct {
+type Map struct {
 	Bounds coord.Bounds
 	// y, x
-	TerrainTypes TerrainType2dArray
+	Types Type2dArray
 }
 
 // A change to the terrain type of a cell.
-type TerrainTypeChange struct {
-	Cell        coord.Cell  `json:"cell"`
-	TerrainType TerrainType `json:"type"`
+type TypeChange struct {
+	Cell        coord.Cell `json:"cell"`
+	TerrainType Type       `json:"type"`
 }
 
-func NewTerrainArray(bounds coord.Bounds, s string) (TerrainType2dArray, error) {
+func NewType2dArray(bounds coord.Bounds, s string) (Type2dArray, error) {
 	if len(s) == 0 {
 		return nil, errors.New("invalid [][]TerrainType defination")
 	}
 
 	w, h := bounds.Width(), bounds.Height()
-	tm := make([][]TerrainType, h)
+	tm := make([][]Type, h)
 
 	if len(s) == 1 {
 		for row, _ := range tm {
-			tm[row] = make([]TerrainType, w)
+			tm[row] = make([]Type, w)
 		}
 
 		for _, row := range tm {
 			for x, _ := range row {
-				row[x] = TerrainType(s[0])
+				row[x] = Type(s[0])
 			}
 		}
 	} else {
@@ -62,7 +62,7 @@ func NewTerrainArray(bounds coord.Bounds, s string) (TerrainType2dArray, error) 
 
 		buf := bufio.NewReader(strings.NewReader(s))
 		for y, _ := range tm {
-			row := make([]TerrainType, 0, w)
+			row := make([]Type, 0, w)
 			rowStr, err := buf.ReadString("\n"[0])
 			if err != nil {
 				return nil, err
@@ -75,7 +75,7 @@ func NewTerrainArray(bounds coord.Bounds, s string) (TerrainType2dArray, error) 
 			}
 
 			for _, c := range rowStr {
-				row = append(row, TerrainType(c))
+				row = append(row, Type(c))
 			}
 			tm[y] = row
 		}
@@ -86,35 +86,35 @@ func NewTerrainArray(bounds coord.Bounds, s string) (TerrainType2dArray, error) 
 
 // TODO extract the errors this constructor returns
 // into static error values.
-func NewTerrainMap(bounds coord.Bounds, s string) (TerrainMap, error) {
-	tm, err := NewTerrainArray(bounds, s)
+func NewMap(bounds coord.Bounds, s string) (Map, error) {
+	tm, err := NewType2dArray(bounds, s)
 	if err != nil {
-		return TerrainMap{}, err
+		return Map{}, err
 	}
 
-	return TerrainMap{bounds, tm}, nil
+	return Map{bounds, tm}, nil
 }
 
 // Return the terrain type in a given cell.
-func (m TerrainMap) Cell(c coord.Cell) TerrainType {
+func (m Map) Cell(c coord.Cell) Type {
 	x := c.X - m.Bounds.TopL.X
 	y := -(c.Y - m.Bounds.TopL.Y)
 
-	return m.TerrainTypes[y][x]
+	return m.Types[y][x]
 }
 
-func (m *TerrainMap) SetType(t TerrainType, c coord.Cell) {
+func (m *Map) SetType(t Type, c coord.Cell) {
 	x := c.X - m.Bounds.TopL.X
 	y := -(c.Y - m.Bounds.TopL.Y)
 
-	m.TerrainTypes[y][x] = t
+	m.Types[y][x] = t
 }
 
 // Return a slice of terrain within a given bounds.
 // This method doesn't copy any memory.
 // The slice is viewport into the same memeory as
 // the map it is sliced from.
-func (m TerrainMap) Slice(bounds coord.Bounds) TerrainMap {
+func (m Map) Slice(bounds coord.Bounds) Map {
 	bounds, err := m.Bounds.Intersection(bounds)
 	if err != nil {
 		panic("invalid terrain map slicing operation: " + err.Error())
@@ -123,13 +123,13 @@ func (m TerrainMap) Slice(bounds coord.Bounds) TerrainMap {
 	x := bounds.TopL.X - m.Bounds.TopL.X
 	y := -(bounds.TopL.Y - m.Bounds.TopL.Y)
 	w, h := bounds.Width(), bounds.Height()
-	rows := make([][]TerrainType, h)
+	rows := make([][]Type, h)
 
-	for i, row := range m.TerrainTypes[y : y+h] {
+	for i, row := range m.Types[y : y+h] {
 		rows[i] = row[x : x+w]
 	}
 
-	return TerrainMap{
+	return Map{
 		bounds,
 		rows,
 	}
@@ -137,16 +137,16 @@ func (m TerrainMap) Slice(bounds coord.Bounds) TerrainMap {
 
 // Create a copy of the terrain map.
 // The copy will not share memory with the source.
-func (m TerrainMap) Clone() (TerrainMap, error) {
-	if m.TerrainTypes == nil {
+func (m Map) Clone() (Map, error) {
+	if m.Types == nil {
 		return m, nil
 	}
 
 	// TODO LoL this is lazy, but it's ok cause this method isn't important right now
-	return NewTerrainMap(m.Bounds, m.String())
+	return NewMap(m.Bounds, m.String())
 }
 
-func (a TerrainType2dArray) String() string {
+func (a Type2dArray) String() string {
 	w, h := len(a[0]), len(a)
 	w += 1 // For \n char
 
@@ -163,23 +163,23 @@ func (a TerrainType2dArray) String() string {
 }
 
 // Produce a string representation of the terrain map.
-func (m TerrainMap) String() string {
-	return m.TerrainTypes.String()
+func (m Map) String() string {
+	return m.Types.String()
 }
 
 // Produce a terrain map state with the given terrain map.
-func (m TerrainMap) ToState() *TerrainMapState {
-	return &TerrainMapState{m}
+func (m Map) ToState() *MapState {
+	return &MapState{m}
 }
 
 // MergeDiff will merge the slices of terrain into
 // the TerrainMap. TerrainMap will have the bounds of
 // newBounds once the operation is complete. If slices
 // are unmergable MergeDiff will return an error.
-func (m *TerrainMap) MergeDiff(newBounds coord.Bounds, slices ...TerrainMapStateSlice) error {
-	maps := make([]TerrainMap, 0, len(slices)+1)
+func (m *Map) MergeDiff(newBounds coord.Bounds, slices ...MapStateSlice) error {
+	maps := make([]Map, 0, len(slices)+1)
 	for _, slice := range slices {
-		m, err := NewTerrainMap(slice.Bounds, slice.Terrain)
+		m, err := NewMap(slice.Bounds, slice.Terrain)
 		if err != nil {
 			return err
 		}
@@ -197,7 +197,7 @@ func (m *TerrainMap) MergeDiff(newBounds coord.Bounds, slices ...TerrainMapState
 	return nil
 }
 
-func JoinTerrain(newBounds coord.Bounds, maps ...TerrainMap) (TerrainMap, error) {
+func JoinTerrain(newBounds coord.Bounds, maps ...Map) (Map, error) {
 	switch len(maps) {
 	case 2:
 		b0 := maps[0].Bounds
@@ -205,7 +205,7 @@ func JoinTerrain(newBounds coord.Bounds, maps ...TerrainMap) (TerrainMap, error)
 
 		switch {
 		case b0.TopL.X == b1.TopL.X:
-			var top, bot TerrainMap
+			var top, bot Map
 
 			switch {
 			case b0.TopL == newBounds.TopL || b0.TopR() == newBounds.TopR():
@@ -216,7 +216,7 @@ func JoinTerrain(newBounds coord.Bounds, maps ...TerrainMap) (TerrainMap, error)
 			return join2vert(newBounds, top, bot), nil
 
 		case b0.TopL.Y == b1.TopL.Y:
-			var left, right TerrainMap
+			var left, right Map
 
 			switch {
 			case b0.TopL == newBounds.TopL || b0.BotL() == newBounds.BotL():
@@ -227,10 +227,10 @@ func JoinTerrain(newBounds coord.Bounds, maps ...TerrainMap) (TerrainMap, error)
 			return join2horz(newBounds, left, right), nil
 
 		default:
-			return TerrainMap{}, fmt.Errorf("invalid 2 terrain join: %v", maps)
+			return Map{}, fmt.Errorf("invalid 2 terrain join: %v", maps)
 		}
 	case 4:
-		var tl, tr, br, bl TerrainMap
+		var tl, tr, br, bl Map
 		for _, m := range maps {
 			switch {
 			case m.Bounds.TopL == newBounds.TopL:
@@ -243,20 +243,20 @@ func JoinTerrain(newBounds coord.Bounds, maps ...TerrainMap) (TerrainMap, error)
 				bl = m
 
 			default:
-				return TerrainMap{}, fmt.Errorf("invalid 4 terrain join: %v", maps)
+				return Map{}, fmt.Errorf("invalid 4 terrain join: %v", maps)
 			}
 		}
 
 		return join4(newBounds, tl, tr, br, bl), nil
 
 	default:
-		return TerrainMap{}, fmt.Errorf("unsupported terrain map join: %v", maps)
+		return Map{}, fmt.Errorf("unsupported terrain map join: %v", maps)
 	}
 }
 
-func join2horz(newBounds coord.Bounds, left, right TerrainMap) TerrainMap {
-	for y, row := range right.TerrainTypes {
-		left.TerrainTypes[y] = append(left.TerrainTypes[y], row...)
+func join2horz(newBounds coord.Bounds, left, right Map) Map {
+	for y, row := range right.Types {
+		left.Types[y] = append(left.Types[y], row...)
 	}
 
 	left.Bounds.TopL = left.Bounds.TopL
@@ -264,13 +264,13 @@ func join2horz(newBounds coord.Bounds, left, right TerrainMap) TerrainMap {
 	return left
 }
 
-func join2vert(newBounds coord.Bounds, top, bot TerrainMap) TerrainMap {
-	top.TerrainTypes = append(top.TerrainTypes, bot.TerrainTypes...)
+func join2vert(newBounds coord.Bounds, top, bot Map) Map {
+	top.Types = append(top.Types, bot.Types...)
 	top.Bounds.BotR = bot.Bounds.BotR
 	return top
 }
 
-func join4(newBounds coord.Bounds, tl, tr, br, bl TerrainMap) TerrainMap {
+func join4(newBounds coord.Bounds, tl, tr, br, bl Map) Map {
 	return join2vert(newBounds,
 		join2horz(newBounds, tl, tr),
 		join2horz(newBounds, bl, br),

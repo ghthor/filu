@@ -1,4 +1,4 @@
-package rpg2d
+package worldterrain
 
 import (
 	"github.com/ghthor/filu/rpg2d/coord"
@@ -11,15 +11,15 @@ func DescribeTerrainMap(c gospec.Context) {
 	C := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 
 	c.Specify("a terrain map", func() {
-		terrainMap, err := NewTerrainMap(coord.Bounds{
+		terrainMap, err := NewMap(coord.Bounds{
 			C(-2, 3),
 			C(2, -2),
 		}, "G")
 		c.Expect(err, IsNil)
-		c.Expect(len(terrainMap.TerrainTypes), Equals, 6)
-		c.Expect(len(terrainMap.TerrainTypes[0]), Equals, 5)
+		c.Expect(len(terrainMap.Types), Equals, 6)
+		c.Expect(len(terrainMap.Types[0]), Equals, 5)
 
-		for _, row := range terrainMap.TerrainTypes {
+		for _, row := range terrainMap.Types {
 			for x, _ := range row {
 				c.Expect(row[x], Equals, TT_GRASS)
 			}
@@ -36,8 +36,8 @@ GGGGG
 GGGGG
 `)
 
-			terrainMap.TerrainTypes[2][3] = TT_DIRT
-			terrainMap.TerrainTypes[3][2] = TT_ROCK
+			terrainMap.Types[2][3] = TT_DIRT
+			terrainMap.Types[3][2] = TT_ROCK
 			c.Expect(terrainMap.String(), Equals, `
 GGGGG
 GGGGG
@@ -49,7 +49,7 @@ GGGGG
 		})
 
 		c.Specify("can be created with a string", func() {
-			terrainMap, err = NewTerrainMap(coord.Bounds{C(0, 0), C(5, -6)}, `
+			terrainMap, err = NewMap(coord.Bounds{C(0, 0), C(5, -6)}, `
 RRRRRD
 RRRRRD
 RRRRRD
@@ -72,11 +72,11 @@ DDDDDD
 		})
 
 		c.Specify("can be accessed", func() {
-			terrainMap.TerrainTypes[0][0] = TT_ROCK
+			terrainMap.Types[0][0] = TT_ROCK
 
 			c.Specify("directly", func() {
-				c.Expect(terrainMap.TerrainTypes[0][0], Equals, TT_ROCK)
-				c.Expect(terrainMap.TerrainTypes[1][1], Equals, TT_GRASS)
+				c.Expect(terrainMap.Types[0][0], Equals, TT_ROCK)
+				c.Expect(terrainMap.Types[1][1], Equals, TT_GRASS)
 			})
 			c.Specify("by cell", func() {
 				c.Expect(terrainMap.Cell(C(-2, 3)), Equals, TT_ROCK)
@@ -85,8 +85,8 @@ DDDDDD
 		})
 
 		c.Specify("can be sliced into a smaller rectangle", func() {
-			terrainMap.TerrainTypes[1][2] = TT_DIRT
-			terrainMap.TerrainTypes[4][3] = TT_ROCK
+			terrainMap.Types[1][2] = TT_DIRT
+			terrainMap.Types[4][3] = TT_ROCK
 
 			slice := terrainMap.Slice(coord.Bounds{
 				C(-1, 2),
@@ -108,9 +108,9 @@ GGR
 			})
 
 			c.Specify("that shares memory with the original slice", func() {
-				c.Assume(terrainMap.TerrainTypes[1][1], Equals, TT_GRASS)
-				slice.TerrainTypes[0][0] = TT_ROCK
-				c.Expect(terrainMap.TerrainTypes[1][1], Equals, TT_ROCK)
+				c.Assume(terrainMap.Types[1][1], Equals, TT_GRASS)
+				slice.Types[0][0] = TT_ROCK
+				c.Expect(terrainMap.Types[1][1], Equals, TT_ROCK)
 			})
 		})
 
@@ -142,7 +142,7 @@ GGR
 			initialBounds := coord.Bounds{C(-1, 1), C(0, 0)}
 			resultBounds := coord.Bounds{C(-2, 2), C(-1, 1)}
 
-			fullMap, err := NewTerrainMap(fullBounds, `
+			fullMap, err := NewMap(fullBounds, `
 GDR
 RGD
 DRG
@@ -159,7 +159,7 @@ DRG
 	})
 
 	c.Specify("a terrain map state", func() {
-		fullMap, err := NewTerrainMap(coord.Bounds{
+		fullMap, err := NewMap(coord.Bounds{
 			C(0, 0),
 			C(3, -3),
 		}, `
@@ -174,12 +174,12 @@ DGGR
 			terrainState := fullMap.ToState()
 
 			diffs := terrainState.Diff(terrainState)
-			c.Expect(diffs, ContainsExactly, []*TerrainMapState{})
+			c.Expect(diffs, ContainsExactly, []*MapState{})
 		})
 
 		c.Specify("that is empty", func() {
 			c.Specify("will calculate a diff that contains everything", func() {
-				old := &TerrainMapState{}
+				old := &MapState{}
 				terrainState := fullMap.ToState()
 				diffs := old.Diff(terrainState)
 
@@ -188,7 +188,7 @@ DGGR
 				diff := diffs[0]
 
 				c.Expect(diff.IsEmpty(), IsFalse)
-				c.Expect(diff.Bounds, Equals, terrainState.TerrainMap.Bounds)
+				c.Expect(diff.Bounds, Equals, terrainState.Map.Bounds)
 				c.Expect(diff.Terrain, Equals, terrainState.String())
 			})
 		})
@@ -196,7 +196,7 @@ DGGR
 		c.Specify("can calculate differences with a map that overlaps to the", func() {
 			ce := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 			b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
-			strs := func(diffs []TerrainMapStateSlice) []string {
+			strs := func(diffs []MapStateSlice) []string {
 				strs := make([]string, 0, len(diffs))
 				for _, d := range diffs {
 					strs = append(strs, d.Terrain)
@@ -206,7 +206,7 @@ DGGR
 
 			center := fullMap.Slice(b(ce(1, -1), ce(2, -2))).ToState()
 
-			diffs := func(with coord.Bounds) []TerrainMapStateSlice {
+			diffs := func(with coord.Bounds) []MapStateSlice {
 				return center.Diff(fullMap.Slice(with).ToState())
 			}
 

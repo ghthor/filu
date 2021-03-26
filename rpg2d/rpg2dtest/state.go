@@ -3,6 +3,7 @@ package rpg2dtest
 import (
 	"github.com/ghthor/filu/rpg2d"
 	"github.com/ghthor/filu/rpg2d/entity"
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/gospec"
 )
 
@@ -12,8 +13,8 @@ type (
 )
 
 type (
-	terrainMapState       rpg2d.TerrainMapState
-	terrainMapStateSlices []rpg2d.TerrainMapStateSlice
+	terrainMapState       worldterrain.MapState
+	terrainMapStateSlices []worldterrain.MapStateSlice
 )
 
 func StateEquals(actual interface{}, expected interface{}) (match bool, pos, neg gospec.Message, err error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/ghthor/filu/rpg2d/entity/entitytest"
 	"github.com/ghthor/filu/rpg2d/quad"
 	"github.com/ghthor/filu/rpg2d/rpg2dtest"
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
 
 	"github.com/ghthor/gospec"
@@ -28,7 +29,7 @@ func DescribeWorldState(c gospec.Context) {
 	}, 20, nil)
 	c.Assume(err, IsNil)
 
-	terrain, err := rpg2d.NewTerrainMap(quadTree.Bounds(), `
+	terrain, err := worldterrain.NewMap(quadTree.Bounds(), `
 DDDDDDDD
 DGGGGGGD
 DGGRRGGD
@@ -251,7 +252,7 @@ GRRG
 							mockEntity1.ToState(),
 						},
 
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{-2, 4},
 								coord.Cell{1, 3},
@@ -276,7 +277,7 @@ GRRG
 							mockEntity1.ToState(),
 							mockEntity2.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{0, 4},
 								coord.Cell{1, 3},
@@ -312,7 +313,7 @@ GRRG
 							mockEntity1.ToState(),
 							mockEntity2.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{2, 2},
 								coord.Cell{3, -1},
@@ -337,7 +338,7 @@ GRRG
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{2, 0},
 								coord.Cell{3, -1},
@@ -373,7 +374,7 @@ GRRG
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{-2, -2},
 								coord.Cell{1, -3},
@@ -398,7 +399,7 @@ GRRG
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{-2, -2},
 								coord.Cell{-1, -3},
@@ -434,7 +435,7 @@ GRRG
 							mockEntity0.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{-4, 2},
 								coord.Cell{-3, -1},
@@ -459,7 +460,7 @@ GRRG
 							mockEntity1.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []rpg2d.TerrainMapStateSlice{{
+						TerrainMapSlices: []worldterrain.MapStateSlice{{
 							Bounds: coord.Bounds{
 								coord.Cell{-4, 2},
 								coord.Cell{-3, 1},
@@ -484,7 +485,7 @@ GRRG
 
 			c.Specify("when the viewport hasn't changed", func() {
 				clone := worldState.Clone()
-				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*rpg2d.TerrainMapState{})
+				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*worldterrain.MapState{})
 			})
 		})
 

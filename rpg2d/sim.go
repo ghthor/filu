@@ -8,6 +8,7 @@ import (
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad"
 	"github.com/ghthor/filu/rpg2d/quad/quadstate"
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
 )
 
@@ -26,7 +27,7 @@ type Actor interface {
 }
 
 type ActorNext interface {
-	WriteStateNext(stime.Time, quadstate.Quad, *TerrainMapState)
+	WriteStateNext(stime.Time, quadstate.Quad, *worldterrain.MapState)
 }
 
 // A SimulationDef used to configure a simulation
@@ -38,7 +39,7 @@ type SimulationDef struct {
 	// Initial World State
 	Now        stime.Time
 	QuadTree   quad.Quad
-	TerrainMap TerrainMap
+	TerrainMap worldterrain.Map
 
 	// User defined update phase handler
 	quad.UpdatePhaseHandler
@@ -53,7 +54,7 @@ type SimulationDef struct {
 type initialWorldState struct {
 	now        stime.Time
 	quadTree   quad.Quad
-	terrainMap TerrainMap
+	terrainMap worldterrain.Map
 }
 
 type simSettings struct {

@@ -5,6 +5,7 @@ import (
 	"github.com/ghthor/filu/rpg2d/coord"
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad"
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
 
 	"github.com/ghthor/gospec"
@@ -60,7 +61,7 @@ func DescribeASimulation(c gospec.Context) {
 
 	quad, err := quad.New(bounds, 10, nil)
 
-	terrainMap, err := rpg2d.NewTerrainMap(bounds, string(rpg2d.TT_GRASS))
+	terrainMap, err := worldterrain.NewMap(bounds, string(worldterrain.TT_GRASS))
 	c.Assume(err, IsNil)
 
 	c.Assume(err, IsNil)

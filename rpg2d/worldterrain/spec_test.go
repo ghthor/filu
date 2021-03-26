@@ -1,7 +1,9 @@
-package rpg2d_test
+package worldterrain_test
 
 import (
 	"testing"
+
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 
 	"github.com/ghthor/gospec"
 )
@@ -9,8 +11,7 @@ import (
 func TestUnitSpecs(t *testing.T) {
 	r := gospec.NewRunner()
 
-	r.AddSpec(DescribeWorldState)
-	r.AddSpec(DescribeASimulation)
+	r.AddSpec(worldterrain.DescribeTerrainMap)
 
 	gospec.MainGoTest(r, t)
 }

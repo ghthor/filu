@@ -4,22 +4,23 @@ import (
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad"
 	"github.com/ghthor/filu/rpg2d/quad/quadstate"
+	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
 )
 
 type World struct {
 	time     stime.Time
 	quadTree quad.Quad
-	terrain  TerrainMap
+	terrain  worldterrain.Map
 
 	// TODO deprecated
 	state WorldState
 
 	quadState    quadstate.Quad
-	terrainState *TerrainMapState
+	terrainState *worldterrain.MapState
 }
 
-func NewWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
+func NewWorld(now stime.Time, quad quad.Quad, terrain worldterrain.Map) *World {
 	const defaultEntitiesSize = 300
 	return &World{
 		time:     now,
@@ -139,7 +140,7 @@ func (world World) ToQuadState() (nextState quadstate.Quad) {
 	return nextState
 }
 
-func (world World) ToTerrainState() *TerrainMapState {
+func (world World) ToTerrainState() *worldterrain.MapState {
 	terrain := world.terrain.ToState()
 	if !terrain.IsEmpty() {
 		return terrain
