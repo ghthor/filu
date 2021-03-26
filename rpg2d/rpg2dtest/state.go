@@ -14,7 +14,7 @@ type (
 
 type (
 	terrainMapState       worldterrain.MapState
-	terrainMapStateSlices []worldterrain.MapStateSlice
+	terrainMapStateSlices worldterrain.MapStateSlices
 )
 
 func StateEquals(actual interface{}, expected interface{}) (match bool, pos, neg gospec.Message, err error) {
@@ -124,7 +124,7 @@ func (s worldStateDiff) isEqual(other worldStateDiff) bool {
 		return false
 	case !s.hasSameEntities(other):
 		return false
-	case !(terrainMapStateSlices)(s.TerrainMapSlices).isEqual((terrainMapStateSlices)(other.TerrainMapSlices)):
+	case !(*terrainMapStateSlices)(s.TerrainMapSlices).isEqual((*terrainMapStateSlices)(other.TerrainMapSlices)):
 		return false
 
 	default:
@@ -137,14 +137,18 @@ func (s worldStateDiff) hasSameEntities(other worldStateDiff) bool {
 		entitiesAreEqual(s.Removed, other.Removed)
 }
 
-func (s terrainMapStateSlices) isEqual(other terrainMapStateSlices) bool {
-	if len(s) != len(other) {
+func (s *terrainMapStateSlices) isEqual(other *terrainMapStateSlices) bool {
+	if s.Bounds != other.Bounds {
+		return false
+	}
+
+	if len(s.Slices) != len(other.Slices) {
 		return false
 	}
 
 nextMap:
-	for _, m1 := range s {
-		for _, m2 := range other {
+	for _, m1 := range s.Slices {
+		for _, m2 := range other.Slices {
 			if m1 == m2 {
 				continue nextMap
 			}

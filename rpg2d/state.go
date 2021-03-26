@@ -29,7 +29,7 @@ type WorldStateDiff struct {
 	Entities entity.StateSlice `json:"entities"`
 	Removed  entity.StateSlice `json:"removed"`
 
-	TerrainMapSlices []worldterrain.MapStateSlice `json:"terrainMapSlices,omitempty"`
+	TerrainMapSlices *worldterrain.MapStateSlices `json:"terrainMapSlices,omitempty"`
 }
 
 func (s WorldState) Clone() WorldState {
@@ -199,14 +199,18 @@ nextAddedOrModified:
 		state.Entities = append(state.Entities, e)
 	}
 
-	switch len(diff.TerrainMapSlices) {
+	if diff.TerrainMapSlices == nil {
+		goto finalize
+	}
+
+	switch len(diff.TerrainMapSlices.Slices) {
 	default:
-		state.TerrainMap.MergeDiff(diff.Bounds, diff.TerrainMapSlices...)
+		state.TerrainMap.MergeDiff(diff.TerrainMapSlices)
 	case 1:
 		if state.Bounds.Overlaps(diff.Bounds) {
-			state.TerrainMap.MergeDiff(diff.Bounds, diff.TerrainMapSlices...)
+			state.TerrainMap.MergeDiff(diff.TerrainMapSlices)
 		} else {
-			slice := diff.TerrainMapSlices[0]
+			slice := diff.TerrainMapSlices.Slices[0]
 			tm, err := worldterrain.NewMap(slice.Bounds, slice.Terrain)
 			if err != nil {
 				panic(fmt.Sprintf("error applying diff: %v", err))
@@ -216,6 +220,7 @@ nextAddedOrModified:
 	case 0:
 	}
 
+finalize:
 	state.Time = diff.Time
 	state.Bounds = diff.Bounds
 }

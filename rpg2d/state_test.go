@@ -252,13 +252,14 @@ GRRG
 							mockEntity1.ToState(),
 						},
 
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{-2, 4},
-								coord.Cell{1, 3},
-							},
-							Terrain: "\nDDDD\nGGGG\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							north, worldterrain.MapStateSlice{
+								coord.Bounds{
+									coord.Cell{-2, 4},
+									coord.Cell{1, 3},
+								},
+								"\nDDDD\nGGGG\n",
+							}),
 					})
 				})
 
@@ -277,25 +278,27 @@ GRRG
 							mockEntity1.ToState(),
 							mockEntity2.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{0, 4},
-								coord.Cell{1, 3},
-							},
-							Terrain: "\nDD\nGG\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{2, 4},
-								coord.Cell{3, 3},
-							},
-							Terrain: "\nDD\nGD\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{2, 2},
-								coord.Cell{3, 1},
-							},
-							Terrain: "\nGD\nGD\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							northEast,
+							[]worldterrain.MapStateSlice{{
+								Bounds: coord.Bounds{
+									coord.Cell{0, 4},
+									coord.Cell{1, 3},
+								},
+								Terrain: "\nDD\nGG\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{2, 4},
+									coord.Cell{3, 3},
+								},
+								Terrain: "\nDD\nGD\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{2, 2},
+									coord.Cell{3, 1},
+								},
+								Terrain: "\nGD\nGD\n",
+							}}...),
 					})
 				})
 
@@ -313,13 +316,14 @@ GRRG
 							mockEntity1.ToState(),
 							mockEntity2.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{2, 2},
-								coord.Cell{3, -1},
-							},
-							Terrain: "\nGD\nGD\nGD\nGD\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							east, worldterrain.MapStateSlice{
+								coord.Bounds{
+									coord.Cell{2, 2},
+									coord.Cell{3, -1},
+								},
+								"\nGD\nGD\nGD\nGD\n",
+							}),
 					})
 				})
 
@@ -338,25 +342,27 @@ GRRG
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{2, 0},
-								coord.Cell{3, -1},
-							},
-							Terrain: "\nGD\nGD\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{2, -2},
-								coord.Cell{3, -3},
-							},
-							Terrain: "\nGD\nDD\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{0, -2},
-								coord.Cell{1, -3},
-							},
-							Terrain: "\nGG\nDD\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							southEast,
+							[]worldterrain.MapStateSlice{{
+								Bounds: coord.Bounds{
+									coord.Cell{2, 0},
+									coord.Cell{3, -1},
+								},
+								Terrain: "\nGD\nGD\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{2, -2},
+									coord.Cell{3, -3},
+								},
+								Terrain: "\nGD\nDD\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{0, -2},
+									coord.Cell{1, -3},
+								},
+								Terrain: "\nGG\nDD\n",
+							}}...),
 					})
 				})
 
@@ -374,13 +380,14 @@ GRRG
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{-2, -2},
-								coord.Cell{1, -3},
-							},
-							Terrain: "\nGGGG\nDDDD\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							south, worldterrain.MapStateSlice{
+								coord.Bounds{
+									coord.Cell{-2, -2},
+									coord.Cell{1, -3},
+								},
+								"\nGGGG\nDDDD\n",
+							}),
 					})
 				})
 
@@ -399,25 +406,27 @@ GRRG
 							mockEntity2.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{-2, -2},
-								coord.Cell{-1, -3},
-							},
-							Terrain: "\nGG\nDD\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{-4, -2},
-								coord.Cell{-3, -3},
-							},
-							Terrain: "\nDG\nDD\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{-4, 0},
-								coord.Cell{-3, -1},
-							},
-							Terrain: "\nDG\nDG\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							southWest,
+							[]worldterrain.MapStateSlice{{
+								Bounds: coord.Bounds{
+									coord.Cell{-2, -2},
+									coord.Cell{-1, -3},
+								},
+								Terrain: "\nGG\nDD\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{-4, -2},
+									coord.Cell{-3, -3},
+								},
+								Terrain: "\nDG\nDD\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{-4, 0},
+									coord.Cell{-3, -1},
+								},
+								Terrain: "\nDG\nDG\n",
+							}}...),
 					})
 				})
 
@@ -435,13 +444,14 @@ GRRG
 							mockEntity0.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{-4, 2},
-								coord.Cell{-3, -1},
-							},
-							Terrain: "\nDG\nDG\nDG\nDG\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							west, worldterrain.MapStateSlice{
+								coord.Bounds{
+									coord.Cell{-4, 2},
+									coord.Cell{-3, -1},
+								},
+								"\nDG\nDG\nDG\nDG\n",
+							}),
 					})
 				})
 
@@ -460,32 +470,34 @@ GRRG
 							mockEntity1.ToState(),
 							mockEntity3.ToState(),
 						},
-						TerrainMapSlices: []worldterrain.MapStateSlice{{
-							Bounds: coord.Bounds{
-								coord.Cell{-4, 2},
-								coord.Cell{-3, 1},
-							},
-							Terrain: "\nDG\nDG\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{-4, 4},
-								coord.Cell{-3, 3},
-							},
-							Terrain: "\nDD\nDG\n",
-						}, {
-							Bounds: coord.Bounds{
-								coord.Cell{-2, 4},
-								coord.Cell{-1, 3},
-							},
-							Terrain: "\nDD\nGG\n",
-						}},
+						TerrainMapSlices: worldterrain.NewStateSlices(
+							northWest,
+							[]worldterrain.MapStateSlice{{
+								Bounds: coord.Bounds{
+									coord.Cell{-4, 2},
+									coord.Cell{-3, 1},
+								},
+								Terrain: "\nDG\nDG\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{-4, 4},
+									coord.Cell{-3, 3},
+								},
+								Terrain: "\nDD\nDG\n",
+							}, {
+								Bounds: coord.Bounds{
+									coord.Cell{-2, 4},
+									coord.Cell{-1, 3},
+								},
+								Terrain: "\nDD\nGG\n",
+							}}...),
 					})
 				})
 			})
 
 			c.Specify("when the viewport hasn't changed", func() {
 				clone := worldState.Clone()
-				c.Expect(worldState.Diff(clone).TerrainMapSlices, ContainsExactly, []*worldterrain.MapState{})
+				c.Expect(worldState.Diff(clone).TerrainMapSlices, IsNil)
 			})
 		})
 

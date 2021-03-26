@@ -152,7 +152,7 @@ DRG
 
 			actualMap, err := initialSlice.Clone()
 			c.Assume(err, IsNil)
-			err = actualMap.MergeDiff(resultBounds, initialSlice.ToState().Diff(resultSlice.ToState())...)
+			err = actualMap.MergeDiff(initialSlice.ToState().Diff(resultSlice.ToState()))
 			c.Assume(err, IsNil)
 			c.Expect(actualMap.String(), Equals, resultSlice.String())
 		})
@@ -173,23 +173,23 @@ DGGR
 		c.Specify("can calculate there are no differences", func() {
 			terrainState := fullMap.ToState()
 
-			diffs := terrainState.Diff(terrainState)
-			c.Expect(diffs, ContainsExactly, []*MapState{})
+			update := terrainState.Diff(terrainState)
+			c.Expect(update, IsNil)
 		})
 
 		c.Specify("that is empty", func() {
 			c.Specify("will calculate a diff that contains everything", func() {
 				old := &MapState{}
 				terrainState := fullMap.ToState()
-				diffs := old.Diff(terrainState)
+				diff := old.Diff(terrainState)
 
-				c.Expect(len(diffs), Equals, 1)
+				c.Expect(len(diff.Slices), Equals, 1)
 
-				diff := diffs[0]
+				slice := diff.Slices[0]
 
-				c.Expect(diff.IsEmpty(), IsFalse)
-				c.Expect(diff.Bounds, Equals, terrainState.Map.Bounds)
-				c.Expect(diff.Terrain, Equals, terrainState.String())
+				c.Expect(slice.IsEmpty(), IsFalse)
+				c.Expect(slice.Bounds, Equals, terrainState.Map.Bounds)
+				c.Expect(slice.Terrain, Equals, terrainState.String())
 			})
 		})
 
@@ -206,7 +206,7 @@ DGGR
 
 			center := fullMap.Slice(b(ce(1, -1), ce(2, -2))).ToState()
 
-			diffs := func(with coord.Bounds) []MapStateSlice {
+			diff := func(with coord.Bounds) *MapStateSlices {
 				return center.Diff(fullMap.Slice(with).ToState())
 			}
 
@@ -218,83 +218,83 @@ DGGR
 			}
 
 			c.Specify("north", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(1, 0),
 					ce(2, -1),
 				))
 
-				c.Expect(len(diffs), Equals, 1)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("RG"))
+				c.Expect(len(update.Slices), Equals, 1)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("RG"))
 			})
 
 			c.Specify("north & east", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(2, 0),
 					ce(3, -1),
 				))
 
-				c.Expect(len(diffs), Equals, 3)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("G", "G", "D"))
+				c.Expect(len(update.Slices), Equals, 3)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("G", "G", "D"))
 			})
 
 			c.Specify("east", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(2, -1),
 					ce(3, -2),
 				))
 
-				c.Expect(len(diffs), Equals, 1)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("D\nR"))
+				c.Expect(len(update.Slices), Equals, 1)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("D\nR"))
 			})
 
 			c.Specify("south & east", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(2, -2),
 					ce(3, -3),
 				))
 
-				c.Expect(len(diffs), Equals, 3)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("R", "R", "G"))
+				c.Expect(len(update.Slices), Equals, 3)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("R", "R", "G"))
 			})
 
 			c.Specify("south", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(1, -2),
 					ce(2, -3),
 				))
 
-				c.Expect(len(diffs), Equals, 1)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("GG"))
+				c.Expect(len(update.Slices), Equals, 1)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("GG"))
 			})
 
 			c.Specify("south & west", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(0, -2),
 					ce(1, -3),
 				))
 
-				c.Expect(len(diffs), Equals, 3)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("D", "D", "G"))
+				c.Expect(len(update.Slices), Equals, 3)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("D", "D", "G"))
 			})
 
 			c.Specify("west", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(0, -1),
 					ce(1, -2),
 				))
 
-				c.Expect(len(diffs), Equals, 1)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("D\nD"))
+				c.Expect(len(update.Slices), Equals, 1)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("D\nD"))
 			})
 
 			c.Specify("north & west", func() {
-				diffs := diffs(b(
+				update := diff(b(
 					ce(0, 0),
 					ce(1, -1),
 				))
 
-				c.Expect(len(diffs), Equals, 3)
-				c.Expect(strs(diffs), ContainsAll, sliceStrs("D", "G", "R"))
+				c.Expect(len(update.Slices), Equals, 3)
+				c.Expect(strs(update.Slices), ContainsAll, sliceStrs("D", "G", "R"))
 			})
 		})
 	})

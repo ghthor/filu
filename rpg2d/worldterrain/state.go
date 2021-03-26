@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 
 	"github.com/ghthor/filu/rpg2d/coord"
 )
@@ -48,9 +49,26 @@ type MapStateSlice struct {
 	Terrain string       `json:"terrain"`
 }
 
+// TODO combine MapStateSlices with MapStateDiff
+type MapStateSlices struct {
+	Bounds coord.Bounds    `json:"bounds"`
+	Slices []MapStateSlice `json:"slices"`
+}
+
 type MapStateDiff struct {
-	Bounds  coord.Bounds        `json:"bounds"`
+	Bounds  coord.Bounds `json:"bounds"`
 	Changes []TypeChange `json:"changes"`
+}
+
+func (s MapStateSlices) String() string {
+	return fmt.Sprintf("%#v", s)
+}
+
+func NewStateSlices(bounds coord.Bounds, slices ...MapStateSlice) *MapStateSlices {
+	return &MapStateSlices{
+		Bounds: bounds,
+		Slices: slices,
+	}
 }
 
 func (m *MapState) IsEmpty() bool {
@@ -60,12 +78,15 @@ func (m *MapState) IsEmpty() bool {
 	return m.Map.Types == nil
 }
 
-func (m *MapState) Diff(other *MapState) []MapStateSlice {
+func (m *MapState) Diff(other *MapState) *MapStateSlices {
 	if m.IsEmpty() || !m.Bounds.Overlaps(other.Bounds) {
-		return []MapStateSlice{{
-			Bounds:  other.Bounds,
-			Terrain: other.String(),
-		}}
+		return &MapStateSlices{
+			Bounds: other.Bounds,
+			Slices: []MapStateSlice{{
+				Bounds:  other.Bounds,
+				Terrain: other.String(),
+			}},
+		}
 	}
 
 	mBounds, oBounds := m.Map.Bounds, other.Map.Bounds
@@ -86,7 +107,10 @@ func (m *MapState) Diff(other *MapState) []MapStateSlice {
 		})
 	}
 
-	return slices
+	return &MapStateSlices{
+		Bounds: other.Bounds,
+		Slices: slices,
+	}
 }
 
 func (m *MapState) Clone() (*MapState, error) {
