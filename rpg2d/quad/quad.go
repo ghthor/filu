@@ -15,6 +15,8 @@ type Corner coord.Quad
 // An interface used to abstract the implementation differences
 // of a node and a leaf.
 type Quad interface {
+	MaxSize() int
+
 	Parent() Quad
 	Child(Corner) Quad
 	Children() []Quad
@@ -77,6 +79,10 @@ type Chunk struct {
 
 	Entities []entity.Entity
 }
+
+func (q quadRoot) MaxSize() int { return q.Quad.MaxSize() }
+func (q quadNode) MaxSize() int { return q.children[0].MaxSize() }
+func (q quadLeaf) MaxSize() int { return q.maxSize }
 
 type quadRoot struct {
 	Quad
@@ -227,7 +233,7 @@ func (q quadLeaf) divide() Quad {
 		panic(fmt.Sprintf("error splitting bounds into quads: %e", err))
 	}
 
-	//TODO Reuse this leaf forming 3 new leaves + this 1
+	// TODO Reuse this leaf forming 3 new leaves + this 1
 	for i, _ := range qn.children {
 		qn.children[i] = quadLeaf{
 			parent: qn,

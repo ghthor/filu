@@ -7,6 +7,7 @@ import (
 
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad"
+	"github.com/ghthor/filu/rpg2d/quad/quadstate"
 	"github.com/ghthor/filu/sim/stime"
 )
 
@@ -22,6 +23,10 @@ type Actor interface {
 	// Enables the simulation to send the
 	// state of the world to the actor
 	WriteState(WorldState)
+}
+
+type ActorNext interface {
+	WriteStateNext(stime.Time, quadstate.Quad, *TerrainMapState)
 }
 
 // A SimulationDef used to configure a simulation
@@ -317,14 +322,20 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		clock = clock.Tick()
 		world.stepTo(clock.Now(), runTick)
 
-		world.state = world.ToState()
+		//world.state = world.ToState()
+		world.quadState = world.ToQuadState()
+		world.terrainState = world.ToTerrainState()
 
 		multiWrite.Add(len(actors))
 		for _, a := range actors {
-			go func(a Actor) {
-				a.WriteState(world.state)
-				multiWrite.Done()
-			}(a)
+			if aa, updated := a.(ActorNext); updated {
+				go func(aa ActorNext) {
+					aa.WriteStateNext(world.time, world.quadState, world.terrainState)
+					multiWrite.Done()
+				}(aa)
+
+				continue
+			}
 		}
 		multiWrite.Wait()
 

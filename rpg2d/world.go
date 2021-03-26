@@ -3,6 +3,7 @@ package rpg2d
 import (
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad"
+	"github.com/ghthor/filu/rpg2d/quad/quadstate"
 	"github.com/ghthor/filu/sim/stime"
 )
 
@@ -11,7 +12,11 @@ type World struct {
 	quadTree quad.Quad
 	terrain  TerrainMap
 
+	// TODO deprecated
 	state WorldState
+
+	quadState    quadstate.Quad
+	terrainState *TerrainMapState
 }
 
 func NewWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
@@ -28,6 +33,8 @@ func NewWorld(now stime.Time, quad quad.Quad, terrain TerrainMap) *World {
 			EntitiesUnchanged: make(entity.StateSlice, 0, defaultEntitiesSize),
 			EntitiesRemoved:   make(entity.StateSlice, 0, defaultEntitiesSize),
 		},
+
+		quadState: quadstate.NewMust(quad.Bounds(), quad.MaxSize()),
 	}
 }
 
@@ -96,4 +103,47 @@ func (world World) ToState() WorldState {
 	}
 
 	return nextState
+}
+
+func (world World) ToQuadState() (nextState quadstate.Quad) {
+	now := world.time
+	nextState = world.quadState.Clear()
+
+	entities := world.quadTree.QueryBounds(world.quadTree.Bounds())
+	for _, e := range entities {
+		flags := e.Flags()
+		entityState := e.ToState()
+
+		if flags&entity.FlagRemoved != 0 {
+			if e.(entity.Removed).RemovedAt == now {
+				nextState = nextState.Insert(quadstate.Entity{entityState, quadstate.TypeRemoved})
+			}
+			continue
+		}
+
+		if flags&entity.FlagNew != 0 {
+			nextState = nextState.Insert(quadstate.Entity{entityState, quadstate.TypeNew})
+			continue
+		}
+
+		if ee, canChange := e.(entity.CanChange); canChange {
+			if ee.HasChanged(entityState, now) {
+				nextState = nextState.Insert(quadstate.Entity{entityState, quadstate.TypeChanged})
+				continue
+			}
+		}
+
+		nextState = nextState.Insert(quadstate.Entity{entityState, quadstate.TypeUnchanged})
+	}
+
+	return nextState
+}
+
+func (world World) ToTerrainState() *TerrainMapState {
+	terrain := world.terrain.ToState()
+	if !terrain.IsEmpty() {
+		return terrain
+	}
+
+	return nil
 }

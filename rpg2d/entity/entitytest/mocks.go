@@ -60,8 +60,9 @@ func (e MockEntityWithBounds) ToState() entity.State {
 	}
 }
 
-func (e MockEntityState) EntityId() entity.Id  { return e.Id }
-func (e MockEntityState) Bounds() coord.Bounds { return e.bounds }
+func (e MockEntityState) EntityId() entity.Id    { return e.Id }
+func (e MockEntityState) EntityCell() coord.Cell { return e.Cell }
+func (e MockEntityState) Bounds() coord.Bounds   { return e.bounds }
 func (e MockEntityState) IsDifferentFrom(other entity.State) bool {
 	switch other := other.(type) {
 	case MockEntityState:

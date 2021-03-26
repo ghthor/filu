@@ -24,6 +24,6 @@ func (e RemovedState) JSValue() js.Value {
 	v := js.Global().Get("Object").New()
 	v.Set("Id", int64(e.Id))
 	v.Set("Type", "removed")
-	v.Set("EntityBounds", e.EntityBounds)
+	v.Set("Cell", e.Cell)
 	return v
 }

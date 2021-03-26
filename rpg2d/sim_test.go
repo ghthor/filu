@@ -28,10 +28,11 @@ func (a mockActor) Entity() entity.Entity     { return a.mockActorEntity }
 func (mockActor) WriteState(rpg2d.WorldState) {}
 
 // Implement entity.Entity
-func (a mockActorEntity) Id() entity.Id       { return a.id }
-func (a mockActorEntity) EntityId() entity.Id { return a.id }
-func (a mockActorEntity) Cell() coord.Cell    { return a.cell }
-func (a mockActorEntity) Flags() entity.Flag  { return a.flags }
+func (a mockActorEntity) Id() entity.Id          { return a.id }
+func (a mockActorEntity) EntityId() entity.Id    { return a.id }
+func (a mockActorEntity) Cell() coord.Cell       { return a.cell }
+func (a mockActorEntity) EntityCell() coord.Cell { return a.cell }
+func (a mockActorEntity) Flags() entity.Flag     { return a.flags }
 func (a mockActorEntity) Bounds() coord.Bounds {
 	return coord.Bounds{a.cell, a.cell}
 }
@@ -126,7 +127,7 @@ func DescribeASimulation(c gospec.Context) {
 
 			entities := hs.Quad().QueryCell(coord.Cell{})
 			c.Expect(len(entities), Equals, 1)
-			c.Expect(entities[0].ToState(), Equals, entity.RemovedState{a.EntityId(), a.Bounds()})
+			c.Expect(entities[0].ToState(), Equals, entity.RemovedState{a.EntityId(), a.Cell()})
 		})
 	})
 }

@@ -29,7 +29,10 @@ func (s WorldState) JSValue() js.Value {
 	v := js.Global().Get("Object").New()
 	v.Set("Time", int64(s.Time))
 	v.Set("Bounds", s.Bounds.JSValue())
-	v.Set("Entities", s.Entities.JSValue())
+	v.Set("EntitiesRemoved", s.EntitiesRemoved.JSValue())
+	v.Set("EntitiesNew", s.EntitiesNew.JSValue())
+	v.Set("EntitiesChanged", s.EntitiesChanged.JSValue())
+	v.Set("EntitiesUnchanged", s.EntitiesUnchanged.JSValue())
 	v.Set("TerrainMap", s.TerrainMap.JSValue())
 	return v
 }

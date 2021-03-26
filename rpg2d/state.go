@@ -8,6 +8,7 @@ import (
 
 	"github.com/ghthor/filu/rpg2d/coord"
 	"github.com/ghthor/filu/rpg2d/entity"
+	"github.com/ghthor/filu/rpg2d/quad/quadstate"
 	"github.com/ghthor/filu/sim/stime"
 )
 
@@ -236,9 +237,11 @@ func (prev WorldState) diffExpensive(next WorldState, diff WorldStateDiff) World
 			continue
 		}
 
-		if old.IsDifferentFrom(e) {
-			diff.Entities = append(diff.Entities, e)
-			goto cleanup
+		if old, canChange := old.(entity.StateCanChange); canChange {
+			if old.IsDifferentFrom(e) {
+				diff.Entities = append(diff.Entities, e)
+				goto cleanup
+			}
 		}
 
 	cleanup:
@@ -316,4 +319,46 @@ nextAddedOrModified:
 
 	state.Time = diff.Time
 	state.Bounds = diff.Bounds
+}
+
+func clear(s entity.StateSlice) entity.StateSlice {
+	if s == nil {
+		return make(entity.StateSlice, 0, 1)
+	}
+
+	return s[:0]
+}
+
+func (state WorldState) Clear() WorldState {
+	return WorldState{
+		Time:              state.Time,
+		Bounds:            state.Bounds,
+		Entities:          clear(state.Entities),
+		EntitiesRemoved:   clear(state.EntitiesRemoved),
+		EntitiesNew:       clear(state.EntitiesNew),
+		EntitiesChanged:   clear(state.EntitiesChanged),
+		EntitiesUnchanged: clear(state.EntitiesUnchanged),
+	}
+}
+
+// TODO Fix the need to convert from quadstate.Entity to entity.State
+var _ quadstate.Accumulator = &WorldState{}
+
+func (state *WorldState) Add(e quadstate.Entity, flag entity.Flag) {
+	switch {
+	case flag&entity.FlagRemoved != 0:
+		state.EntitiesRemoved = append(state.EntitiesRemoved, e.State)
+	case flag&entity.FlagNew != 0:
+		state.EntitiesNew = append(state.EntitiesNew, e.State)
+	case flag&entity.FlagChanged != 0:
+		state.EntitiesChanged = append(state.EntitiesChanged, e.State)
+	default:
+		state.EntitiesUnchanged = append(state.EntitiesUnchanged, e.State)
+	}
+}
+
+func (state *WorldState) AddSlice(entities []quadstate.Entity, flag entity.Flag) {
+	for _, e := range entities {
+		state.Add(e, flag)
+	}
 }

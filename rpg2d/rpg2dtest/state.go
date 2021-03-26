@@ -76,8 +76,10 @@ nextEntity:
 				continue
 			}
 
-			if e1.IsDifferentFrom(e2) {
-				return false
+			if ee1, canChange := e1.(entity.StateCanChange); canChange {
+				if ee1.IsDifferentFrom(e2) {
+					return false
+				}
 			}
 
 			// Cached that we've verified Equality for the EntityID

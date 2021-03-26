@@ -13,9 +13,10 @@ type Id int64
 type Flag uint64
 
 const (
-	FlagNew = 1 << iota
+	FlagRemoved = 1 << iota
+	FlagNew
+	FlagChanged
 	FlagNoCollide
-	FlagRemoved
 	FlagUserDefined
 )
 
@@ -50,6 +51,11 @@ type Entity interface {
 	ToState() State
 }
 
+// TODO Factor out Bounds from the Entity Interface
+type HasBounds interface {
+	Bounds() coord.Bounds
+}
+
 type CanChange interface {
 	HasChanged(nextState State, now stime.Time) bool
 }
@@ -61,12 +67,16 @@ type CanChange interface {
 // marshaller and expect to be sent to the
 // client over the wire.
 type State interface {
-	// Unique ID
 	EntityId() Id
+	EntityCell() coord.Cell
+}
 
-	// Bounds of the entity
-	Bounds() coord.Bounds
+type StateHasBounds interface {
+	HasBounds
+}
 
+// TODO Replace this with the CanChange interface from above
+type StateCanChange interface {
 	// Compare to another entity
 	IsDifferentFrom(State) bool
 }
@@ -81,7 +91,14 @@ func (s StateSlice) FilterByBounds(result StateSlice, bounds coord.Bounds) State
 	}
 
 	for _, e := range s {
-		if bounds.Overlaps(e.Bounds()) {
+		if ee, yes := e.(HasBounds); yes {
+			if bounds.Overlaps(ee.Bounds()) {
+				result = append(result, e)
+				continue
+			}
+		}
+
+		if bounds.Contains(e.EntityCell()) {
 			result = append(result, e)
 			continue
 		}
@@ -119,8 +136,8 @@ type Removed struct {
 }
 
 type RemovedState struct {
-	Id           Id
-	EntityBounds coord.Bounds
+	Id   Id
+	Cell coord.Cell
 }
 
 func (e Removed) Flags() Flag {
@@ -129,17 +146,17 @@ func (e Removed) Flags() Flag {
 
 func (e Removed) ToState() State {
 	return RemovedState{
-		Id:           e.Id(),
-		EntityBounds: e.Bounds(),
+		Id:   e.Id(),
+		Cell: e.Cell(),
 	}
 }
 
-func (e RemovedState) EntityId() Id         { return e.Id }
-func (e RemovedState) Bounds() coord.Bounds { return e.EntityBounds }
+func (e RemovedState) EntityId() Id           { return e.Id }
+func (e RemovedState) EntityCell() coord.Cell { return e.Cell }
 func (e RemovedState) IsDifferentFrom(other State) bool {
 	switch other := other.(type) {
 	case RemovedState:
-		return e.Id != other.Id || e.EntityBounds != other.EntityBounds
+		return e.Id != other.Id || e.Cell != other.Cell
 	default:
 	}
 
