@@ -185,6 +185,14 @@ func (m *Map) MergeDiff(update *MapStateSlices) error {
 		}
 		maps = append(maps, m)
 	}
+	if !m.Bounds.Overlaps(update.Bounds) {
+		if len(maps) != 1 {
+			panic(fmt.Sprintf("invalid Map.MergeDiff\n%#v\n%#v", m, update))
+		}
+
+		*m = maps[0]
+	}
+
 	maps = append(maps, m.Slice(update.Bounds))
 
 	joined, err := JoinTerrain(update.Bounds, maps...)

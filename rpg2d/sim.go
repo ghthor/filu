@@ -221,6 +221,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	removeReq = removeCh
 
 	// Map of all the actors currently connected to the simulation
+	// TODO Expose this to the client somehow, currently duplicated
 	actors := make(map[ActorId]Actor)
 
 	// Make channel to be used to by the public api to

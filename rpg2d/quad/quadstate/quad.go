@@ -8,27 +8,12 @@ import (
 	"github.com/ghthor/filu/rpg2d/entity"
 )
 
-type Type uint
-
-const (
-	TypeRemoved Type = 1 << iota
-	TypeNew
-	TypeChanged
-	TypeUnchanged
-)
-
 type QueryFlag uint
 
 const (
 	QueryAll  QueryFlag = QueryFlag(TypeRemoved | TypeNew | TypeChanged | TypeUnchanged)
 	QueryDiff QueryFlag = QueryFlag(TypeRemoved | TypeNew | TypeChanged)
 )
-
-type Entity struct {
-	entity.State
-	Type
-	// TODO add encoding cache to this type
-}
 
 type Quad interface {
 	Bounds() coord.Bounds
@@ -43,8 +28,8 @@ type Quad interface {
 }
 
 type Accumulator interface {
-	Add(Entity, entity.Flag)
-	AddSlice([]Entity, entity.Flag)
+	Add(Entity)
+	AddSlice([]Entity, Type)
 }
 
 var _ Quad = root{}
@@ -61,23 +46,17 @@ type node struct {
 }
 
 type leaf struct {
-	bounds            coord.Bounds
-	entitiesRemoved   []Entity
-	entitiesNew       []Entity
-	entitiesChanged   []Entity
-	entitiesUnchanged []Entity
-	size              int
-	maxSize           int
+	bounds  coord.Bounds
+	size    int
+	maxSize int
+	*Entities
 }
 
 func newLeaf(bounds coord.Bounds, maxSize int) leaf {
 	return leaf{
-		bounds:            bounds,
-		entitiesRemoved:   make([]Entity, 0, maxSize),
-		entitiesNew:       make([]Entity, 0, maxSize),
-		entitiesChanged:   make([]Entity, 0, maxSize),
-		entitiesUnchanged: make([]Entity, 0, maxSize),
-		maxSize:           maxSize,
+		bounds:   bounds,
+		Entities: NewEntities(maxSize),
+		maxSize:  maxSize,
 	}
 }
 
@@ -112,19 +91,7 @@ func (q leaf) Insert(e Entity) Quad {
 
 	//fmt.Printf("actual size: %d maxSize: %d\n", len(q.entities), q.maxSize)
 
-	switch {
-	case e.Type&TypeRemoved != 0:
-		q.entitiesRemoved = append(q.entitiesRemoved, e)
-	case e.Type&TypeNew != 0:
-		q.entitiesNew = append(q.entitiesNew, e)
-	case e.Type&TypeChanged != 0:
-		q.entitiesChanged = append(q.entitiesChanged, e)
-	case e.Type&TypeUnchanged != 0:
-		q.entitiesUnchanged = append(q.entitiesUnchanged, e)
-	default:
-		return q
-	}
-
+	q.Entities.Insert(e)
 	q.size++
 
 	return q
@@ -148,16 +115,16 @@ func (q leaf) divide() Quad {
 
 	var quad Quad = qn
 
-	for _, e := range q.entitiesRemoved {
+	for _, e := range q.Entities.Removed {
 		quad = quad.Insert(e)
 	}
-	for _, e := range q.entitiesNew {
+	for _, e := range q.Entities.New {
 		quad = quad.Insert(e)
 	}
-	for _, e := range q.entitiesChanged {
+	for _, e := range q.Entities.Changed {
 		quad = quad.Insert(e)
 	}
-	for _, e := range q.entitiesUnchanged {
+	for _, e := range q.Entities.Unchanged {
 		quad = quad.Insert(e)
 	}
 
@@ -178,10 +145,7 @@ func (q node) Clear() Quad {
 
 func (q leaf) Clear() Quad {
 	q.size = 0
-	q.entitiesRemoved = q.entitiesRemoved[:0]
-	q.entitiesNew = q.entitiesNew[:0]
-	q.entitiesChanged = q.entitiesChanged[:0]
-	q.entitiesUnchanged = q.entitiesUnchanged[:0]
+	q.Entities.Clear()
 	return q
 }
 
@@ -218,31 +182,32 @@ func (q leaf) QueryBounds(bounds coord.Bounds, acc Accumulator, types QueryFlag)
 		return
 	}
 
+	// TODO Convert this into an array iteration over pairs
 	if types&QueryFlag(TypeRemoved) != 0 {
-		filterBounds(acc, q.entitiesRemoved, entity.FlagRemoved, bounds)
+		filterBounds(acc, q.Entities.Removed, TypeRemoved, bounds)
 	}
 	if types&QueryFlag(TypeNew) != 0 {
-		filterBounds(acc, q.entitiesNew, entity.FlagNew, bounds)
+		filterBounds(acc, q.Entities.New, TypeNew, bounds)
 	}
 	if types&QueryFlag(TypeChanged) != 0 {
-		filterBounds(acc, q.entitiesChanged, entity.FlagChanged, bounds)
+		filterBounds(acc, q.Entities.Changed, TypeChanged, bounds)
 	}
 	if types&QueryFlag(TypeUnchanged) != 0 {
-		filterBounds(acc, q.entitiesUnchanged, 0, bounds)
+		filterBounds(acc, q.Entities.Unchanged, TypeUnchanged, bounds)
 	}
 }
 
-func filterBounds(acc Accumulator, src []Entity, flag entity.Flag, bounds coord.Bounds) {
+func filterBounds(acc Accumulator, src []Entity, t Type, bounds coord.Bounds) {
 	for i, _ := range src {
 		if e, hasBounds := src[i].State.(entity.HasBounds); hasBounds {
 			if e.Bounds().Overlaps(bounds) {
-				acc.Add(src[i], flag)
+				acc.Add(src[i])
 			}
 			continue
 		}
 
 		if bounds.Contains(src[i].EntityCell()) {
-			acc.Add(src[i], flag)
+			acc.Add(src[i])
 		}
 	}
 }
@@ -258,17 +223,18 @@ func (q node) AccumulateAll(acc Accumulator, types QueryFlag) {
 }
 
 func (q leaf) AccumulateAll(acc Accumulator, types QueryFlag) {
+	// TODO Convert this into an array iteration over pairs
 	if types&QueryFlag(TypeRemoved) != 0 {
-		acc.AddSlice(q.entitiesRemoved, entity.FlagRemoved)
+		acc.AddSlice(q.Entities.Removed, TypeRemoved)
 	}
 	if types&QueryFlag(TypeNew) != 0 {
-		acc.AddSlice(q.entitiesNew, entity.FlagNew)
+		acc.AddSlice(q.Entities.New, TypeNew)
 	}
 	if types&QueryFlag(TypeChanged) != 0 {
-		acc.AddSlice(q.entitiesChanged, entity.FlagChanged)
+		acc.AddSlice(q.Entities.Changed, TypeChanged)
 	}
 	if types&QueryFlag(TypeUnchanged) != 0 {
-		acc.AddSlice(q.entitiesUnchanged, 0)
+		acc.AddSlice(q.Entities.Unchanged, TypeUnchanged)
 	}
 }
 

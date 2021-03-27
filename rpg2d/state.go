@@ -9,6 +9,7 @@ import (
 	"github.com/ghthor/filu/sim/stime"
 )
 
+// TODO Remove this type
 type WorldState struct {
 	Time   stime.Time   `json:"time"`
 	Bounds coord.Bounds `json:"bounds"`
@@ -22,6 +23,7 @@ type WorldState struct {
 	TerrainMap *worldterrain.MapState `json:"terrainMap,omitempty"`
 }
 
+// TODO Remove this type
 type WorldStateDiff struct {
 	Time   stime.Time   `json:"time"`
 	Bounds coord.Bounds `json:"bounds"`
@@ -242,27 +244,5 @@ func (state WorldState) Clear() WorldState {
 		EntitiesNew:       clear(state.EntitiesNew),
 		EntitiesChanged:   clear(state.EntitiesChanged),
 		EntitiesUnchanged: clear(state.EntitiesUnchanged),
-	}
-}
-
-// TODO Fix the need to convert from quadstate.Entity to entity.State
-var _ quadstate.Accumulator = &WorldState{}
-
-func (state *WorldState) Add(e quadstate.Entity, flag entity.Flag) {
-	switch {
-	case flag&entity.FlagRemoved != 0:
-		state.EntitiesRemoved = append(state.EntitiesRemoved, e.State)
-	case flag&entity.FlagNew != 0:
-		state.EntitiesNew = append(state.EntitiesNew, e.State)
-	case flag&entity.FlagChanged != 0:
-		state.EntitiesChanged = append(state.EntitiesChanged, e.State)
-	default:
-		state.EntitiesUnchanged = append(state.EntitiesUnchanged, e.State)
-	}
-}
-
-func (state *WorldState) AddSlice(entities []quadstate.Entity, flag entity.Flag) {
-	for _, e := range entities {
-		state.Add(e, flag)
 	}
 }

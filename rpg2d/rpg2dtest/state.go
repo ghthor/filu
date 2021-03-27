@@ -3,6 +3,7 @@ package rpg2dtest
 import (
 	"github.com/ghthor/filu/rpg2d"
 	"github.com/ghthor/filu/rpg2d/entity"
+	"github.com/ghthor/filu/rpg2d/worldstate"
 	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/gospec"
 )
@@ -17,6 +18,12 @@ type (
 	terrainMapStateSlices worldterrain.MapStateSlices
 )
 
+type (
+	snapshot worldstate.Snapshot
+	update   worldstate.Update
+)
+
+// TODO deprecated
 func StateEquals(actual interface{}, expected interface{}) (match bool, pos, neg gospec.Message, err error) {
 	s1, ok1 := actual.(rpg2d.WorldState)
 	s2, ok2 := expected.(rpg2d.WorldState)
@@ -29,6 +36,24 @@ func StateEquals(actual interface{}, expected interface{}) (match bool, pos, neg
 
 	if ok1 && ok2 {
 		return gospec.Equals(worldStateDiff(d1), worldStateDiff(d2))
+	}
+
+	return gospec.Equals(actual, expected)
+
+}
+
+func SnapshotEquals(actual interface{}, expected interface{}) (match bool, pos, neg gospec.Message, err error) {
+	s1, ok1 := actual.(worldstate.Snapshot)
+	s2, ok2 := expected.(worldstate.Snapshot)
+	if ok1 && ok2 {
+		return gospec.Equals(snapshot(s1), snapshot(s2))
+	}
+
+	d1, ok1 := actual.(worldstate.Update)
+	d2, ok2 := expected.(worldstate.Update)
+
+	if ok1 && ok2 {
+		return gospec.Equals(update(d1), update(d2))
 	}
 
 	return gospec.Equals(actual, expected)

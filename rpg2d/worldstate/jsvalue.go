@@ -1,28 +1,32 @@
 // +build js,wasm
 
-package rpg2d
+package worldstate
 
-import "syscall/js"
+import (
+	"syscall/js"
 
-func (s WorldState) JSValue() js.Value {
+	"github.com/ghthor/filu/rpg2d/quad/quadstate"
+)
+
+func (s *Snapshot) JSValue() js.Value {
 	v := js.Global().Get("Object").New()
 	v.Set("Time", int64(s.Time))
 	v.Set("Bounds", s.Bounds.JSValue())
-	v.Set("EntitiesRemoved", s.EntitiesRemoved.JSValue())
-	v.Set("EntitiesNew", s.EntitiesNew.JSValue())
-	v.Set("EntitiesChanged", s.EntitiesChanged.JSValue())
-	v.Set("EntitiesUnchanged", s.EntitiesUnchanged.JSValue())
+	v.Set("EntitiesRemoved", quadstate.EntitiesJSValue(s.Entities.Removed))
+	v.Set("EntitiesNew", quadstate.EntitiesJSValue(s.Entities.New))
+	v.Set("EntitiesChanged", quadstate.EntitiesJSValue(s.Entities.Changed))
+	v.Set("EntitiesUnchanged", quadstate.EntitiesJSValue(s.Entities.Unchanged))
 	v.Set("TerrainMap", s.TerrainMap.JSValue())
 	return v
 }
 
-func (s WorldStateDiff) JSValue() js.Value {
+func (s *Update) JSValue() js.Value {
 	v := js.Global().Get("Object").New()
 	v.Set("Time", int64(s.Time))
 	v.Set("Bounds", s.Bounds.JSValue())
 
-	v.Set("Entities", s.Entities.JSValue())
-	v.Set("Removed", s.Removed.JSValue())
+	v.Set("Entities", quadstate.EntitiesJSValue(s.Entities))
+	v.Set("Removed", quadstate.EntitiesJSValue(s.Removed))
 
 	if s.TerrainMapSlices == nil || len(s.TerrainMapSlices.Slices) <= 0 {
 		v.Set("TerrainMapSlices", js.Null())
