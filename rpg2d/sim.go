@@ -1,6 +1,7 @@
 package rpg2d
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ type Actor interface {
 }
 
 type ActorNext interface {
-	WriteStateNext(stime.Time, quadstate.Quad, *worldterrain.MapState)
+	WriteStateNext(stime.Time, quadstate.Quad, *worldterrain.MapState, chan<- quadstate.EncodingRequest)
 }
 
 // A SimulationDef used to configure a simulation
@@ -224,6 +225,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	// TODO Expose this to the client somehow, currently duplicated
 	actors := make(map[ActorId]Actor)
 
+	// TODO Replace this with a simulation running context
 	// Make channel to be used to by the public api to
 	// request that the simulation be halted
 	haltCh := make(chan chan<- HaltedSimulation)
@@ -234,6 +236,11 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	// Set the 1way recieve channel used by the game loop
 	var haltReq <-chan chan<- HaltedSimulation
 	haltReq = haltCh
+
+	encodingCh := make(chan quadstate.EncodingRequest)
+	entityEncoder := quadstate.NewEntityEncoder()
+	var encodingCtx context.Context
+	var stopEncoder context.CancelFunc
 
 	clock := stime.Clock(initialState.now)
 	world := NewWorld(initialState.now, initialState.quadTree, initialState.terrainMap)
@@ -325,14 +332,17 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		world.stepTo(clock.Now(), runTick)
 
 		//world.state = world.ToState()
-		world.quadState = world.ToQuadState()
+		world.quadState = world.ToQuadState(entityEncoder)
 		world.terrainState = world.ToTerrainState()
+
+		encodingCtx, stopEncoder = context.WithCancel(context.Background())
+		entityEncoder.Start(encodingCtx, encodingCh)
 
 		multiWrite.Add(len(actors))
 		for _, a := range actors {
 			if aa, updated := a.(ActorNext); updated {
 				go func(aa ActorNext) {
-					aa.WriteStateNext(world.time, world.quadState, world.terrainState)
+					aa.WriteStateNext(world.time, world.quadState, world.terrainState, encodingCh)
 					multiWrite.Done()
 				}(aa)
 
@@ -340,6 +350,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 			}
 		}
 		multiWrite.Wait()
+		stopEncoder()
 
 		goto communicationLoop
 

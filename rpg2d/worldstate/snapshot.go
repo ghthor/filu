@@ -22,8 +22,8 @@ type Update struct {
 	Time   stime.Time
 	Bounds coord.Bounds
 
-	Entities []quadstate.Entity
-	Removed  []quadstate.Entity
+	Entities []*quadstate.Entity
+	Removed  []*quadstate.Entity
 
 	TerrainMapSlices *worldterrain.MapStateSlices
 }
@@ -45,10 +45,10 @@ func (s *Snapshot) Clone() *Snapshot {
 		Time:   s.Time,
 		Bounds: s.Bounds,
 		Entities: &quadstate.Entities{
-			Removed:   make([]quadstate.Entity, len(s.Removed)),
-			New:       make([]quadstate.Entity, len(s.New)),
-			Changed:   make([]quadstate.Entity, len(s.Changed)),
-			Unchanged: make([]quadstate.Entity, len(s.Unchanged)),
+			Removed:   make([]*quadstate.Entity, len(s.Removed)),
+			New:       make([]*quadstate.Entity, len(s.New)),
+			Changed:   make([]*quadstate.Entity, len(s.Changed)),
+			Unchanged: make([]*quadstate.Entity, len(s.Unchanged)),
 		},
 		TerrainMap: s.TerrainMap,
 	}
@@ -63,8 +63,8 @@ func (s *Snapshot) Clone() *Snapshot {
 
 func NewUpdate(size int) *Update {
 	return &Update{
-		Removed:  make([]quadstate.Entity, 0, size),
-		Entities: make([]quadstate.Entity, 0, size),
+		Removed:  make([]*quadstate.Entity, 0, size),
+		Entities: make([]*quadstate.Entity, 0, size),
 	}
 }
 

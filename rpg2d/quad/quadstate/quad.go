@@ -18,7 +18,7 @@ const (
 type Quad interface {
 	Bounds() coord.Bounds
 
-	Insert(Entity) Quad
+	Insert(*Entity) Quad
 	// Remove all State's that have been inserted
 	Clear() Quad
 
@@ -28,8 +28,8 @@ type Quad interface {
 }
 
 type Accumulator interface {
-	Add(Entity)
-	AddSlice([]Entity, Type)
+	Add(*Entity)
+	AddSlice([]*Entity, Type)
 }
 
 var _ Quad = root{}
@@ -64,12 +64,12 @@ func (q root) Bounds() coord.Bounds { return q.quad.Bounds() }
 func (q node) Bounds() coord.Bounds { return q.bounds }
 func (q leaf) Bounds() coord.Bounds { return q.bounds }
 
-func (q root) Insert(e Entity) Quad {
+func (q root) Insert(e *Entity) Quad {
 	q.quad = q.quad.Insert(e)
 	return q
 }
 
-func (q node) Insert(e Entity) Quad {
+func (q node) Insert(e *Entity) Quad {
 	for i, quad := range q.children {
 		// If the child's bounds contain the entities cell
 		if quad.Bounds().Contains(e.EntityCell()) {
@@ -80,7 +80,7 @@ func (q node) Insert(e Entity) Quad {
 	panic("entity out of bounds")
 }
 
-func (q leaf) Insert(e Entity) Quad {
+func (q leaf) Insert(e *Entity) Quad {
 	// If the quad is full it must split
 	if q.size >= q.maxSize {
 		// Unless it has a width or height of 1 then it can't be split.
@@ -197,7 +197,7 @@ func (q leaf) QueryBounds(bounds coord.Bounds, acc Accumulator, types QueryFlag)
 	}
 }
 
-func filterBounds(acc Accumulator, src []Entity, t Type, bounds coord.Bounds) {
+func filterBounds(acc Accumulator, src []*Entity, t Type, bounds coord.Bounds) {
 	for i, _ := range src {
 		if e, hasBounds := src[i].State.(entity.HasBounds); hasBounds {
 			if e.Bounds().Overlaps(bounds) {
