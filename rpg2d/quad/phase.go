@@ -177,12 +177,17 @@ func (q quadNode) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Qua
 }
 
 func (q quadLeaf) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
-	for _, e := range q.entities {
+	for i, e := range q.entities {
 		updatedEntity := p.Update(e, now)
 		if updatedEntity == nil {
 			removed = append(removed, e)
 		} else {
-			remaining = append(remaining, updatedEntity)
+			if updatedEntity.Cell() == e.Cell() {
+				q.entities[i] = updatedEntity
+			} else {
+				// Return to parent to be reinserted
+				remaining = append(remaining, updatedEntity)
+			}
 		}
 	}
 
