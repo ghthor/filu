@@ -89,11 +89,11 @@ func (f NarrowPhaseHandlerFn) ResolveCollisions(cgrp *CollisionGroup, now stime.
 }
 
 func RunPhasesOn(
-	q Quad,
+	q QuadRoot,
 	updatePhase UpdatePhaseHandler,
 	inputPhase InputPhaseHandler,
 	narrowPhase NarrowPhaseHandler,
-	now stime.Time) Quad {
+	now stime.Time) QuadRoot {
 
 	q, _, _ = RunUpdatePhaseOn(q, updatePhase, now)
 	q, _ = RunInputPhaseOn(q, inputPhase, now)
@@ -103,30 +103,30 @@ func RunPhasesOn(
 	return q
 }
 
-func RunUpdatePhaseOn(q Quad, updatePhase UpdatePhaseHandler, now stime.Time) (Quad, []entity.Entity, []entity.Entity) {
+func RunUpdatePhaseOn(q QuadRoot, updatePhase UpdatePhaseHandler, now stime.Time) (QuadRoot, []entity.Entity, []entity.Entity) {
 	return q.runUpdatePhase(updatePhase, now)
 }
 
 func RunInputPhaseOn(
-	q Quad,
+	q QuadRoot,
 	inputPhase InputPhaseHandler,
-	now stime.Time) (Quad, []entity.Entity) {
+	now stime.Time) (QuadRoot, []entity.Entity) {
 
 	return q.runInputPhase(inputPhase, now)
 }
 
 func RunBroadPhaseOn(
-	q Quad,
+	q QuadRoot,
 	now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 
 	return q.runBroadPhase(now)
 }
 
 func RunNarrowPhaseOn(
-	q Quad,
+	q QuadRoot,
 	cgroups []*CollisionGroup,
 	narrowPhase NarrowPhaseHandler,
-	now stime.Time) (Quad, []entity.Entity) {
+	now stime.Time) (QuadRoot, []entity.Entity) {
 
 	var toBeInserted, toBeRemoved []entity.Entity
 
@@ -137,7 +137,7 @@ func RunNarrowPhaseOn(
 	}
 
 	for _, e := range toBeRemoved {
-		q = q.Remove(e)
+		q = q.Remove(e.Id())
 	}
 
 	for _, e := range toBeInserted {
@@ -147,19 +147,19 @@ func RunNarrowPhaseOn(
 	return q, nil
 }
 
-func (q quadRoot) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
-	q.Quad, remaining, removed = q.Quad.runUpdatePhase(p, now)
+func (q quadRoot) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (root QuadRoot, remaining, removed []entity.Entity) {
+	q.node, remaining, removed = q.node.runUpdatePhase(p, now)
 
-	quad = q
+	root = q
 	for _, e := range remaining {
-		quad = quad.Insert(e)
+		root = root.Insert(e)
 	}
 
 	for _, e := range removed {
-		quad = quad.Remove(e)
+		root = root.Remove(e.Id())
 	}
 
-	return quad, nil, nil
+	return root, nil, nil
 }
 
 func (q quadNode) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
@@ -194,15 +194,15 @@ func (q quadLeaf) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Qua
 	return q, remaining, removed
 }
 
-func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (quad Quad, bubbled []entity.Entity) {
-	q.Quad, bubbled = q.Quad.runInputPhase(p, now)
+func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (root QuadRoot, bubbled []entity.Entity) {
+	q.node, bubbled = q.node.runInputPhase(p, now)
 
-	quad = q
+	root = q
 	for _, e := range bubbled {
-		quad = quad.Insert(e)
+		root = root.Insert(e)
 	}
 
-	return quad, nil
+	return root, nil
 }
 
 func (q quadNode) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
@@ -230,8 +230,9 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []en
 	return q, bubbled
 }
 
-// Broad phase is non-mutative and therefor doesn't
-// require a method on the quadRoot type.
+func (q quadRoot) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+	return q.node.runBroadPhase(now)
+}
 
 func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
 	for _, cq := range q.children {

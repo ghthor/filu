@@ -10,7 +10,7 @@ import (
 
 type World struct {
 	time     stime.Time
-	quadTree quad.Quad
+	quadTree quad.QuadRoot
 	terrain  worldterrain.Map
 
 	// TODO deprecated
@@ -20,7 +20,7 @@ type World struct {
 	terrainState *worldterrain.MapState
 }
 
-func NewWorld(now stime.Time, quad quad.Quad, terrain worldterrain.Map) *World {
+func NewWorld(now stime.Time, quad quad.QuadRoot, terrain worldterrain.Map) *World {
 	const defaultEntitiesSize = 300
 	return &World{
 		time:     now,
@@ -39,7 +39,7 @@ func NewWorld(now stime.Time, quad quad.Quad, terrain worldterrain.Map) *World {
 	}
 }
 
-type stepToFn func(quad.Quad, stime.Time) quad.Quad
+type stepToFn func(quad.QuadRoot, stime.Time) quad.QuadRoot
 
 func (w *World) stepTo(t stime.Time, stepTo stepToFn) {
 	w.quadTree = stepTo(w.quadTree, t)
@@ -52,7 +52,7 @@ func (w *World) Insert(e entity.Entity) {
 }
 
 func (w *World) Remove(e entity.Entity) {
-	w.quadTree = w.quadTree.Remove(e)
+	w.quadTree = w.quadTree.Remove(e.Id())
 }
 
 func (world World) ToState() WorldState {

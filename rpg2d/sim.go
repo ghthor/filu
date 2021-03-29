@@ -39,7 +39,7 @@ type SimulationDef struct {
 
 	// Initial World State
 	Now        stime.Time
-	QuadTree   quad.Quad
+	QuadTree   quad.QuadRoot
 	TerrainMap worldterrain.Map
 
 	// User defined update phase handler
@@ -54,7 +54,7 @@ type SimulationDef struct {
 
 type initialWorldState struct {
 	now        stime.Time
-	quadTree   quad.Quad
+	quadTree   quad.QuadRoot
 	terrainMap worldterrain.Map
 }
 
@@ -77,7 +77,7 @@ type RunningSimulation interface {
 }
 
 type HaltedSimulation interface {
-	Quad() quad.Quad
+	Quad() quad.QuadRoot
 }
 
 // An implementation of RunningSimulation
@@ -254,7 +254,7 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 	//---- User provided narrow phase
 	narrowPhase := settings.NarrowPhaseHandler
 
-	runTick := func(q quad.Quad, t stime.Time) quad.Quad {
+	runTick := func(q quad.QuadRoot, t stime.Time) quad.QuadRoot {
 		return quad.RunPhasesOn(q, updatePhase, inputPhase, narrowPhase, t)
 	}
 
@@ -374,8 +374,8 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 }
 
 type haltedSimulation struct {
-	quadTree quad.Quad
+	quadTree quad.QuadRoot
 }
 
 // Return the quad tree used by the simulation
-func (s haltedSimulation) Quad() quad.Quad { return s.quadTree }
+func (s haltedSimulation) Quad() quad.QuadRoot { return s.quadTree }

@@ -74,7 +74,7 @@ func DescribeQuad(c gospec.Context) {
 			q = q.Insert(e)
 			c.Assume(len(q.QueryCell(e.Cell())), Equals, 1)
 
-			q = q.Remove(e)
+			q = q.Remove(e.Id())
 			c.Expect(len(q.QueryCell(e.Cell())), Equals, 0)
 		})
 
@@ -109,8 +109,14 @@ func DescribeQuad(c gospec.Context) {
 
 				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 8*8)
 
-				var fn func(q quad.Quad)
-				fn = func(q quad.Quad) {
+				type quadCheckRecusive interface {
+					Bounds() coord.Bounds
+					QueryBounds(coord.Bounds) []entity.Entity
+					Children() []quad.Quad
+				}
+
+				var fn func(q quadCheckRecusive)
+				fn = func(q quadCheckRecusive) {
 					children := q.Children()
 					if len(children) == 0 {
 						size := len(q.QueryBounds(q.Bounds()))

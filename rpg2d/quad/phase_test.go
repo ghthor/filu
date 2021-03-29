@@ -260,7 +260,7 @@ func DescribePhase(c gospec.Context) {
 		c.Assume(cgroups[5].Entities, ContainsAll, cgEntities[22:24])
 		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[24:])
 
-		makeQuad := func(entities []entity.Entity, quadMaxSize int) quad.Quad {
+		makeQuad := func(entities []entity.Entity, quadMaxSize int) quad.QuadRoot {
 			q, err := quad.New(quadBounds, quadMaxSize, nil)
 			c.Assume(err, IsNil)
 

@@ -27,7 +27,7 @@ func DescribeQuadInsert(c gospec.Context) {
 				c.Expect(len(chunk.Entities), Equals, 1)
 
 				c.Specify("and remove it", func() {
-					q = q.Remove(entity)
+					q = q.Remove(entity.Id())
 					c.Expect(len(q.Chunk().Entities), Equals, 0)
 				})
 			})
@@ -43,7 +43,7 @@ func DescribeQuadInsert(c gospec.Context) {
 				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 3)
 
 				c.Specify("and remove them", func() {
-					q = q.Remove(e1)
+					q = q.Remove(e1.Id())
 
 					c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
 					c.Expect(q.QueryCell(coord.Cell{7, -7})[0].Id(), Equals, entity.Id(1))

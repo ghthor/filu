@@ -25,7 +25,7 @@ type Quad interface {
 
 	// Mutators
 	Insert(entity.Entity) Quad
-	Remove(entity.Entity) Quad
+	RemoveCell(entity.Id, coord.Cell) Quad
 
 	QueryCell(coord.Cell) []entity.Entity
 	QueryBounds(coord.Bounds) []entity.Entity
@@ -35,6 +35,28 @@ type Quad interface {
 	//---- Internal methods to execute a phase calculation
 	runUpdatePhase(UpdatePhaseHandler, stime.Time) (quad Quad, remaining, removed []entity.Entity)
 	runInputPhase(InputPhaseHandler, stime.Time) (Quad, []entity.Entity)
+	runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
+}
+
+type QuadRoot interface {
+	MaxSize() int
+	Bounds() coord.Bounds
+
+	// TODO rework the tests so this method can be removed
+	Children() []Quad
+
+	Insert(entity.Entity) QuadRoot
+	Remove(entity.Id) QuadRoot
+
+	QueryCell(coord.Cell) []entity.Entity
+	QueryBounds(coord.Bounds) []entity.Entity
+
+	// TODO rework the tests so this method can be removed
+	Chunk() Chunk
+
+	//---- Internal methods to execute a phase calculation
+	runUpdatePhase(UpdatePhaseHandler, stime.Time) (quad QuadRoot, remaining, removed []entity.Entity)
+	runInputPhase(InputPhaseHandler, stime.Time) (QuadRoot, []entity.Entity)
 	runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
 }
 
@@ -48,7 +70,7 @@ func isPowerOf2(v uint) bool {
 	return (v != 0) && (v&(v-1)) == 0
 }
 
-func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, error) {
+func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (QuadRoot, error) {
 	if maxSize < 2 {
 		return nil, ErrMaxSizeTooSmall
 	}
@@ -62,12 +84,12 @@ func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (Quad, erro
 	}
 
 	return quadRoot{
-		Quad: quadLeaf{
+		node: quadLeaf{
 			parent:  nil,
 			bounds:  bounds,
 			maxSize: maxSize,
 		},
-		entityIndex: make(map[entity.Id]entity.Entity),
+		entityIndex: make(map[entity.Id]coord.Cell),
 	}, nil
 }
 
@@ -80,14 +102,19 @@ type Chunk struct {
 	Entities []entity.Entity
 }
 
-func (q quadRoot) MaxSize() int { return q.Quad.MaxSize() }
+func (q quadRoot) MaxSize() int { return q.node.MaxSize() }
 func (q quadNode) MaxSize() int { return q.children[0].MaxSize() }
 func (q quadLeaf) MaxSize() int { return q.maxSize }
 
-type quadRoot struct {
-	Quad
+func (q quadRoot) Bounds() coord.Bounds { return q.node.Bounds() }
+func (q quadRoot) Children() []Quad {
+	return q.node.Children()
+}
 
-	entityIndex map[entity.Id]entity.Entity
+type quadRoot struct {
+	node Quad
+
+	entityIndex map[entity.Id]coord.Cell
 }
 
 // A node in the quad tree that will contain 4 children,
@@ -99,26 +126,26 @@ type quadNode struct {
 	bounds coord.Bounds
 }
 
-func (q quadRoot) Insert(e entity.Entity) Quad {
-	old, indexed := q.entityIndex[e.Id()]
+func (q quadRoot) Insert(e entity.Entity) QuadRoot {
+	cell, indexed := q.entityIndex[e.Id()]
 	if indexed {
-		q.Quad = q.Quad.Remove(old)
+		q.node = q.node.RemoveCell(e.Id(), cell)
 	}
 
-	q.entityIndex[e.Id()] = e
-	q.Quad = q.Quad.Insert(e)
+	q.entityIndex[e.Id()] = e.Cell()
+	q.node = q.node.Insert(e)
 
 	return q
 }
 
-func (q quadRoot) Remove(e entity.Entity) Quad {
-	old, indexed := q.entityIndex[e.Id()]
+func (q quadRoot) Remove(id entity.Id) QuadRoot {
+	cell, indexed := q.entityIndex[id]
 	if !indexed {
 		return q
 	}
 
-	q.Quad = q.Quad.Remove(old)
-	delete(q.entityIndex, e.Id())
+	q.node = q.node.RemoveCell(id, cell)
+	delete(q.entityIndex, id)
 
 	return q
 }
@@ -140,15 +167,19 @@ func (q quadNode) Insert(e entity.Entity) Quad {
 	panic("entity out of bounds")
 }
 
-func (q quadNode) Remove(e entity.Entity) Quad {
+func (q quadNode) RemoveCell(id entity.Id, cell coord.Cell) Quad {
 	for i, quad := range q.children {
 		// If the child's bounds contain the entities cell
-		if quad.Bounds().Contains(e.Cell()) {
-			q.children[i] = quad.Remove(e)
+		if quad.Bounds().Contains(cell) {
+			q.children[i] = quad.RemoveCell(id, cell)
 			break
 		}
 	}
 	return q
+}
+
+func (q quadRoot) QueryCell(c coord.Cell) []entity.Entity {
+	return q.node.QueryCell(c)
 }
 
 func (q quadNode) QueryCell(c coord.Cell) []entity.Entity {
@@ -162,6 +193,10 @@ func (q quadNode) QueryCell(c coord.Cell) []entity.Entity {
 	return nil
 }
 
+func (q quadRoot) QueryBounds(b coord.Bounds) []entity.Entity {
+	return q.node.QueryBounds(b)
+}
+
 func (q quadNode) QueryBounds(b coord.Bounds) []entity.Entity {
 	var matches []entity.Entity
 	for _, quad := range q.children {
@@ -172,6 +207,10 @@ func (q quadNode) QueryBounds(b coord.Bounds) []entity.Entity {
 		}
 	}
 	return matches
+}
+
+func (q quadRoot) Chunk() Chunk {
+	return q.node.Chunk()
 }
 
 func (q quadNode) Chunk() Chunk {
@@ -254,10 +293,10 @@ func (q quadLeaf) divide() Quad {
 	return quad
 }
 
-func (q quadLeaf) Remove(remove entity.Entity) Quad {
+func (q quadLeaf) RemoveCell(id entity.Id, cell coord.Cell) Quad {
 	// Remove Entity
 	for i, entity := range q.entities {
-		if entity.Id() == remove.Id() {
+		if entity.Id() == id {
 			q.entities = append(q.entities[:i], q.entities[i+1:]...)
 			break
 		}
