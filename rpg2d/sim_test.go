@@ -43,8 +43,8 @@ func (a mockActorEntity) IsDifferentFrom(entity.State) bool { return true }
 
 type mockInputPhase struct{}
 
-func (mockInputPhase) ApplyInputsTo(e entity.Entity, now stime.Time) []entity.Entity {
-	return []entity.Entity{e}
+func (mockInputPhase) ApplyInputsTo(e entity.Entity, now stime.Time, changes quad.InputPhaseChanges) entity.Entity {
+	return e
 }
 
 type mockNarrowPhase struct{}

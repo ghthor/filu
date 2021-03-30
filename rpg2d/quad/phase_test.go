@@ -164,7 +164,7 @@ func DescribePhase(c gospec.Context) {
 		q = q.Insert(e(3, 3, 0))
 
 		c.Specify("will insert the updated entity", func() {
-			q, _, _ = quad.RunUpdatePhaseOn(q, quad.UpdatePhaseHandlerFn(
+			q = q.RunUpdatePhase(quad.UpdatePhaseHandlerFn(
 				func(entity entity.Entity, now stime.Time) entity.Entity {
 					c := entity.Cell()
 					return e(entity.Id(), c.X, c.Y+1)
@@ -181,7 +181,7 @@ func DescribePhase(c gospec.Context) {
 		c.Specify("will remove an entity", func() {
 			c.Assume(len(q.QueryCell(cell(2, 0))), Equals, 1)
 
-			q, _, _ = quad.RunUpdatePhaseOn(q, quad.UpdatePhaseHandlerFn(
+			q = q.RunUpdatePhase(quad.UpdatePhaseHandlerFn(
 				func(e entity.Entity, now stime.Time) entity.Entity {
 					if e.Id() == entity.Id(2) {
 						return nil
@@ -207,12 +207,12 @@ func DescribePhase(c gospec.Context) {
 			q = q.Insert(entitytest.MockEntity{0, coord.Cell{-16, 16}, 0})
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
 
-			q, _ = quad.RunInputPhaseOn(q, quad.InputPhaseHandlerFn(func(e entity.Entity, now stime.Time) []entity.Entity {
-				return []entity.Entity{
-					e,
-					entitytest.MockEntity{1, coord.Cell{-15, 16}, 0},
-				}
-			}), stime.Time(0))
+			q = q.RunInputPhase(quad.InputPhaseHandlerFn(
+				func(e entity.Entity, now stime.Time, changes quad.InputPhaseChanges) entity.Entity {
+					changes.New(entitytest.MockEntity{1, coord.Cell{-15, 16}, 0})
+					return nil
+				},
+			), stime.Time(0))
 
 			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 2)
 		})
@@ -323,11 +323,10 @@ func DescribePhase(c gospec.Context) {
 
 					var cgroups []*quad.CollisionGroup
 					var unsolved quad.CollisionGroupIndex
-					cgroups, _, unsolved = quad.RunBroadPhaseOn(q, stime.Time(0))
+					cgroups = q.RunBroadPhase(stime.Time(0))
 
 					c.Expect(len(cgroups), Equals, len(testCase.cgroups))
 					c.Expect(cgroups, ContainsAll, testCase.cgroups)
-					c.Expect(unsolved, Equals, testCase.unsolved)
 
 					// Lets break early so the output is more useful
 					// in debugging why the test is failing.
@@ -365,7 +364,7 @@ func DescribePhase(c gospec.Context) {
 				return entities
 			}(), 10)
 
-			cgroups, _, _ := quad.RunBroadPhaseOn(q, stime.Time(0))
+			cgroups := q.RunBroadPhase(stime.Time(0))
 
 			cgroupedEntities := func() []entity.Entity {
 				var entities []entity.Entity

@@ -2,6 +2,7 @@ package quad
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/sim/stime"
@@ -43,15 +44,19 @@ func (f UpdatePhaseHandlerFn) Update(e entity.Entity, now stime.Time) entity.Ent
 // These new entities will be inserted into the
 // quad tree.
 type InputPhaseHandler interface {
-	ApplyInputsTo(entity.Entity, stime.Time) []entity.Entity
+	ApplyInputsTo(target entity.Entity, now stime.Time, entities InputPhaseChanges) (targetIfChanged entity.Entity)
+}
+
+type InputPhaseChanges interface {
+	New(entity.Entity)
 }
 
 // Convenience type so input phase handlers
 // can be written as closures or as functions.
-type InputPhaseHandlerFn func(entity.Entity, stime.Time) []entity.Entity
+type InputPhaseHandlerFn func(entity.Entity, stime.Time, InputPhaseChanges) entity.Entity
 
-func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time) []entity.Entity {
-	return f(e, now)
+func (f InputPhaseHandlerFn) ApplyInputsTo(e entity.Entity, now stime.Time, entities InputPhaseChanges) entity.Entity {
+	return f(e, now, entities)
 }
 
 // 3. Broad Phase - Internal
@@ -95,31 +100,12 @@ func RunPhasesOn(
 	narrowPhase NarrowPhaseHandler,
 	now stime.Time) QuadRoot {
 
-	q, _, _ = RunUpdatePhaseOn(q, updatePhase, now)
-	q, _ = RunInputPhaseOn(q, inputPhase, now)
-	cgroups, _, _ := RunBroadPhaseOn(q, now)
+	q = q.RunUpdatePhase(updatePhase, now)
+	q = q.RunInputPhase(inputPhase, now)
+	cgroups := q.RunBroadPhase(now)
 	q, _ = RunNarrowPhaseOn(q, cgroups, narrowPhase, now)
 
 	return q
-}
-
-func RunUpdatePhaseOn(q QuadRoot, updatePhase UpdatePhaseHandler, now stime.Time) (QuadRoot, []entity.Entity, []entity.Entity) {
-	return q.runUpdatePhase(updatePhase, now)
-}
-
-func RunInputPhaseOn(
-	q QuadRoot,
-	inputPhase InputPhaseHandler,
-	now stime.Time) (QuadRoot, []entity.Entity) {
-
-	return q.runInputPhase(inputPhase, now)
-}
-
-func RunBroadPhaseOn(
-	q QuadRoot,
-	now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
-
-	return q.runBroadPhase(now)
 }
 
 func RunNarrowPhaseOn(
@@ -147,91 +133,127 @@ func RunNarrowPhaseOn(
 	return q, nil
 }
 
-func (q quadRoot) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (root QuadRoot, remaining, removed []entity.Entity) {
-	q.node, remaining, removed = q.node.runUpdatePhase(p, now)
-
-	root = q
-	for _, e := range remaining {
-		root = root.Insert(e)
-	}
-
-	for _, e := range removed {
-		root = root.Remove(e.Id())
-	}
-
-	return root, nil, nil
+type updatePhaseChanges interface {
+	modified(entity.Entity)
+	removed(entity.Entity)
 }
 
-func (q quadNode) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
+type updatePhaseSliceChanges struct {
+	allModified []entity.Entity
+	allRemoved  []entity.Entity
+}
+
+func (c *updatePhaseSliceChanges) modified(e entity.Entity) {
+	c.allModified = append(c.allModified, e)
+}
+func (c *updatePhaseSliceChanges) removed(e entity.Entity) {
+	c.allRemoved = append(c.allRemoved, e)
+}
+
+func (q QuadRoot) RunUpdatePhase(p UpdatePhaseHandler, now stime.Time) QuadRoot {
+	if q.updatePhaseSliceChanges == nil {
+		q.updatePhaseSliceChanges = &updatePhaseSliceChanges{
+			allModified: make([]entity.Entity, 0, 10),
+			allRemoved:  make([]entity.Entity, 0, 10),
+		}
+	} else {
+		q.updatePhaseSliceChanges.allModified = q.updatePhaseSliceChanges.allModified[:0]
+		q.updatePhaseSliceChanges.allRemoved = q.updatePhaseSliceChanges.allRemoved[:0]
+	}
+	q.node = q.node.runUpdatePhase(p, now, q.updatePhaseSliceChanges)
+
+	for _, e := range q.updatePhaseSliceChanges.allModified {
+		q = q.Insert(e)
+	}
+
+	for _, e := range q.updatePhaseSliceChanges.allRemoved {
+		q = q.Remove(e.Id())
+	}
+
+	return q
+}
+
+func (q quadNode) runUpdatePhase(p UpdatePhaseHandler, now stime.Time, changes updatePhaseChanges) Quad {
 	// TODO Implement concurrently
 	//      For each child, recursively descend and run input phase
 	for i, quad := range q.children {
-		quad, iremaining, iremoved := quad.runUpdatePhase(p, now)
-		q.children[i] = quad
-
-		remaining = append(remaining, iremaining...)
-		removed = append(removed, iremoved...)
+		q.children[i] = quad.runUpdatePhase(p, now, changes)
 	}
 
-	return q, remaining, removed
+	return q
 }
 
-func (q quadLeaf) runUpdatePhase(p UpdatePhaseHandler, now stime.Time) (quad Quad, remaining, removed []entity.Entity) {
+func (q quadLeaf) runUpdatePhase(p UpdatePhaseHandler, now stime.Time, changes updatePhaseChanges) Quad {
 	for i, e := range q.entities {
 		updatedEntity := p.Update(e, now)
 		if updatedEntity == nil {
-			removed = append(removed, e)
+			changes.removed(e)
 		} else {
 			if updatedEntity.Cell() == e.Cell() {
 				q.entities[i] = updatedEntity
 			} else {
 				// Return to parent to be reinserted
-				remaining = append(remaining, updatedEntity)
+				changes.modified(updatedEntity)
 			}
 		}
 	}
 
-	return q, remaining, removed
+	return q
 }
 
-func (q quadRoot) runInputPhase(p InputPhaseHandler, now stime.Time) (root QuadRoot, bubbled []entity.Entity) {
-	q.node, bubbled = q.node.runInputPhase(p, now)
+type inputPhaseChanges struct {
+	entities []entity.Entity
+}
+
+func (c *inputPhaseChanges) New(e entity.Entity) {
+	c.entities = append(c.entities, e)
+}
+
+func (q QuadRoot) RunInputPhase(p InputPhaseHandler, now stime.Time) (root QuadRoot) {
+	if q.inputPhaseChanges == nil {
+		q.inputPhaseChanges = &inputPhaseChanges{make([]entity.Entity, 0, 100)}
+	} else {
+		q.inputPhaseChanges.entities = q.inputPhaseChanges.entities[:0]
+	}
+	q.node = q.node.runInputPhase(p, now, q.inputPhaseChanges)
 
 	root = q
-	for _, e := range bubbled {
+	for _, e := range q.inputPhaseChanges.entities {
 		root = root.Insert(e)
 	}
 
-	return root, nil
+	return root
 }
 
-func (q quadNode) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
-	var bubbled []entity.Entity
-
-	// TODO Implement concurrently
-	//      For each child, recursively descend and run input phase
+func (q quadNode) runInputPhase(p InputPhaseHandler, now stime.Time, changes InputPhaseChanges) Quad {
 	for i, quad := range q.children {
-		quad, entities := quad.runInputPhase(p, now)
-		q.children[i] = quad
-		bubbled = append(bubbled, entities...)
+		q.children[i] = quad.runInputPhase(p, now, changes)
 	}
-
-	return q, bubbled
+	return q
 }
 
-func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time) (Quad, []entity.Entity) {
-	var bubbled []entity.Entity
+func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time, changes InputPhaseChanges) Quad {
+	for i, e := range q.entities {
+		var changeToE entity.Entity
+		changeToE = p.ApplyInputsTo(e, now, changes)
 
-	for _, e := range q.entities {
-		entities := p.ApplyInputsTo(e, now)
-		bubbled = append(bubbled, entities...)
+		if changeToE != nil {
+			if changeToE.Cell() != e.Cell() {
+				// TODO Does the Input Phase need to be allowed to modify an entities cell?
+				log.Printf("%#v", e)
+				log.Printf("%#v", changeToE)
+				panic("invalid modification to entities Cell during input phase")
+			}
+			q.entities[i] = changeToE
+		}
 	}
 
-	return q, bubbled
+	return q
 }
 
-func (q quadRoot) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
-	return q.node.runBroadPhase(now)
+func (q QuadRoot) RunBroadPhase(now stime.Time) (cgroups []*CollisionGroup) {
+	cgroups, _, _ = q.node.runBroadPhase(now)
+	return cgroups
 }
 
 func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {

@@ -164,10 +164,6 @@ var ErrMustProvideATerrainMap = errors.New("user must provide a terrain map to a
 
 // Implement engine/sim.UnstartedSimulation
 func (s SimulationDef) Begin() (RunningSimulation, error) {
-	if s.QuadTree == nil {
-		return nil, ErrMustProvideAQuadtree
-	}
-
 	if s.TerrainMap.Bounds != s.QuadTree.Bounds() {
 		return nil, ErrMustProvideATerrainMap
 	}
