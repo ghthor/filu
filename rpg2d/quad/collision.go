@@ -115,7 +115,7 @@ func (cg *CollisionGroup) AddCollisionFromMerge(c Collision) {
 }
 
 func (cg *CollisionGroup) addCollision(c Collision) {
-	id := CollisionId{c.AId, c.BId}
+	id := c.CollisionId
 	if _, exists := cg.CollisionsById[id]; exists {
 		return
 	}
