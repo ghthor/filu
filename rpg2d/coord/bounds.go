@@ -8,6 +8,7 @@ type Bounds struct {
 }
 
 func (b Bounds) Contains(c Cell) bool {
+	// TODO there might be some optimizations laying right here
 	return (b.TopL.X <= c.X && b.BotR.X >= c.X &&
 		b.TopL.Y >= c.Y && b.BotR.Y <= c.Y)
 }
@@ -40,6 +41,14 @@ func (b Bounds) Area() int {
 }
 
 func (b Bounds) Overlaps(other Bounds) bool {
+	if other.TopL == other.BotR {
+		return b.Contains(other.TopL)
+	}
+
+	if b.TopL == b.BotR {
+		return other.Contains(b.TopL)
+	}
+
 	if b.Contains(other.TopL) || b.Contains(other.BotR) ||
 		other.Contains(b.TopL) || other.Contains(b.BotR) {
 		return true
@@ -70,9 +79,11 @@ func min(a, b int) int {
 	return b
 }
 
+var ErrNoOverlap = errors.New("no overlap")
+
 func (b Bounds) Intersection(other Bounds) (Bounds, error) {
 	if !b.Overlaps(other) {
-		return Bounds{}, errors.New("no overlap")
+		return Bounds{}, ErrNoOverlap
 	}
 
 	return Bounds{
