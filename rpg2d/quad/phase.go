@@ -442,12 +442,13 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 		}
 
 		for _, e2 := range q.entities {
-			// Ignore entities that have no collisions
-			if e2.Flags()&entity.FlagNoCollide != 0 {
+			// Check for self
+			if e1.Id() == e2.Id() {
 				continue
 			}
-			// Check for self
-			if e1 == e2 {
+
+			// Ignore entities that have no collisions
+			if e2.Flags()&entity.FlagNoCollide != 0 {
 				continue
 			}
 
