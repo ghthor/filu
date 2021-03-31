@@ -76,7 +76,7 @@ func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, [
 	}()
 
 	collisions := func(e []entitytest.MockEntityWithBounds) []quad.Collision {
-		c := func(a, b entity.Entity) quad.Collision { return quad.Collision{a, b} }
+		c := func(a, b entity.Entity) quad.Collision { return quad.NewCollision(a, b) }
 
 		return []quad.Collision{
 			// Group 0
@@ -115,7 +115,7 @@ func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, [
 	cgroups := func(c []quad.Collision) []quad.CollisionGroup {
 		cg := func(collisions ...quad.Collision) (cg quad.CollisionGroup) {
 			for _, c := range collisions {
-				cg = cg.AddCollision(c)
+				cg = cg.AddCollisionFromMerge(c)
 			}
 			return
 		}

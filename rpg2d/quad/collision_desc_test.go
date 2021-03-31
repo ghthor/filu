@@ -17,21 +17,21 @@ func DescribeCollision(c gospec.Context) {
 			a, b := entitytest.MockEntity{EntityId: 0}, entitytest.MockEntity{EntityId: 1}
 
 			c.Specify("if a and b are the same", func() {
-				c1, c2 := quad.Collision{aptr, bptr}, quad.Collision{aptr, bptr}
+				c1, c2 := quad.NewCollision(aptr, bptr), quad.NewCollision(aptr, bptr)
 				c.Expect(c1, Equals, c2)
 				c.Expect(c2, Equals, c1)
 
-				c1, c2 = quad.Collision{a, b}, quad.Collision{a, b}
+				c1, c2 = quad.NewCollision(a, b), quad.NewCollision(a, b)
 				c.Expect(c1, Equals, c2)
 				c.Expect(c2, Equals, c1)
 			})
 
 			c.Specify("if a and b are swapped", func() {
-				c1, c2 := quad.Collision{aptr, bptr}, quad.Collision{bptr, aptr}
+				c1, c2 := quad.NewCollision(aptr, bptr), quad.NewCollision(bptr, aptr)
 				c.Expect(c1, Equals, c2)
 				c.Expect(c2, Equals, c1)
 
-				c1, c2 = quad.Collision{a, b}, quad.Collision{b, a}
+				c1, c2 = quad.NewCollision(a, b), quad.NewCollision(b, a)
 				c.Expect(c1, Equals, c2)
 				c.Expect(c2, Equals, c1)
 			})
@@ -52,7 +52,7 @@ func DescribeCollisionIndex(c gospec.Context) {
 				{EntityId: 4},
 			}
 
-			col := func(a, b entity.Entity) quad.Collision { return quad.Collision{a, b} }
+			col := func(a, b entity.Entity) quad.Collision { return quad.NewCollision(a, b) }
 
 			cindex := quad.CollisionIndex{
 				e[0]: []quad.Collision{
@@ -112,7 +112,7 @@ func DescribeCollisionGroup(c gospec.Context) {
 	}()
 
 	collisions := func(e []entitytest.MockEntityWithBounds) []quad.Collision {
-		c := func(a, b entity.Entity) quad.Collision { return quad.Collision{a, b} }
+		c := func(a, b entity.Entity) quad.Collision { return quad.NewCollision(a, b) }
 
 		return []quad.Collision{
 			c(e[0], e[1]),
@@ -150,7 +150,7 @@ func DescribeCollisionGroup(c gospec.Context) {
 		var cg quad.CollisionGroup
 
 		for _, c := range collisions {
-			cg = cg.AddCollision(c)
+			cg = cg.AddCollisionFromMerge(c)
 		}
 
 		return cg
@@ -175,9 +175,9 @@ func DescribeCollisionGroup(c gospec.Context) {
 				return []quad.CollisionGroup{
 					newcg(c[2], c[0], c[1]),
 					newcg(c[1], c[2], c[0]),
-					newcg(quad.Collision{
+					newcg(quad.NewCollision(
 						c[1].B, c[1].A,
-					}, c[2], c[0]),
+					), c[2], c[0]),
 				}
 			}(collisions)
 
@@ -215,18 +215,18 @@ func DescribeCollisionGroup(c gospec.Context) {
 		c.Specify("will not add a collision it already has", func() {
 			cg := cgroups[0]
 
-			cg = cg.AddCollision(collisions[0])
+			cg = cg.AddCollisionFromMerge(collisions[0])
 			c.Expect(len(cg.Entities), Equals, 3)
 			c.Expect(len(cg.Collisions), Equals, 3)
 
-			cg = cg.AddCollision(quad.Collision{collisions[0].B, collisions[0].A})
+			cg = cg.AddCollision(collisions[0].B, collisions[0].A)
 			c.Expect(len(cg.Entities), Equals, 3)
 			c.Expect(len(cg.Collisions), Equals, 3)
 
-			cg = cg.AddCollision(quad.Collision{
+			cg = cg.AddCollision(
 				entitytest.MockEntityWithBounds{EntityId: 10},
 				entitytest.MockEntityWithBounds{EntityId: 20},
-			})
+			)
 
 			c.Expect(len(cg.Entities), Equals, 5)
 			c.Expect(len(cg.Collisions), Equals, 4)
@@ -301,7 +301,7 @@ func DescribeCollisionGroupIndex(c gospec.Context) {
 				entitytest.MockEntity{EntityId: 0}: cg,
 			})
 
-			cg2 := cg.AddCollision(quad.Collision{entitytest.MockEntity{EntityId: 0}, entitytest.MockEntity{EntityId: 1}})
+			cg2 := cg.AddCollision(entitytest.MockEntity{EntityId: 0}, entitytest.MockEntity{EntityId: 1})
 
 			c.Expect(quad.CollisionGroupIndex{
 				entitytest.MockEntity{EntityId: 0}: cg,

@@ -313,7 +313,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 
 				// create a new collision group
 				// and add a collision for e1 & e2
-				cg := CollisionGroup{}.AddCollision(Collision{e1, e2})
+				cg := CollisionGroup{}.AddCollision(e1, e2)
 
 				// add this new collision group to the array of collision groups
 				cgroups = append(cgroups, &cg)
@@ -342,7 +342,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 
 				// create a new collision of e1 & e2
 				// add it to e1's collision group
-				*cg = cg.AddCollision(Collision{e1, e2})
+				*cg = cg.AddCollision(e1, e2)
 
 				// and set e2's collision group in the collision group index
 				solved[e2] = cg
@@ -352,7 +352,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				// e2 is in a collision group
 
 				// add a collision for e1 & e2 to e2's collision group
-				*e2cg = e2cg.AddCollision(Collision{e1, e2})
+				*e2cg = e2cg.AddCollision(e1, e2)
 
 				// set e1's collision group
 				solved[e1] = e2cg
@@ -377,12 +377,12 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 
 				// merge the collision groups into e1's collision group
 				for _, c := range e2cg.Collisions {
-					*e1cg = e1cg.AddCollision(c)
+					*e1cg = e1cg.AddCollisionFromMerge(c)
 				}
 
 				// create a collision for e1 & e2
 				// add it to the collision group
-				*e1cg = e1cg.AddCollision(Collision{e1, e2})
+				*e1cg = e1cg.AddCollision(e1, e2)
 
 				// set e2's new collision group and
 				// remove e2's old collision group from the cgindex
@@ -464,8 +464,7 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 			case e1cgExists && !e2cgExists:
 				// e1 exists in a collision group already
 				// create a collision and add it to e1's group
-				c := Collision{e1, e2}
-				*e1cg = e1cg.AddCollision(c)
+				*e1cg = e1cg.AddCollision(e1, e2)
 
 				cgindex[e1] = e1cg
 				cgindex[e2] = e1cg
@@ -473,8 +472,7 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 			case !e1cgExists && e2cgExists:
 				// e2 exists in a collision group already
 				// create a collision and add it to e2's group
-				c := Collision{e1, e2}
-				*e2cg = e2cg.AddCollision(c)
+				*e2cg = e2cg.AddCollision(e1, e2)
 
 				cgindex[e1] = e2cg
 				cgindex[e2] = e2cg
@@ -488,7 +486,7 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 				}
 
 				// add a collision between e1 and e2
-				*cg = cg.AddCollision(Collision{e1, e2})
+				*cg = cg.AddCollision(e1, e2)
 
 				// set the cgroup in the cgroup index
 				cgindex[e1] = cg
@@ -503,11 +501,11 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 
 				// merge the collision groups
 				for _, c := range e2cg.Collisions {
-					*e1cg = e1cg.AddCollision(c)
+					*e1cg = e1cg.AddCollisionFromMerge(c)
 				}
 
 				// add a collision for e1 && e2
-				*e1cg = e1cg.AddCollision(Collision{e1, e2})
+				*e1cg = e1cg.AddCollision(e1, e2)
 
 				// set e2's new collision group and
 				// remove e2's old collision group from the cgindex
@@ -529,7 +527,7 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 				// both entities exist in the same collision group already
 				// Add a collision for e1 && e2
 				cg := e1cg
-				*cg = cg.AddCollision(Collision{e1, e2})
+				*cg = cg.AddCollision(e1, e2)
 
 			default:
 				panic(fmt.Sprintf(`unexpected index state during broad phase

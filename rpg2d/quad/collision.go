@@ -9,7 +9,24 @@ import (
 // entities bounds are overlapping. Intended to
 // be solved by the user defined NarrowPhaseHandler.
 type Collision struct {
-	A, B entity.Entity
+	AId, BId entity.Id
+	A, B     entity.Entity
+}
+
+func NewCollision(a, b entity.Entity) Collision {
+	aId, bId := a.Id(), b.Id()
+
+	if aId > bId {
+		return Collision{
+			bId, aId,
+			b, a,
+		}
+	}
+
+	return Collision{
+		aId, bId,
+		a, b,
+	}
 }
 
 // A collision index stores all the
@@ -33,13 +50,11 @@ func (c Collision) Bounds() coord.Bounds {
 // Compares to Collisions and returns if
 // they are representing the same collision.
 func (c Collision) IsSameAs(oc Collision) bool {
-	switch {
-	case c.A == oc.A && c.B == oc.B:
-		fallthrough
-	case c.A == oc.B && c.B == oc.A:
-		return true
+	if c.AId == oc.AId {
+		if c.BId == oc.BId {
+			return true
+		}
 	}
-
 	return false
 }
 
@@ -74,7 +89,15 @@ func (cg CollisionGroup) CollisionIndex() CollisionIndex {
 // entities from the collision to the entities slice.
 // Filters out collisions it already has and entities
 // that are already in the entities slice.
-func (cg CollisionGroup) AddCollision(c Collision) CollisionGroup {
+func (cg CollisionGroup) AddCollision(a, b entity.Entity) CollisionGroup {
+	return cg.addCollision(NewCollision(a, b))
+}
+
+func (cg CollisionGroup) AddCollisionFromMerge(c Collision) CollisionGroup {
+	return cg.addCollision(c)
+}
+
+func (cg CollisionGroup) addCollision(c Collision) CollisionGroup {
 	for _, cc := range cg.Collisions {
 		if c.IsSameAs(cc) {
 			return cg
