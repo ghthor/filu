@@ -340,22 +340,6 @@ func DescribePhase(c gospec.Context) {
 			}
 		})
 
-		c.Specify("will have an entity remaining unsolved", func() {
-			q := makeQuad(func() []entity.Entity {
-				var entities []entity.Entity
-				for _, e := range cgEntities {
-					entities = append(entities, e)
-				}
-				return entities
-			}(), 10)
-
-			_, _, unsolved := quad.RunBroadPhaseOn(q, stime.Time(0))
-
-			c.Expect(unsolved, Equals, quad.CollisionGroupIndex{
-				cgEntities[24]: nil,
-			})
-		})
-
 		c.Specify("will not create a collision group", func() {
 			q := makeQuad(func() []entity.Entity {
 				var entities []entity.Entity
