@@ -21,7 +21,7 @@ var quadBounds = coord.Bounds{
 
 // Creates a set of entities in collision groups
 // used for testing the broad phase.
-func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, []quad.CollisionGroup) {
+func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, []*quad.CollisionGroup) {
 	entities := func() []entitytest.MockEntityWithBounds {
 		c := func(x, y int) coord.Cell { return coord.Cell{x, y} }
 		b := func(tl, br coord.Cell) coord.Bounds { return coord.Bounds{tl, br} }
@@ -112,15 +112,16 @@ func cgEntitiesDataSet() ([]entitytest.MockEntityWithBounds, []quad.Collision, [
 		}
 	}(entities)
 
-	cgroups := func(c []quad.Collision) []quad.CollisionGroup {
-		cg := func(collisions ...quad.Collision) (cg quad.CollisionGroup) {
+	cgroups := func(c []quad.Collision) []*quad.CollisionGroup {
+		cg := func(collisions ...quad.Collision) (cg *quad.CollisionGroup) {
+			cg = quad.NewCollisionGroup(len(collisions))
 			for _, c := range collisions {
-				cg = cg.AddCollisionFromMerge(c)
+				cg.AddCollisionFromMerge(c)
 			}
 			return
 		}
 
-		return []quad.CollisionGroup{
+		return []*quad.CollisionGroup{
 			cg(c[0]),
 			cg(c[1:4]...),
 			cg(c[4:10]...),
@@ -226,36 +227,36 @@ func DescribePhase(c gospec.Context) {
 		// want to make sure I'm using the right indices in
 		// range expressions.
 		c.Assume(len(cgroups[0].Entities), Equals, 2)
-		c.Assume(len(cgroups[0].Collisions), Equals, 1)
+		c.Assume(len(cgroups[0].CollisionsById), Equals, 1)
 		c.Assume(cgroups[0].Entities, ContainsAll, cgEntities[0:2])
 		c.Assume(cgroups[0].Entities, Not(ContainsAny), cgEntities[2:])
 
 		c.Assume(len(cgroups[1].Entities), Equals, 3)
-		c.Assume(len(cgroups[1].Collisions), Equals, 3)
+		c.Assume(len(cgroups[1].CollisionsById), Equals, 3)
 		c.Assume(cgroups[1].Entities, Not(ContainsAny), cgEntities[0:2])
 		c.Assume(cgroups[1].Entities, ContainsAll, cgEntities[2:5])
 		c.Assume(cgroups[1].Entities, Not(ContainsAny), cgEntities[5:])
 
 		c.Assume(len(cgroups[2].Entities), Equals, 7)
-		c.Assume(len(cgroups[2].Collisions), Equals, 6)
+		c.Assume(len(cgroups[2].CollisionsById), Equals, 6)
 		c.Assume(cgroups[2].Entities, Not(ContainsAny), cgEntities[0:5])
 		c.Assume(cgroups[2].Entities, ContainsAll, cgEntities[5:12])
 		c.Assume(cgroups[2].Entities, Not(ContainsAny), cgEntities[12:])
 
 		c.Assume(len(cgroups[3].Entities), Equals, 7)
-		c.Assume(len(cgroups[3].Collisions), Equals, 6)
+		c.Assume(len(cgroups[3].CollisionsById), Equals, 6)
 		c.Assume(cgroups[3].Entities, Not(ContainsAny), cgEntities[0:12])
 		c.Assume(cgroups[3].Entities, ContainsAll, cgEntities[12:19])
 		c.Assume(cgroups[3].Entities, Not(ContainsAny), cgEntities[19:])
 
 		c.Assume(len(cgroups[4].Entities), Equals, 3)
-		c.Assume(len(cgroups[4].Collisions), Equals, 2)
+		c.Assume(len(cgroups[4].CollisionsById), Equals, 2)
 		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[0:19])
 		c.Assume(cgroups[4].Entities, ContainsAll, cgEntities[19:22])
 		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[22:])
 
 		c.Assume(len(cgroups[5].Entities), Equals, 2)
-		c.Assume(len(cgroups[5].Collisions), Equals, 1)
+		c.Assume(len(cgroups[5].CollisionsById), Equals, 1)
 		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[0:22])
 		c.Assume(cgroups[5].Entities, ContainsAll, cgEntities[22:24])
 		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[24:])
@@ -274,12 +275,12 @@ func DescribePhase(c gospec.Context) {
 		c.Specify("will create collision groups", func() {
 			type testCase struct {
 				entities []entity.Entity
-				cgroups  []quad.CollisionGroup
+				cgroups  []*quad.CollisionGroup
 				unsolved quad.CollisionGroupIndex
 			}
 
-			testCases := func(cg []quad.CollisionGroup) []testCase {
-				tc := func(cgroups ...quad.CollisionGroup) testCase {
+			testCases := func(cg []*quad.CollisionGroup) []testCase {
+				tc := func(cgroups ...*quad.CollisionGroup) testCase {
 					var entities []entity.Entity
 					for _, cg := range cgroups {
 						entities = append(entities, cg.Entities...)

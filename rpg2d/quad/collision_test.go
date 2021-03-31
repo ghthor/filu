@@ -72,8 +72,8 @@ func (cg CollisionGroup) Equals(other interface{}) bool {
 
 func (cg CollisionGroup) hasSameCollisionsAs(ocg CollisionGroup) bool {
 toNextEntity:
-	for _, c1 := range cg.Collisions {
-		for _, c2 := range ocg.Collisions {
+	for id, c1 := range cg.CollisionsById {
+		if c2, exists := ocg.CollisionsById[id]; exists {
 			if c1.Equals(c2) {
 				continue toNextEntity
 			}
@@ -88,7 +88,7 @@ func (cg CollisionGroup) String() string {
 
 	fmt.Fprint(b, "CollisionGroup {\n")
 	fmt.Fprint(b, "\tCollisions:\n")
-	for _, c := range cg.Collisions {
+	for _, c := range cg.CollisionsById {
 		fmt.Fprintf(b, "\t\t%v\n", c)
 	}
 	fmt.Fprint(b, "}\n")

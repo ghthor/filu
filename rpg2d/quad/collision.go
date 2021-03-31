@@ -5,26 +5,32 @@ import (
 	"github.com/ghthor/filu/rpg2d/entity"
 )
 
+type CollisionId struct {
+	AId, BId entity.Id
+}
+
 // A collision between 2 entities because the
 // entities bounds are overlapping. Intended to
 // be solved by the user defined NarrowPhaseHandler.
 type Collision struct {
-	AId, BId entity.Id
-	A, B     entity.Entity
+	CollisionId
+	A, B entity.Entity
 }
+
+type CollisionById map[CollisionId]Collision
 
 func NewCollision(a, b entity.Entity) Collision {
 	aId, bId := a.Id(), b.Id()
 
 	if aId > bId {
 		return Collision{
-			bId, aId,
+			CollisionId{bId, aId},
 			b, a,
 		}
 	}
 
 	return Collision{
-		aId, bId,
+		CollisionId{aId, bId},
 		a, b,
 	}
 }
@@ -33,7 +39,7 @@ func NewCollision(a, b entity.Entity) Collision {
 // collisions an entity is involved in.
 type CollisionIndex map[entity.Entity][]Collision
 
-func (i CollisionIndex) add(collisions []Collision) CollisionIndex {
+func (i CollisionIndex) add(collisions map[CollisionId]Collision) CollisionIndex {
 	for _, c := range collisions {
 		a, b := c.A, c.B
 		i[a] = append(i[a], c)
@@ -67,13 +73,24 @@ type CollisionGroup struct {
 	// the collisions of the group.
 	Entities []entity.Entity
 
-	// A slice of all the collisions in the group.
-	Collisions []Collision
+	// A map of all the collisions in the group.
+	CollisionsById map[CollisionId]Collision
+}
+
+func NewCollisionGroup(size int) *CollisionGroup {
+	eSize := 2
+	if size != 1 {
+		eSize = size * 7 / 4
+	}
+	return &CollisionGroup{
+		make([]entity.Entity, 0, eSize),
+		make(map[CollisionId]Collision, size),
+	}
 }
 
 func (cg CollisionGroup) Bounds() coord.Bounds {
-	bounds := make([]coord.Bounds, 0, len(cg.Collisions))
-	for _, c := range cg.Collisions {
+	bounds := make([]coord.Bounds, 0, len(cg.CollisionsById))
+	for _, c := range cg.CollisionsById {
 		bounds = append(bounds, c.Bounds())
 	}
 
@@ -82,29 +99,27 @@ func (cg CollisionGroup) Bounds() coord.Bounds {
 
 func (cg CollisionGroup) CollisionIndex() CollisionIndex {
 	index := make(CollisionIndex, len(cg.Entities))
-	return index.add(cg.Collisions)
+	return index.add(cg.CollisionsById)
 }
 
 // Adds a collision to the group. Also adds the
 // entities from the collision to the entities slice.
 // Filters out collisions it already has and entities
 // that are already in the entities slice.
-func (cg CollisionGroup) AddCollision(a, b entity.Entity) CollisionGroup {
-	return cg.addCollision(NewCollision(a, b))
+func (cg *CollisionGroup) AddCollision(a, b entity.Entity) {
+	cg.addCollision(NewCollision(a, b))
 }
 
-func (cg CollisionGroup) AddCollisionFromMerge(c Collision) CollisionGroup {
-	return cg.addCollision(c)
+func (cg *CollisionGroup) AddCollisionFromMerge(c Collision) {
+	cg.addCollision(c)
 }
 
-func (cg CollisionGroup) addCollision(c Collision) CollisionGroup {
-	for _, cc := range cg.Collisions {
-		if c.IsSameAs(cc) {
-			return cg
-		}
+func (cg *CollisionGroup) addCollision(c Collision) {
+	id := CollisionId{c.AId, c.BId}
+	if _, exists := cg.CollisionsById[id]; exists {
+		return
 	}
-
-	cg.Collisions = append(cg.Collisions, c)
+	cg.CollisionsById[id] = c
 
 	a, b := c.A, c.B
 
@@ -118,12 +133,12 @@ func (cg CollisionGroup) addCollision(c Collision) CollisionGroup {
 check_B_Exists:
 	for _, e := range cg.Entities {
 		if b == e {
-			return cg
+			return
 		}
 	}
 	cg.Entities = append(cg.Entities, b)
 
-	return cg
+	return
 }
 
 // An entity may ONLY be assigned to 1 collision group.
