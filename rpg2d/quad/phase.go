@@ -256,37 +256,56 @@ func (q QuadRoot) RunBroadPhase(now stime.Time) (cgroups []*CollisionGroup) {
 	return cgroups
 }
 
-func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+type broadPhase struct {
+	cgroups          []*CollisionGroup
+	solved, unsolved CollisionGroupIndex
+}
+
+func newBroadPhase(size int) *broadPhase {
+	return &broadPhase{
+		cgroups:  make([]*CollisionGroup, 0, size),
+		solved:   make(CollisionGroupIndex, size),
+		unsolved: make(CollisionGroupIndex, size),
+	}
+}
+
+func (p *broadPhase) reset() {
+	p.cgroups = p.cgroups[:0]
+	for k := range p.solved {
+		delete(p.solved, k)
+	}
+	for k := range p.unsolved {
+		delete(p.unsolved, k)
+	}
+}
+
+func (q quadNode) runBroadPhase(now stime.Time) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
+	if q.broadPhase == nil {
+		q.broadPhase = newBroadPhase(4)
+	} else {
+		q.broadPhase.reset()
+	}
 	for _, cq := range q.children {
-		cgrps, s, u := cq.runBroadPhase(now)
+		cgrps, solved, unsolved := cq.runBroadPhase(now)
 
 		// Join array of collision groups
-		cgroups = append(cgroups, cgrps...)
+		q.cgroups = append(q.cgroups, cgrps...)
 
-		// TODO Rip this out into a method of collision group index.
-		// Join solved collision group index
-		if solved == nil {
-			solved = s
-		} else {
-			for e, cg := range s {
-				solved[e] = cg
-			}
+		// Joins solved collision group index
+		for e, cg := range solved {
+			q.solved[e] = cg
 		}
 
 		// Join unsolved collision group index
-		if unsolved == nil {
-			unsolved = u
-		} else {
-			for e, cg := range u {
-				unsolved[e] = cg
-			}
+		for e, cg := range unsolved {
+			q.unsolved[e] = cg
 		}
 	}
 
 	// For each entity in the unsolved array
 	// try to solve it by querying the children
-	for e1, e1cg := range unsolved {
-		if b, _ := q.Bounds().Intersection(e1.Bounds()); b != e1.Bounds() {
+	for e1, e1cg := range q.unsolved {
+		if b, err := q.Bounds().Intersection(e1.Bounds()); err == nil && b != e1.Bounds() {
 			// The entities bounds extend beyond the quad tree's bounds
 			// and therefore we can't solve this entity here either
 			// and will bubble to our parent
@@ -304,7 +323,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				continue
 			}
 
-			e2cg, e2cgExist := solved[e2]
+			e2cg, e2cgExist := q.solved[e2]
 
 			switch {
 			case e1cg == nil && !e2cgExist:
@@ -316,11 +335,11 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				cg := CollisionGroup{}.AddCollision(e1, e2)
 
 				// add this new collision group to the array of collision groups
-				cgroups = append(cgroups, &cg)
+				q.cgroups = append(q.cgroups, &cg)
 
 				// set e1 & e2's new collision group
-				solved[e1] = &cg
-				solved[e2] = &cg
+				q.solved[e1] = &cg
+				q.solved[e2] = &cg
 
 				// set e1's collision group in the for loop
 				// over the unsolved map.
@@ -333,7 +352,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				// NOTE I don't know if this is necessary
 				// due to the inverse reason that the above
 				// statement is required.
-				unsolved[e1] = &cg
+				q.unsolved[e1] = &cg
 
 			case e1cg != nil && !e2cgExist:
 				// e1 is in a collision group
@@ -345,7 +364,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				*cg = cg.AddCollision(e1, e2)
 
 				// and set e2's collision group in the collision group index
-				solved[e2] = cg
+				q.solved[e2] = cg
 
 			case e1cg == nil && e2cgExist:
 				// e1 is NOT in a collision group
@@ -355,7 +374,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				*e2cg = e2cg.AddCollision(e1, e2)
 
 				// set e1's collision group
-				solved[e1] = e2cg
+				q.solved[e1] = e2cg
 
 				// set e1's collision group in the for loop
 				// over the unsolved map.
@@ -368,7 +387,7 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 				// NOTE I don't know if this is necessary
 				// due to the inverse reason that the above
 				// statement is required.
-				unsolved[e1] = e2cg
+				q.unsolved[e1] = e2cg
 
 			case e1cg != nil && e2cgExist && e1cg != e2cg:
 				// e1 is in a collision group
@@ -386,24 +405,24 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 
 				// set e2's new collision group and
 				// remove e2's old collision group from the cgindex
-				for e, cg := range solved {
+				for e, cg := range q.solved {
 					if cg == e2cg {
-						solved[e] = e1cg
+						q.solved[e] = e1cg
 					}
 				}
 
 				// set e2's new collision group and
 				// remove e2's old collision group from the cgindex
-				for e, cg := range unsolved {
+				for e, cg := range q.unsolved {
 					if cg == e2cg {
-						unsolved[e] = e1cg
+						q.unsolved[e] = e1cg
 					}
 				}
 
 				// remove e2's collision group from the array
-				for i, cg := range cgroups {
+				for i, cg := range q.cgroups {
 					if cg == e2cg {
-						cgroups = append(cgroups[:i], cgroups[i+1:]...)
+						q.cgroups = append(q.cgroups[:i], q.cgroups[i+1:]...)
 						break
 					}
 				}
@@ -420,19 +439,22 @@ func (q quadNode) runBroadPhase(now stime.Time) (cgroups []*CollisionGroup, solv
 		}
 
 		// remove the entity from the unsolved map for it is now solved
-		delete(unsolved, e1)
+		delete(q.unsolved, e1)
 	}
 
-	return cgroups, solved, unsolved
+	return q.cgroups, q.solved, q.unsolved
 }
 
-func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex) {
+func (q quadLeaf) runBroadPhase(stime.Time) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
 	if !(len(q.entities) > 0) {
 		return nil, nil, nil
 	}
 
-	cgindex := make(map[entity.Entity]*CollisionGroup, len(q.entities))
-	cgroups = make([]*CollisionGroup, 0, len(q.entities))
+	if q.broadPhase == nil {
+		q.broadPhase = newBroadPhase(q.maxSize)
+	} else {
+		q.broadPhase.reset()
+	}
 
 	for _, e1 := range q.entities {
 		// TODO Add test cases for no collisions
@@ -457,8 +479,8 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 				continue
 			}
 
-			e1cg, e1cgExists := cgindex[e1]
-			e2cg, e2cgExists := cgindex[e2]
+			e1cg, e1cgExists := q.solved[e1]
+			e2cg, e2cgExists := q.solved[e2]
 
 			switch {
 			case e1cgExists && !e2cgExists:
@@ -466,16 +488,16 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 				// create a collision and add it to e1's group
 				*e1cg = e1cg.AddCollision(e1, e2)
 
-				cgindex[e1] = e1cg
-				cgindex[e2] = e1cg
+				q.solved[e1] = e1cg
+				q.solved[e2] = e1cg
 
 			case !e1cgExists && e2cgExists:
 				// e2 exists in a collision group already
 				// create a collision and add it to e2's group
 				*e2cg = e2cg.AddCollision(e1, e2)
 
-				cgindex[e1] = e2cg
-				cgindex[e2] = e2cg
+				q.solved[e1] = e2cg
+				q.solved[e2] = e2cg
 
 			case !e1cgExists && !e2cgExists:
 				// neither e1 or e2 have been assigned to a collision group
@@ -489,11 +511,11 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 				*cg = cg.AddCollision(e1, e2)
 
 				// set the cgroup in the cgroup index
-				cgindex[e1] = cg
-				cgindex[e2] = cg
+				q.solved[e1] = cg
+				q.solved[e2] = cg
 
 				// append the cgroup to the array of cgroups
-				cgroups = append(cgroups, cg)
+				q.cgroups = append(q.cgroups, cg)
 
 			case (e1cgExists && e2cgExists) && (e1cg != e2cg):
 				// both entities exist in a collision group
@@ -509,16 +531,16 @@ func (q quadLeaf) runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, 
 
 				// set e2's new collision group and
 				// remove e2's old collision group from the cgindex
-				for e, cg := range cgindex {
+				for e, cg := range q.solved {
 					if cg == e2cg {
-						cgindex[e] = e1cg
+						q.solved[e] = e1cg
 					}
 				}
 
 				// remove e2's collision group from the array
-				for i, cg := range cgroups {
+				for i, cg := range q.cgroups {
 					if cg == e2cg {
-						cgroups = append(cgroups[:i], cgroups[i+1:]...)
+						q.cgroups = append(q.cgroups[:i], q.cgroups[i+1:]...)
 						break
 					}
 				}
@@ -538,11 +560,6 @@ e2cg = %v
 		}
 	}
 
-	// Solved entities are in the cgindex
-	solved = cgindex
-	// Build a collision group index for the unsolvable entities
-	unsolved = make(map[entity.Entity]*CollisionGroup)
-
 	// If the bounds of the entity extend beyond the quad leaf's
 	// bounds, it is passed to the parent with the collision
 	// group the entity belongs to
@@ -551,9 +568,11 @@ e2cg = %v
 		// intersection of the 2 will be different than
 		// the entities bounds.
 		if b, _ := e.Bounds().Intersection(q.Bounds()); b != e.Bounds() {
-			unsolved[e] = cgindex[e]
+			q.unsolved[e] = q.solved[e]
+			// TODO should this collision group be removed from the solved index?
+			// TODO test if this breaks anything
 		}
 	}
 
-	return cgroups, cgindex, unsolved
+	return q.cgroups, q.solved, q.unsolved
 }

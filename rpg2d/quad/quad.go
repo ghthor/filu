@@ -104,6 +104,8 @@ type quadNode struct {
 	parent   Quad
 	children [4]Quad
 
+	*broadPhase
+
 	bounds coord.Bounds
 }
 
@@ -215,6 +217,8 @@ type quadLeaf struct {
 	entities []entity.Entity
 
 	maxSize int
+
+	*broadPhase
 }
 
 func (q quadLeaf) Parent() Quad        { return q.parent }
@@ -241,8 +245,9 @@ func (q quadLeaf) Insert(e entity.Entity) Quad {
 
 func (q quadLeaf) divide() Quad {
 	qn := quadNode{
-		parent: q.parent,
-		bounds: q.bounds,
+		parent:     q.parent,
+		bounds:     q.bounds,
+		broadPhase: newBroadPhase(4),
 	}
 
 	quads, err := q.bounds.Quads()
@@ -258,7 +263,8 @@ func (q quadLeaf) divide() Quad {
 			parent: qn,
 			bounds: quads[i],
 
-			entities: make([]entity.Entity, 0, q.maxSize),
+			entities:   make([]entity.Entity, 0, q.maxSize),
+			broadPhase: newBroadPhase(q.maxSize),
 
 			maxSize: q.maxSize,
 		}
