@@ -8,6 +8,9 @@ type Bounds struct {
 }
 
 func (b Bounds) Contains(c Cell) bool {
+	if b.TopL == c || b.BotR == c {
+		return true
+	}
 	// TODO there might be some optimizations laying right here
 	return (b.TopL.X <= c.X && b.BotR.X >= c.X &&
 		b.TopL.Y >= c.Y && b.BotR.Y <= c.Y)
