@@ -239,12 +239,13 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time, changes Inp
 	return q
 }
 
-func (q QuadRoot) RunBroadPhase(now stime.Time) (cgroups []*CollisionGroup) {
-	cgroups, _, _ = q.node.runBroadPhase(now, q.CollisionGroupPool)
+func (q QuadRoot) RunBroadPhase(now stime.Time) []*CollisionGroup {
+	cgroups, _, _ := q.node.runBroadPhase(now, q.CollisionGroupPool)
 	return cgroups
 }
 
 type broadPhase struct {
+	matches          []entity.Entity
 	cgroups          []*CollisionGroup
 	solved, unsolved CollisionGroupIndex
 }
@@ -268,11 +269,8 @@ func (p *broadPhase) reset() {
 }
 
 func (q quadNode) runBroadPhase(now stime.Time, cgroupPool *CollisionGroupPool) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
-	if q.broadPhase == nil {
-		q.broadPhase = newBroadPhase(4)
-	} else {
-		q.broadPhase.reset()
-	}
+	q.broadPhase.reset()
+
 	for _, cq := range q.children {
 		cgrps, solved, unsolved := cq.runBroadPhase(now, cgroupPool)
 
@@ -303,9 +301,9 @@ func (q quadNode) runBroadPhase(now stime.Time, cgroupPool *CollisionGroupPool) 
 		}
 
 		// Query for any overlapping entities
-		overlappingEntities := q.QueryBounds(e1.Bounds())
+		q.broadPhase.matches = q.QueryBounds(e1.Bounds(), q.broadPhase.matches[:0])
 
-		for _, e2 := range overlappingEntities {
+		for _, e2 := range q.broadPhase.matches {
 			// ignore self
 			if e1 == e2 {
 				continue
@@ -439,11 +437,7 @@ func (q quadLeaf) runBroadPhase(now stime.Time, cgroupPool *CollisionGroupPool) 
 		return nil, nil, nil
 	}
 
-	if q.broadPhase == nil {
-		q.broadPhase = newBroadPhase(q.maxSize)
-	} else {
-		q.broadPhase.reset()
-	}
+	q.broadPhase.reset()
 
 	for _, e1 := range q.entities {
 		// TODO Add test cases for no collisions

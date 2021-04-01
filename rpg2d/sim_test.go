@@ -114,7 +114,7 @@ func DescribeASimulation(c gospec.Context) {
 			hs, err := rs.Halt()
 			c.Assume(err, IsNil)
 
-			entities := hs.Quad().QueryCell(coord.Cell{})
+			entities := hs.Quad().QueryCell(coord.Cell{}, nil)
 			c.Expect(len(entities), Equals, 1)
 			c.Expect(entities[0], Equals, a.Entity())
 		})
@@ -126,7 +126,7 @@ func DescribeASimulation(c gospec.Context) {
 			hs, err := rs.Halt()
 			c.Assume(err, IsNil)
 
-			entities := hs.Quad().QueryCell(coord.Cell{})
+			entities := hs.Quad().QueryCell(coord.Cell{}, nil)
 			c.Expect(len(entities), Equals, 1)
 			c.Expect(entities[0].ToState(), Equals, entity.RemovedState{a.EntityId(), a.Cell()})
 		})

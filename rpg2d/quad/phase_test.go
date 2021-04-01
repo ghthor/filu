@@ -172,15 +172,15 @@ func DescribePhase(c gospec.Context) {
 				},
 			), stime.Time(0))
 
-			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 4)
-			c.Expect(q.QueryCell(cell(0, 1))[0].Id(), Equals, entity.Id(0))
-			c.Expect(q.QueryCell(cell(1, 1))[0].Id(), Equals, entity.Id(1))
-			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, entity.Id(2))
-			c.Expect(q.QueryCell(cell(3, 1))[0].Id(), Equals, entity.Id(3))
+			c.Expect(len(q.QueryBounds(q.Bounds(), nil)), Equals, 4)
+			c.Expect(q.QueryCell(cell(0, 1), nil)[0].Id(), Equals, entity.Id(0))
+			c.Expect(q.QueryCell(cell(1, 1), nil)[0].Id(), Equals, entity.Id(1))
+			c.Expect(q.QueryCell(cell(2, 1), nil)[0].Id(), Equals, entity.Id(2))
+			c.Expect(q.QueryCell(cell(3, 1), nil)[0].Id(), Equals, entity.Id(3))
 		})
 
 		c.Specify("will remove an entity", func() {
-			c.Assume(len(q.QueryCell(cell(2, 0))), Equals, 1)
+			c.Assume(len(q.QueryCell(cell(2, 0), nil)), Equals, 1)
 
 			q = q.RunUpdatePhase(quad.UpdatePhaseHandlerFn(
 				func(e entity.Entity, now stime.Time) entity.Entity {
@@ -191,8 +191,8 @@ func DescribePhase(c gospec.Context) {
 				},
 			), stime.Time(0))
 
-			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 3)
-			c.Expect(len(q.QueryCell(cell(2, 0))), Equals, 0)
+			c.Expect(len(q.QueryBounds(q.Bounds(), nil)), Equals, 3)
+			c.Expect(len(q.QueryCell(cell(2, 0), nil)), Equals, 0)
 		})
 	})
 
@@ -206,7 +206,7 @@ func DescribePhase(c gospec.Context) {
 
 			// A Single Entity
 			q = q.Insert(entitytest.MockEntity{0, coord.Cell{-16, 16}, 0})
-			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 1)
+			c.Assume(len(q.QueryBounds(q.Bounds(), nil)), Equals, 1)
 
 			q = q.RunInputPhase(quad.InputPhaseHandlerFn(
 				func(e entity.Entity, now stime.Time, changes quad.InputPhaseChanges) entity.Entity {
@@ -215,7 +215,7 @@ func DescribePhase(c gospec.Context) {
 				},
 			), stime.Time(0))
 
-			c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 2)
+			c.Assume(len(q.QueryBounds(q.Bounds(), nil)), Equals, 2)
 		})
 	})
 
@@ -385,10 +385,10 @@ func DescribePhase(c gospec.Context) {
 				},
 			), []*quad.CollisionGroup{nil}, stime.Time(0))
 
-			c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 3)
-			c.Expect(q.QueryCell(cell(-1, 0))[0].Id(), Equals, entity.Id(0))
-			c.Expect(q.QueryCell(cell(2, 0))[0].Id(), Equals, entity.Id(1))
-			c.Expect(q.QueryCell(cell(2, 1))[0].Id(), Equals, entity.Id(2))
+			c.Expect(len(q.QueryBounds(q.Bounds(), nil)), Equals, 3)
+			c.Expect(q.QueryCell(cell(-1, 0), nil)[0].Id(), Equals, entity.Id(0))
+			c.Expect(q.QueryCell(cell(2, 0), nil)[0].Id(), Equals, entity.Id(1))
+			c.Expect(q.QueryCell(cell(2, 1), nil)[0].Id(), Equals, entity.Id(2))
 		})
 	})
 }

@@ -9,9 +9,10 @@ import (
 )
 
 type World struct {
-	time     stime.Time
-	quadTree quad.QuadRoot
-	terrain  worldterrain.Map
+	time      stime.Time
+	quadTree  quad.QuadRoot
+	quadQuery []entity.Entity
+	terrain   worldterrain.Map
 
 	// TODO deprecated
 	state WorldState
@@ -69,7 +70,7 @@ func (world World) ToState() WorldState {
 		Entities:          world.state.Entities[:0],
 	}
 
-	entities := world.quadTree.QueryBounds(world.quadTree.Bounds())
+	entities := world.quadTree.QueryBounds(world.quadTree.Bounds(), nil)
 	for _, e := range entities {
 		flags := e.Flags()
 		entityState := e.ToState()
@@ -106,11 +107,12 @@ func (world World) ToState() WorldState {
 	return nextState
 }
 
-func (world World) ToQuadState(encoder *quadstate.EntityEncoder) (nextState quadstate.Quad) {
+func (world *World) ToQuadState(encoder *quadstate.EntityEncoder) (nextState quadstate.Quad) {
 	now := world.time
 	nextState = world.quadState.Clear()
 
-	entities := world.quadTree.QueryBounds(world.quadTree.Bounds())
+	world.quadQuery = world.quadTree.QueryBounds(world.quadTree.Bounds(), world.quadQuery[:0])
+	entities := world.quadQuery
 	for _, e := range entities {
 		flags := e.Flags()
 		entityState := e.ToState()

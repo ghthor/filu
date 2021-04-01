@@ -40,14 +40,14 @@ func DescribeQuadInsert(c gospec.Context) {
 				q = q.Insert(e1)
 				q = q.Insert(e2)
 				q = q.Insert(e3)
-				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 3)
+				c.Assume(len(q.QueryBounds(q.Bounds(), nil)), Equals, 3)
 
 				c.Specify("and remove them", func() {
 					q = q.Remove(e1.Id())
 
-					c.Expect(len(q.QueryBounds(q.Bounds())), Equals, 2)
-					c.Expect(q.QueryCell(coord.Cell{7, -7})[0].Id(), Equals, entity.Id(1))
-					c.Expect(q.QueryCell(coord.Cell{5, -1})[0].Id(), Equals, entity.Id(2))
+					c.Expect(len(q.QueryBounds(q.Bounds(), nil)), Equals, 2)
+					c.Expect(q.QueryCell(coord.Cell{7, -7}, nil)[0].Id(), Equals, entity.Id(1))
+					c.Expect(q.QueryCell(coord.Cell{5, -1}, nil)[0].Id(), Equals, entity.Id(2))
 				})
 			})
 		})

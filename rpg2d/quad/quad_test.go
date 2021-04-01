@@ -69,13 +69,13 @@ func DescribeQuad(c gospec.Context) {
 		c.Specify("can remove an entity", func() {
 			e := entitytest.MockEntity{0, coord.Cell{0, 0}, 0}
 
-			c.Assume(len(q.QueryCell(e.Cell())), Equals, 0)
+			c.Assume(len(q.QueryCell(e.Cell(), nil)), Equals, 0)
 
 			q = q.Insert(e)
-			c.Assume(len(q.QueryCell(e.Cell())), Equals, 1)
+			c.Assume(len(q.QueryCell(e.Cell(), nil)), Equals, 1)
 
 			q = q.Remove(e.Id())
-			c.Expect(len(q.QueryCell(e.Cell())), Equals, 0)
+			c.Expect(len(q.QueryCell(e.Cell(), nil)), Equals, 0)
 		})
 
 		c.Specify("can be queried by cell", func() {
@@ -99,7 +99,7 @@ func DescribeQuad(c gospec.Context) {
 				id = 0
 				for j := 4; j > -4; j-- {
 					for i := -4; i < 4; i++ {
-						entities := q.QueryCell(coord.Cell{i, j})
+						entities := q.QueryCell(coord.Cell{i, j}, nil)
 						c.Assume(len(entities), Equals, 1)
 
 						c.Expect(entities[0].Id(), Equals, id)
@@ -107,11 +107,11 @@ func DescribeQuad(c gospec.Context) {
 					}
 				}
 
-				c.Assume(len(q.QueryBounds(q.Bounds())), Equals, 8*8)
+				c.Assume(len(q.QueryBounds(q.Bounds(), nil)), Equals, 8*8)
 
 				type quadCheckRecusive interface {
 					Bounds() coord.Bounds
-					QueryBounds(coord.Bounds) []entity.Entity
+					QueryBounds(coord.Bounds, []entity.Entity) []entity.Entity
 					Children() []quad.Quad
 				}
 
@@ -119,7 +119,7 @@ func DescribeQuad(c gospec.Context) {
 				fn = func(q quadCheckRecusive) {
 					children := q.Children()
 					if len(children) == 0 {
-						size := len(q.QueryBounds(q.Bounds()))
+						size := len(q.QueryBounds(q.Bounds(), nil))
 
 						c.Expect(size, Satisfies, size <= maxSize)
 					} else {

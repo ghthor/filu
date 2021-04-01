@@ -27,8 +27,8 @@ type Quad interface {
 	Insert(entity.Entity) Quad
 	RemoveCell(entity.Id, coord.Cell) Quad
 
-	QueryCell(coord.Cell) []entity.Entity
-	QueryBounds(coord.Bounds) []entity.Entity
+	QueryCell(coord.Cell, []entity.Entity) []entity.Entity
+	QueryBounds(coord.Bounds, []entity.Entity) []entity.Entity
 
 	Chunk() Chunk
 
@@ -63,9 +63,10 @@ func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (QuadRoot, 
 
 	return QuadRoot{
 		node: quadLeaf{
-			parent:  nil,
-			bounds:  bounds,
-			maxSize: maxSize,
+			parent:     nil,
+			bounds:     bounds,
+			broadPhase: newBroadPhase(maxSize),
+			maxSize:    maxSize,
 		},
 		CollisionGroupPool: &CollisionGroupPool{},
 		entityIndex:        make(map[entity.Id]coord.Cell),
@@ -162,30 +163,29 @@ func (q quadNode) RemoveCell(id entity.Id, cell coord.Cell) Quad {
 	return q
 }
 
-func (q QuadRoot) QueryCell(c coord.Cell) []entity.Entity {
-	return q.node.QueryCell(c)
+func (q QuadRoot) QueryCell(c coord.Cell, matches []entity.Entity) []entity.Entity {
+	return q.node.QueryCell(c, matches)
 }
 
-func (q quadNode) QueryCell(c coord.Cell) []entity.Entity {
+func (q quadNode) QueryCell(c coord.Cell, query []entity.Entity) []entity.Entity {
 	for _, quad := range q.children {
 		// If the cell is within the childs bounds
 		if quad.Bounds().Contains(c) {
-			return quad.QueryCell(c)
+			return quad.QueryCell(c, query)
 		}
 	}
 
 	return nil
 }
 
-func (q QuadRoot) QueryBounds(b coord.Bounds) []entity.Entity {
-	return q.node.QueryBounds(b)
+func (q QuadRoot) QueryBounds(b coord.Bounds, matches []entity.Entity) []entity.Entity {
+	return q.node.QueryBounds(b, matches)
 }
 
-func (q quadNode) QueryBounds(b coord.Bounds) []entity.Entity {
-	var matches []entity.Entity
+func (q quadNode) QueryBounds(b coord.Bounds, matches []entity.Entity) []entity.Entity {
 	for _, quad := range q.children {
 		if quad.Bounds().Overlaps(b) {
-			matches = append(matches, quad.QueryBounds(b)...)
+			matches = quad.QueryBounds(b, matches)
 			// We don't return here in case the bounds overlap
 			// with some of the other children
 		}
@@ -293,38 +293,28 @@ func (q quadLeaf) RemoveCell(id entity.Id, cell coord.Cell) Quad {
 	return q
 }
 
-func (q quadLeaf) QueryCell(c coord.Cell) []entity.Entity {
-	entities := make([]entity.Entity, 0, 1)
+func (q quadLeaf) QueryCell(c coord.Cell, matches []entity.Entity) []entity.Entity {
 	for _, e := range q.entities {
 		if e.Bounds().Contains(c) {
-			entities = append(entities, e)
+			matches = append(matches, e)
 		}
 	}
 
-	if len(entities) == 0 {
-		return nil
-	}
-
-	return entities
+	return matches
 }
 
-func (q quadLeaf) QueryBounds(b coord.Bounds) []entity.Entity {
+func (q quadLeaf) QueryBounds(b coord.Bounds, matches []entity.Entity) []entity.Entity {
 	if !q.Bounds().Overlaps(b) {
 		return nil
 	}
 
-	entities := make([]entity.Entity, 0, q.maxSize)
 	for _, e := range q.entities {
 		if b.Overlaps(e.Bounds()) {
-			entities = append(entities, e)
+			matches = append(matches, e)
 		}
 	}
 
-	if len(entities) == 0 {
-		return nil
-	}
-
-	return entities
+	return matches
 }
 
 func (q quadLeaf) Chunk() Chunk {
