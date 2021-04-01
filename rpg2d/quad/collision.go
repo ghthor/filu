@@ -39,13 +39,11 @@ func NewCollision(a, b entity.Entity) Collision {
 // collisions an entity is involved in.
 type CollisionIndex map[entity.Entity][]Collision
 
-func (i CollisionIndex) add(collisions map[CollisionId]Collision) CollisionIndex {
-	for _, c := range collisions {
-		a, b := c.A, c.B
-		i[a] = append(i[a], c)
-		i[b] = append(i[b], c)
-	}
-	return i
+func (i CollisionIndex) add(c Collision) {
+	a, b := c.A, c.B
+	// TODO figure out a way to reduce allocations here
+	i[a] = append(i[a], c)
+	i[b] = append(i[b], c)
 }
 
 // The bounds of A and B joined together.
@@ -69,9 +67,7 @@ func (c Collision) IsSameAs(oc Collision) bool {
 // tree should be created by the user to resolve
 // the collisions in the correct order.
 type CollisionGroup struct {
-	// A slice of the all the entities that are in
-	// the collisions of the group.
-	Entities []entity.Entity
+	CollisionIndex
 
 	// A map of all the collisions in the group.
 	CollisionsById map[CollisionId]Collision
@@ -83,13 +79,22 @@ func NewCollisionGroup(size int) *CollisionGroup {
 		eSize = size * 7 / 4
 	}
 	return &CollisionGroup{
-		make([]entity.Entity, 0, eSize),
+		make(CollisionIndex, eSize),
 		make(map[CollisionId]Collision, size),
 	}
 }
 
+func (cg *CollisionGroup) Entities() (all []entity.Entity) {
+	for e := range cg.CollisionIndex {
+		all = append(all, e)
+	}
+	return all
+}
+
 func (cg *CollisionGroup) Reset() {
-	cg.Entities = cg.Entities[:0]
+	for k := range cg.CollisionIndex {
+		delete(cg.CollisionIndex, k)
+	}
 	for k := range cg.CollisionsById {
 		delete(cg.CollisionsById, k)
 	}
@@ -102,11 +107,6 @@ func (cg CollisionGroup) Bounds() coord.Bounds {
 	}
 
 	return coord.JoinBounds(bounds...)
-}
-
-func (cg CollisionGroup) CollisionIndex() CollisionIndex {
-	index := make(CollisionIndex, len(cg.Entities))
-	return index.add(cg.CollisionsById)
 }
 
 // Adds a collision to the group. Also adds the
@@ -127,24 +127,7 @@ func (cg *CollisionGroup) addCollision(c Collision) {
 		return
 	}
 	cg.CollisionsById[id] = c
-
-	a, b := c.A, c.B
-
-	for _, e := range cg.Entities {
-		if a == e {
-			goto check_B_Exists
-		}
-	}
-	cg.Entities = append(cg.Entities, a)
-
-check_B_Exists:
-	for _, e := range cg.Entities {
-		if b == e {
-			return
-		}
-	}
-	cg.Entities = append(cg.Entities, b)
-
+	cg.CollisionIndex.add(c)
 	return
 }
 

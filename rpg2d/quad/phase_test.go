@@ -226,40 +226,40 @@ func DescribePhase(c gospec.Context) {
 		// time I've used slice operations extensively and I
 		// want to make sure I'm using the right indices in
 		// range expressions.
-		c.Assume(len(cgroups[0].Entities), Equals, 2)
+		c.Assume(len(cgroups[0].Entities()), Equals, 2)
 		c.Assume(len(cgroups[0].CollisionsById), Equals, 1)
-		c.Assume(cgroups[0].Entities, ContainsAll, cgEntities[0:2])
-		c.Assume(cgroups[0].Entities, Not(ContainsAny), cgEntities[2:])
+		c.Assume(cgroups[0].Entities(), ContainsAll, cgEntities[0:2])
+		c.Assume(cgroups[0].Entities(), Not(ContainsAny), cgEntities[2:])
 
-		c.Assume(len(cgroups[1].Entities), Equals, 3)
+		c.Assume(len(cgroups[1].Entities()), Equals, 3)
 		c.Assume(len(cgroups[1].CollisionsById), Equals, 3)
-		c.Assume(cgroups[1].Entities, Not(ContainsAny), cgEntities[0:2])
-		c.Assume(cgroups[1].Entities, ContainsAll, cgEntities[2:5])
-		c.Assume(cgroups[1].Entities, Not(ContainsAny), cgEntities[5:])
+		c.Assume(cgroups[1].Entities(), Not(ContainsAny), cgEntities[0:2])
+		c.Assume(cgroups[1].Entities(), ContainsAll, cgEntities[2:5])
+		c.Assume(cgroups[1].Entities(), Not(ContainsAny), cgEntities[5:])
 
-		c.Assume(len(cgroups[2].Entities), Equals, 7)
+		c.Assume(len(cgroups[2].Entities()), Equals, 7)
 		c.Assume(len(cgroups[2].CollisionsById), Equals, 6)
-		c.Assume(cgroups[2].Entities, Not(ContainsAny), cgEntities[0:5])
-		c.Assume(cgroups[2].Entities, ContainsAll, cgEntities[5:12])
-		c.Assume(cgroups[2].Entities, Not(ContainsAny), cgEntities[12:])
+		c.Assume(cgroups[2].Entities(), Not(ContainsAny), cgEntities[0:5])
+		c.Assume(cgroups[2].Entities(), ContainsAll, cgEntities[5:12])
+		c.Assume(cgroups[2].Entities(), Not(ContainsAny), cgEntities[12:])
 
-		c.Assume(len(cgroups[3].Entities), Equals, 7)
+		c.Assume(len(cgroups[3].Entities()), Equals, 7)
 		c.Assume(len(cgroups[3].CollisionsById), Equals, 6)
-		c.Assume(cgroups[3].Entities, Not(ContainsAny), cgEntities[0:12])
-		c.Assume(cgroups[3].Entities, ContainsAll, cgEntities[12:19])
-		c.Assume(cgroups[3].Entities, Not(ContainsAny), cgEntities[19:])
+		c.Assume(cgroups[3].Entities(), Not(ContainsAny), cgEntities[0:12])
+		c.Assume(cgroups[3].Entities(), ContainsAll, cgEntities[12:19])
+		c.Assume(cgroups[3].Entities(), Not(ContainsAny), cgEntities[19:])
 
-		c.Assume(len(cgroups[4].Entities), Equals, 3)
+		c.Assume(len(cgroups[4].Entities()), Equals, 3)
 		c.Assume(len(cgroups[4].CollisionsById), Equals, 2)
-		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[0:19])
-		c.Assume(cgroups[4].Entities, ContainsAll, cgEntities[19:22])
-		c.Assume(cgroups[4].Entities, Not(ContainsAny), cgEntities[22:])
+		c.Assume(cgroups[4].Entities(), Not(ContainsAny), cgEntities[0:19])
+		c.Assume(cgroups[4].Entities(), ContainsAll, cgEntities[19:22])
+		c.Assume(cgroups[4].Entities(), Not(ContainsAny), cgEntities[22:])
 
-		c.Assume(len(cgroups[5].Entities), Equals, 2)
+		c.Assume(len(cgroups[5].Entities()), Equals, 2)
 		c.Assume(len(cgroups[5].CollisionsById), Equals, 1)
-		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[0:22])
-		c.Assume(cgroups[5].Entities, ContainsAll, cgEntities[22:24])
-		c.Assume(cgroups[5].Entities, Not(ContainsAny), cgEntities[24:])
+		c.Assume(cgroups[5].Entities(), Not(ContainsAny), cgEntities[0:22])
+		c.Assume(cgroups[5].Entities(), ContainsAll, cgEntities[22:24])
+		c.Assume(cgroups[5].Entities(), Not(ContainsAny), cgEntities[24:])
 
 		makeQuad := func(entities []entity.Entity, quadMaxSize int) quad.QuadRoot {
 			q, err := quad.New(quadBounds, quadMaxSize, nil)
@@ -283,7 +283,7 @@ func DescribePhase(c gospec.Context) {
 				tc := func(cgroups ...*quad.CollisionGroup) testCase {
 					var entities []entity.Entity
 					for _, cg := range cgroups {
-						entities = append(entities, cg.Entities...)
+						entities = append(entities, cg.Entities()...)
 					}
 					sort.Sort(byId(entities))
 					return testCase{entities, cgroups, nil}
@@ -354,7 +354,7 @@ func DescribePhase(c gospec.Context) {
 			cgroupedEntities := func() []entity.Entity {
 				var entities []entity.Entity
 				for _, cg := range cgroups {
-					entities = append(entities, cg.Entities...)
+					entities = append(entities, cg.Entities()...)
 				}
 				return entities
 			}()

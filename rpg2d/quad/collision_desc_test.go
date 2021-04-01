@@ -163,10 +163,10 @@ func DescribeCollisionGroup(c gospec.Context) {
 		}
 	}(collisions)
 
-	c.Assume(len(cgroups[0].Entities), Equals, 3)
+	c.Assume(len(cgroups[0].Entities()), Equals, 3)
 	c.Assume(len(cgroups[0].CollisionsById), Equals, 3)
 
-	c.Assume(len(cgroups[1].Entities), Equals, 2)
+	c.Assume(len(cgroups[1].Entities()), Equals, 2)
 	c.Assume(len(cgroups[1].CollisionsById), Equals, 1)
 
 	c.Specify("a collision group", func() {
@@ -216,11 +216,11 @@ func DescribeCollisionGroup(c gospec.Context) {
 			cg := cgroups[0]
 
 			cg.AddCollisionFromMerge(collisions[0])
-			c.Expect(len(cg.Entities), Equals, 3)
+			c.Expect(len(cg.Entities()), Equals, 3)
 			c.Expect(len(cg.CollisionsById), Equals, 3)
 
 			cg.AddCollision(collisions[0].B, collisions[0].A)
-			c.Expect(len(cg.Entities), Equals, 3)
+			c.Expect(len(cg.Entities()), Equals, 3)
 			c.Expect(len(cg.CollisionsById), Equals, 3)
 
 			cg.AddCollision(
@@ -228,22 +228,22 @@ func DescribeCollisionGroup(c gospec.Context) {
 				entitytest.MockEntityWithBounds{EntityId: 20},
 			)
 
-			c.Expect(len(cg.Entities), Equals, 5)
+			c.Expect(len(cg.Entities()), Equals, 5)
 			c.Expect(len(cg.CollisionsById), Equals, 4)
 		})
 
 		c.Specify("has a list of the entities involved in the group", func() {
 			for _, cg := range cgroups {
 				for _, collision := range cg.CollisionsById {
-					c.Expect(cg.Entities, Contains, collision.A)
-					c.Expect(cg.Entities, Contains, collision.B)
+					c.Expect(cg.Entities(), Contains, collision.A)
+					c.Expect(cg.Entities(), Contains, collision.B)
 				}
 			}
 		})
 
 		c.Specify("contains only entities that are involved with collisions in the group", func() {
 			for _, cg := range cgroups {
-				for _, e := range cg.Entities {
+				for _, e := range cg.Entities() {
 					var collisionsEntityExistsIn []quad.Collision
 
 					for _, collision := range cg.CollisionsById {
@@ -259,7 +259,7 @@ func DescribeCollisionGroup(c gospec.Context) {
 
 		c.Specify("can be used to create a collision index", func() {
 			for i, cg := range cgroups {
-				c.Expect(cg.CollisionIndex(), Equals, cindexs[i])
+				c.Expect(cg.CollisionIndex, Equals, cindexs[i])
 			}
 		})
 
@@ -273,7 +273,7 @@ func DescribeCollisionGroup(c gospec.Context) {
 					c.Expect(bounds.Join(collision.B.Bounds()), Equals, bounds)
 				}
 
-				for _, e := range cg.Entities {
+				for _, e := range cg.Entities() {
 					c.Expect(bounds.Join(e.Bounds()), Equals, bounds)
 				}
 			}
