@@ -159,7 +159,14 @@ func (cg *CollisionGroup) FillIndex(prealloc [][]Collision) (CollisionIndex, [][
 // If an entity has collisions that are in separate collision
 // groups, those groups must be merged. This rules make the
 // collision group index possible.
-type CollisionGroupIndex map[entity.Entity]*CollisionGroup
+type CollisionGroupIndex map[entity.Id]*CollisionGroup
+
+type collisionGroupPair struct {
+	entity.Entity
+	*CollisionGroup
+}
+
+type CollisionGroupPairIndex map[entity.Id]collisionGroupPair
 
 type CollisionGroupPool struct {
 	free []*CollisionGroup

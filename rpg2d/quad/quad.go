@@ -35,7 +35,7 @@ type Quad interface {
 	//---- Internal methods to execute a phase calculation
 	runUpdatePhase(UpdatePhaseHandler, stime.Time, updatePhaseChanges) Quad
 	runInputPhase(InputPhaseHandler, stime.Time, InputPhaseChanges) Quad
-	runBroadPhase(stime.Time, *CollisionGroupPool) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
+	runBroadPhase(stime.Time, *CollisionGroupPool) (cgroups []*CollisionGroup, solved CollisionGroupIndex, unsolved CollisionGroupPairIndex)
 }
 
 // Guards against unspecified behavior if the maxSize is 1

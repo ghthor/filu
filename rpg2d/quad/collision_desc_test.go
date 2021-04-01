@@ -292,26 +292,26 @@ func DescribeCollisionGroupIndex(c gospec.Context) {
 			c.Expect(quad.CollisionGroupIndex(nil), Equals, quad.CollisionGroupIndex(nil))
 
 			c.Expect(quad.CollisionGroupIndex{
-				entitytest.MockEntity{EntityId: 0}: nil,
+				0: nil,
 			}, Equals, quad.CollisionGroupIndex{
-				entitytest.MockEntity{EntityId: 0}: nil,
+				0: nil,
 			})
 
 			cg := quad.NewCollisionGroup(1)
 
 			c.Expect(quad.CollisionGroupIndex{
-				entitytest.MockEntity{EntityId: 0}: cg,
+				0: cg,
 			}, Equals, quad.CollisionGroupIndex{
-				entitytest.MockEntity{EntityId: 0}: cg,
+				0: cg,
 			})
 
 			cg2 := quad.NewCollisionGroup(1)
 			cg2.AddCollision(entitytest.MockEntity{EntityId: 0}, entitytest.MockEntity{EntityId: 1})
 
 			c.Expect(quad.CollisionGroupIndex{
-				entitytest.MockEntity{EntityId: 0}: cg,
+				0: cg,
 			}, Not(Equals), quad.CollisionGroupIndex{
-				entitytest.MockEntity{EntityId: 0}: cg2,
+				0: cg2,
 			})
 		})
 	})
