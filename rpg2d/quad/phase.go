@@ -252,7 +252,7 @@ func (q quadLeaf) runInputPhase(p InputPhaseHandler, now stime.Time, changes Inp
 }
 
 func (q QuadRoot) RunBroadPhase(now stime.Time) (cgroups []*CollisionGroup) {
-	cgroups, _, _ = q.node.runBroadPhase(now)
+	cgroups, _, _ = q.node.runBroadPhase(now, q.CollisionGroupPool)
 	return cgroups
 }
 
@@ -279,14 +279,14 @@ func (p *broadPhase) reset() {
 	}
 }
 
-func (q quadNode) runBroadPhase(now stime.Time) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
+func (q quadNode) runBroadPhase(now stime.Time, cgroupPool *CollisionGroupPool) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
 	if q.broadPhase == nil {
 		q.broadPhase = newBroadPhase(4)
 	} else {
 		q.broadPhase.reset()
 	}
 	for _, cq := range q.children {
-		cgrps, solved, unsolved := cq.runBroadPhase(now)
+		cgrps, solved, unsolved := cq.runBroadPhase(now, cgroupPool)
 
 		// Join array of collision groups
 		q.cgroups = append(q.cgroups, cgrps...)
@@ -332,7 +332,7 @@ func (q quadNode) runBroadPhase(now stime.Time) ([]*CollisionGroup, CollisionGro
 
 				// create a new collision group
 				// and add a collision for e1 & e2
-				cg := NewCollisionGroup(1)
+				cg := cgroupPool.NewGroup()
 				cg.AddCollision(e1, e2)
 
 				// add this new collision group to the array of collision groups
@@ -446,7 +446,7 @@ func (q quadNode) runBroadPhase(now stime.Time) ([]*CollisionGroup, CollisionGro
 	return q.cgroups, q.solved, q.unsolved
 }
 
-func (q quadLeaf) runBroadPhase(stime.Time) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
+func (q quadLeaf) runBroadPhase(now stime.Time, cgroupPool *CollisionGroupPool) ([]*CollisionGroup, CollisionGroupIndex, CollisionGroupIndex) {
 	if !(len(q.entities) > 0) {
 		return nil, nil, nil
 	}
@@ -503,7 +503,7 @@ func (q quadLeaf) runBroadPhase(stime.Time) ([]*CollisionGroup, CollisionGroupIn
 			case !e1cgExists && !e2cgExists:
 				// neither e1 or e2 have been assigned to a collision group
 				// create a new collision group
-				cg := NewCollisionGroup(1)
+				cg := cgroupPool.NewGroup()
 
 				// add a collision between e1 and e2
 				cg.AddCollision(e1, e2)

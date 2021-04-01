@@ -88,6 +88,13 @@ func NewCollisionGroup(size int) *CollisionGroup {
 	}
 }
 
+func (cg *CollisionGroup) Reset() {
+	cg.Entities = cg.Entities[:0]
+	for k := range cg.CollisionsById {
+		delete(cg.CollisionsById, k)
+	}
+}
+
 func (cg CollisionGroup) Bounds() coord.Bounds {
 	bounds := make([]coord.Bounds, 0, len(cg.CollisionsById))
 	for _, c := range cg.CollisionsById {
@@ -146,3 +153,30 @@ check_B_Exists:
 // groups, those groups must be merged. This rules make the
 // collision group index possible.
 type CollisionGroupIndex map[entity.Entity]*CollisionGroup
+
+type CollisionGroupPool struct {
+	free []*CollisionGroup
+	used []*CollisionGroup
+}
+
+func (pool *CollisionGroupPool) NewGroup() *CollisionGroup {
+	if len(pool.free) == 0 {
+		cg := NewCollisionGroup(1)
+		pool.used = append(pool.used, cg)
+		return cg
+	}
+
+	i := len(pool.free) - 1
+	cg := pool.free[i]
+	pool.free = pool.free[:i]
+	return cg
+}
+
+func (pool *CollisionGroupPool) Reset() {
+	for _, cg := range pool.used {
+		cg.Reset()
+		pool.free = append(pool.free, cg)
+	}
+
+	pool.used = pool.used[:0]
+}

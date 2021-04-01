@@ -35,7 +35,7 @@ type Quad interface {
 	//---- Internal methods to execute a phase calculation
 	runUpdatePhase(UpdatePhaseHandler, stime.Time, updatePhaseChanges) Quad
 	runInputPhase(InputPhaseHandler, stime.Time, InputPhaseChanges) Quad
-	runBroadPhase(stime.Time) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
+	runBroadPhase(stime.Time, *CollisionGroupPool) (cgroups []*CollisionGroup, solved, unsolved CollisionGroupIndex)
 }
 
 // Guards against unspecified behavior if the maxSize is 1
@@ -67,7 +67,8 @@ func New(bounds coord.Bounds, maxSize int, entities []entity.Entity) (QuadRoot, 
 			bounds:  bounds,
 			maxSize: maxSize,
 		},
-		entityIndex: make(map[entity.Id]coord.Cell),
+		CollisionGroupPool: &CollisionGroupPool{},
+		entityIndex:        make(map[entity.Id]coord.Cell),
 	}, nil
 }
 
@@ -94,6 +95,7 @@ type QuadRoot struct {
 
 	*updatePhaseSliceChanges
 	*inputPhaseChanges
+	*CollisionGroupPool
 
 	entityIndex map[entity.Id]coord.Cell
 }

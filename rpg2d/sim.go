@@ -348,6 +348,8 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		multiWrite.Wait()
 		stopEncoder()
 
+		world.quadTree.CollisionGroupPool.Reset()
+
 		goto communicationLoop
 
 	exit:
