@@ -49,8 +49,8 @@ func (mockInputPhase) ApplyInputsTo(e entity.Entity, now stime.Time, changes qua
 
 type mockNarrowPhase struct{}
 
-func (mockNarrowPhase) ResolveCollisions(c *quad.CollisionGroup, now stime.Time) ([]entity.Entity, []entity.Entity) {
-	return c.Entities, nil
+func (mockNarrowPhase) ResolveCollisions(cgrps []*quad.CollisionGroup, now stime.Time) quad.NarrowPhaseChanges {
+	return quad.SliceNarrowPhaseChanges(cgrps[0].Entities)
 }
 
 func DescribeASimulation(c gospec.Context) {
