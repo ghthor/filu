@@ -37,14 +37,7 @@ func NewCollision(a, b entity.Entity) Collision {
 
 // A collision index stores all the
 // collisions an entity is involved in.
-type CollisionIndex map[entity.Entity][]Collision
-
-func (i CollisionIndex) add(c Collision) {
-	a, b := c.A, c.B
-	// TODO figure out a way to reduce allocations here
-	i[a] = append(i[a], c)
-	i[b] = append(i[b], c)
-}
+type CollisionIndex map[entity.Id][]Collision
 
 // The bounds of A and B joined together.
 func (c Collision) Bounds() coord.Bounds {
@@ -67,6 +60,7 @@ func (c Collision) IsSameAs(oc Collision) bool {
 // tree should be created by the user to resolve
 // the collisions in the correct order.
 type CollisionGroup struct {
+	Entities []entity.Entity
 	CollisionIndex
 
 	// A map of all the collisions in the group.
@@ -79,19 +73,14 @@ func NewCollisionGroup(size int) *CollisionGroup {
 		eSize = size * 7 / 4
 	}
 	return &CollisionGroup{
+		make([]entity.Entity, 0, eSize),
 		make(CollisionIndex, eSize),
 		make(map[CollisionId]Collision, size),
 	}
 }
 
-func (cg *CollisionGroup) Entities() (all []entity.Entity) {
-	for e := range cg.CollisionIndex {
-		all = append(all, e)
-	}
-	return all
-}
-
 func (cg *CollisionGroup) Reset() {
+	cg.Entities = cg.Entities[:0]
 	for k := range cg.CollisionIndex {
 		delete(cg.CollisionIndex, k)
 	}
@@ -126,9 +115,44 @@ func (cg *CollisionGroup) addCollision(c Collision) {
 	if _, exists := cg.CollisionsById[id]; exists {
 		return
 	}
+
 	cg.CollisionsById[id] = c
-	cg.CollisionIndex.add(c)
+	if _, exists := cg.CollisionIndex[c.AId]; !exists {
+		cg.CollisionIndex[c.AId] = nil
+		cg.Entities = append(cg.Entities, c.A)
+	}
+	if _, exists := cg.CollisionIndex[c.BId]; !exists {
+		cg.CollisionIndex[c.BId] = nil
+		cg.Entities = append(cg.Entities, c.B)
+	}
 	return
+}
+
+func (i CollisionIndex) addEntity(id entity.Id, c Collision, prealloc [][]Collision) [][]Collision {
+	if collisions := i[id]; collisions != nil {
+		i[id] = append(collisions, c)
+		return prealloc
+	}
+
+	var collisions []Collision
+	if len(prealloc) == 0 {
+		collisions = make([]Collision, 0, 1)
+	} else {
+		collisions = prealloc[len(prealloc)-1][:0]
+		prealloc = prealloc[:len(prealloc)-1]
+	}
+	i[id] = append(collisions, c)
+
+	return prealloc
+}
+
+func (cg *CollisionGroup) FillIndex(prealloc [][]Collision) (CollisionIndex, [][]Collision) {
+	for _, c := range cg.CollisionsById {
+		prealloc = cg.CollisionIndex.addEntity(c.AId, c, prealloc)
+		prealloc = cg.CollisionIndex.addEntity(c.BId, c, prealloc)
+	}
+
+	return cg.CollisionIndex, prealloc
 }
 
 // An entity may ONLY be assigned to 1 collision group.
