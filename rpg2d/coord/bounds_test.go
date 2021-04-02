@@ -1,6 +1,9 @@
 package coord
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/ghthor/gospec"
 	. "github.com/ghthor/gospec"
 )
@@ -696,4 +699,30 @@ func DescribeBounds(c gospec.Context) {
 			})
 		})
 	})
+}
+
+func TestBoundsRandom(t *testing.T) {
+	bounds := Bounds{
+		Cell{1, -1},
+		Cell{31, -31},
+	}
+
+	r := rand.New(rand.NewSource(1))
+
+	if bounds.IsInverted() {
+		t.Fatalf("inverted bounds %v", bounds)
+	}
+
+	for i := 0; i < 10000; i++ {
+		// TODO Test that all inner cells can be generated
+		c := bounds.RandInnerCell(r)
+
+		if bounds.HasOnEdge(c) {
+			t.Errorf("%d: cell%v was on the edge of the bounds%v", i, c, bounds)
+		}
+
+		if !bounds.Contains(c) {
+			t.Errorf("%d: cell%v was not contained within the bounds%v", i, c, bounds)
+		}
+	}
 }

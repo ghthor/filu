@@ -1,6 +1,9 @@
 package coord
 
-import "errors"
+import (
+	"errors"
+	"math/rand"
+)
 
 type Bounds struct {
 	TopL Cell `json:"tl"`
@@ -34,6 +37,18 @@ func (b Bounds) Width() int {
 
 func (b Bounds) Height() int {
 	return abs(b.TopL.Y-b.BotR.Y) + 1
+}
+
+// Returns a random Cell that is contained within the bounds
+// and is NOT on one of the edges of the bounds
+func (b Bounds) RandInnerCell(rand *rand.Rand) Cell {
+	x := rand.Intn(b.Width() - 2)
+	y := rand.Intn(b.Height() - 2)
+
+	return Cell{
+		b.TopL.X + x + 1,
+		b.TopL.Y - y - 1,
+	}
 }
 
 func (b Bounds) TopR() Cell { return Cell{b.BotR.X, b.TopL.Y} }
