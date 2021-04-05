@@ -44,21 +44,17 @@ func (s *Snapshot) String() string {
 
 func (s *Snapshot) Clone() *Snapshot {
 	clone := &Snapshot{
-		Time:   s.Time,
-		Bounds: s.Bounds,
-		Entities: &quadstate.Entities{
-			Removed:   make([]*quadstate.Entity, len(s.Removed)),
-			New:       make([]*quadstate.Entity, len(s.New)),
-			Changed:   make([]*quadstate.Entity, len(s.Changed)),
-			Unchanged: make([]*quadstate.Entity, len(s.Unchanged)),
-		},
+		Time:       s.Time,
+		Bounds:     s.Bounds,
+		Entities:   &quadstate.Entities{},
 		TerrainMap: s.TerrainMap,
 	}
 
-	copy(clone.Removed, s.Removed)
-	copy(clone.New, s.New)
-	copy(clone.Changed, s.Changed)
-	copy(clone.Unchanged, s.Unchanged)
+	for t := range s.ByType {
+		clone.ByType[t] = make([]*quadstate.Entity, len(s.ByType[t]))
+		copy(clone.ByType[t], s.ByType[t])
+
+	}
 
 	return clone
 }
@@ -83,14 +79,14 @@ func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityI
 
 	u.TerrainMapSlices = nil
 
-	u.Entities = append(u.Entities[:0], next.Entities.Changed...)
-	u.Entities = append(u.Entities, next.Entities.New...)
-	u.Removed = append(u.Removed[:0], next.Entities.Removed...)
+	u.Entities = append(u.Entities[:0], next.Entities.ByType[quadstate.TypeChanged]...)
+	u.Entities = append(u.Entities, next.Entities.ByType[quadstate.TypeNew]...)
+	u.Removed = append(u.Removed[:0], next.Entities.ByType[quadstate.TypeRemoved]...)
 	u.RemovedIds = u.RemovedIds[:0]
 
-	nextBloom.AddEntities(next.Changed)
-	nextBloom.AddEntities(next.New)
-	for _, e := range next.Unchanged {
+	nextBloom.AddEntities(next.Entities.ByType[quadstate.TypeChanged])
+	nextBloom.AddEntities(next.Entities.ByType[quadstate.TypeNew])
+	for _, e := range next.Entities.ByType[quadstate.TypeUnchanged] {
 		id := e.EntityId()
 		nextBloom.AddId(id)
 		if !prevBloom.Exists(id) {
@@ -100,7 +96,9 @@ func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityI
 
 	// TODO Remove once quad is updated with entity viewports
 	for _, array := range [...][]*quadstate.Entity{
-		prev.Changed, prev.New, prev.Unchanged,
+		prev.Entities.ByType[quadstate.TypeChanged],
+		prev.Entities.ByType[quadstate.TypeNew],
+		prev.Entities.ByType[quadstate.TypeUnchanged],
 	} {
 		for _, e := range array {
 			id := e.EntityId()

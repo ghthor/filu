@@ -8,13 +8,6 @@ import (
 	"github.com/ghthor/filu/rpg2d/entity"
 )
 
-type QueryFlag uint
-
-const (
-	QueryAll  QueryFlag = QueryFlag(TypeRemoved | TypeNew | TypeChanged | TypeUnchanged)
-	QueryDiff QueryFlag = QueryFlag(TypeRemoved | TypeNew | TypeChanged)
-)
-
 type Quad interface {
 	Bounds() coord.Bounds
 
@@ -115,17 +108,10 @@ func (q leaf) divide() Quad {
 
 	var quad Quad = qn
 
-	for _, e := range q.Entities.Removed {
-		quad = quad.Insert(e)
-	}
-	for _, e := range q.Entities.New {
-		quad = quad.Insert(e)
-	}
-	for _, e := range q.Entities.Changed {
-		quad = quad.Insert(e)
-	}
-	for _, e := range q.Entities.Unchanged {
-		quad = quad.Insert(e)
+	for t := range q.Entities.ByType {
+		for _, e := range q.Entities.ByType[t] {
+			quad = quad.Insert(e)
+		}
 	}
 
 	return quad
@@ -182,18 +168,11 @@ func (q leaf) QueryBounds(bounds coord.Bounds, acc Accumulator, types QueryFlag)
 		return
 	}
 
-	// TODO Convert this into an array iteration over pairs
-	if types&QueryFlag(TypeRemoved) != 0 {
-		filterBounds(acc, q.Entities.Removed, TypeRemoved, bounds)
-	}
-	if types&QueryFlag(TypeNew) != 0 {
-		filterBounds(acc, q.Entities.New, TypeNew, bounds)
-	}
-	if types&QueryFlag(TypeChanged) != 0 {
-		filterBounds(acc, q.Entities.Changed, TypeChanged, bounds)
-	}
-	if types&QueryFlag(TypeUnchanged) != 0 {
-		filterBounds(acc, q.Entities.Unchanged, TypeUnchanged, bounds)
+	for i := range allTypes {
+		if types&allTypes[i].QueryFlag != 0 {
+			t := allTypes[i].Type
+			filterBounds(acc, q.Entities.ByType[t], t, bounds)
+		}
 	}
 }
 
@@ -223,18 +202,11 @@ func (q node) AccumulateAll(acc Accumulator, types QueryFlag) {
 }
 
 func (q leaf) AccumulateAll(acc Accumulator, types QueryFlag) {
-	// TODO Convert this into an array iteration over pairs
-	if types&QueryFlag(TypeRemoved) != 0 {
-		acc.AddSlice(q.Entities.Removed, TypeRemoved)
-	}
-	if types&QueryFlag(TypeNew) != 0 {
-		acc.AddSlice(q.Entities.New, TypeNew)
-	}
-	if types&QueryFlag(TypeChanged) != 0 {
-		acc.AddSlice(q.Entities.Changed, TypeChanged)
-	}
-	if types&QueryFlag(TypeUnchanged) != 0 {
-		acc.AddSlice(q.Entities.Unchanged, TypeUnchanged)
+	for i := range allTypes {
+		if types&allTypes[i].QueryFlag != 0 {
+			t := allTypes[i].Type
+			acc.AddSlice(q.ByType[t], t)
+		}
 	}
 }
 

@@ -79,7 +79,7 @@ type InverseBloomMap struct {
 	m map[entity.Id]struct{}
 }
 
-func NewInverseBloomMap(size int) EntityInverseBloom {
+func NewInverseBloomMap(size int) InverseBloomMap {
 	return InverseBloomMap{
 		make(map[entity.Id]struct{}),
 	}

@@ -12,10 +12,14 @@ func (s *Snapshot) JSValue() js.Value {
 	v := js.Global().Get("Object").New()
 	v.Set("Time", int64(s.Time))
 	v.Set("Bounds", s.Bounds.JSValue())
-	v.Set("EntitiesRemoved", quadstate.EntitiesJSValue(s.Entities.Removed))
-	v.Set("EntitiesNew", quadstate.EntitiesJSValue(s.Entities.New))
-	v.Set("EntitiesChanged", quadstate.EntitiesJSValue(s.Entities.Changed))
-	v.Set("EntitiesUnchanged", quadstate.EntitiesJSValue(s.Entities.Unchanged))
+	v.Set("EntitiesRemoved", quadstate.EntitiesJSValue(
+		s.Entities.ByType[quadstate.TypeRemoved]))
+	v.Set("EntitiesNew", quadstate.EntitiesJSValue(
+		s.Entities.ByType[quadstate.TypeNew]))
+	v.Set("EntitiesChanged", quadstate.EntitiesJSValue(
+		s.Entities.ByType[quadstate.TypeChanged]))
+	v.Set("EntitiesUnchanged", quadstate.EntitiesJSValue(
+		s.Entities.ByType[quadstate.TypeUnchanged]))
 	v.Set("TerrainMap", s.TerrainMap.JSValue())
 	return v
 }
