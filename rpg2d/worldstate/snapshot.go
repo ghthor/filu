@@ -73,7 +73,8 @@ type EntityInverseBloom interface {
 	Exists(id entity.Id) bool
 }
 
-func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityInverseBloom) {
+// TODO utilize the unknown map
+func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityInverseBloom, unknown map[entity.Id]struct{}) {
 	u.Time = next.Time
 	u.Bounds = next.Bounds
 
