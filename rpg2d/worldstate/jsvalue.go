@@ -28,6 +28,12 @@ func (s *Update) JSValue() js.Value {
 	v.Set("Entities", quadstate.EntitiesJSValue(s.Entities))
 	v.Set("Removed", quadstate.EntitiesJSValue(s.Removed))
 
+	a := js.Global().Get("Array").New(len(s.RemovedIds))
+	for i, id := range s.RemovedIds {
+		a.SetIndex(i, int64(id))
+	}
+	v.Set("RemovedIds", a)
+
 	if s.TerrainMapSlices == nil || len(s.TerrainMapSlices.Slices) <= 0 {
 		v.Set("TerrainMapSlices", js.Null())
 	} else {

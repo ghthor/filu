@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ghthor/filu/rpg2d/coord"
+	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad/quadstate"
 	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
@@ -22,8 +23,9 @@ type Update struct {
 	Time   stime.Time
 	Bounds coord.Bounds
 
-	Entities []*quadstate.Entity
-	Removed  []*quadstate.Entity
+	RemovedIds []entity.Id
+	Removed    []*quadstate.Entity
+	Entities   []*quadstate.Entity
 
 	TerrainMapSlices *worldterrain.MapStateSlices
 }
@@ -63,12 +65,19 @@ func (s *Snapshot) Clone() *Snapshot {
 
 func NewUpdate(size int) *Update {
 	return &Update{
-		Removed:  make([]*quadstate.Entity, 0, size),
-		Entities: make([]*quadstate.Entity, 0, size),
+		RemovedIds: make([]entity.Id, 0, size),
+		Removed:    make([]*quadstate.Entity, 0, size),
+		Entities:   make([]*quadstate.Entity, 0, size),
 	}
 }
 
-func (u *Update) FromSnapshot(prev, next *Snapshot) {
+type EntityInverseBloom interface {
+	AddId(id entity.Id)
+	AddEntities(e []*quadstate.Entity)
+	Exists(id entity.Id) bool
+}
+
+func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityInverseBloom) {
 	u.Time = next.Time
 	u.Bounds = next.Bounds
 
@@ -77,6 +86,29 @@ func (u *Update) FromSnapshot(prev, next *Snapshot) {
 	u.Entities = append(u.Entities[:0], next.Entities.Changed...)
 	u.Entities = append(u.Entities, next.Entities.New...)
 	u.Removed = append(u.Removed[:0], next.Entities.Removed...)
+	u.RemovedIds = u.RemovedIds[:0]
+
+	nextBloom.AddEntities(next.Changed)
+	nextBloom.AddEntities(next.New)
+	for _, e := range next.Unchanged {
+		id := e.EntityId()
+		nextBloom.AddId(id)
+		if !prevBloom.Exists(id) {
+			u.Entities = append(u.Entities, e)
+		}
+	}
+
+	// TODO Remove once quad is updated with entity viewports
+	for _, array := range [...][]*quadstate.Entity{
+		prev.Changed, prev.New, prev.Unchanged,
+	} {
+		for _, e := range array {
+			id := e.EntityId()
+			if !nextBloom.Exists(id) {
+				u.RemovedIds = append(u.RemovedIds, id)
+			}
+		}
+	}
 
 	// Diff the TerrainMap
 	if prev.TerrainMap != nil && !prev.TerrainMap.IsEmpty() {
