@@ -17,6 +17,7 @@ const (
 	FlagNew
 	FlagChanged
 	FlagNoCollide
+	FlagInstant
 	FlagUserDefined
 )
 

@@ -82,6 +82,7 @@ func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityI
 
 	u.Entities = append(u.Entities[:0], next.Entities.ByType[quadstate.TypeChanged]...)
 	u.Entities = append(u.Entities, next.Entities.ByType[quadstate.TypeNew]...)
+	u.Entities = append(u.Entities, next.Entities.ByType[quadstate.TypeInstant]...)
 	u.Removed = append(u.Removed[:0], next.Entities.ByType[quadstate.TypeRemoved]...)
 	u.RemovedIds = u.RemovedIds[:0]
 

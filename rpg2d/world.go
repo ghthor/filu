@@ -117,6 +117,14 @@ func (world *World) ToQuadState(encoder *quadstate.EntityEncoder) (nextState qua
 		flags := e.Flags()
 		entityState := e.ToState()
 
+		if flags&entity.FlagInstant != 0 {
+			nextState = nextState.Insert(&quadstate.Entity{
+				State: entityState,
+				Type:  quadstate.TypeInstant,
+			})
+			continue
+		}
+
 		if flags&entity.FlagRemoved != 0 {
 			if e.(entity.Removed).RemovedAt == now {
 				encoder.FreeBufferFor(e.Id())

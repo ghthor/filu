@@ -12,21 +12,23 @@ import (
 type QueryFlag uint
 
 const (
-	QueryRemoved QueryFlag = 1 << iota
+	QueryInstant QueryFlag = 1 << iota
+	QueryRemoved
 	QueryNew
 	QueryChanged
 	QueryUnchanged
 )
 
 const (
-	QueryAll  QueryFlag = QueryRemoved | QueryNew | QueryChanged | QueryUnchanged
-	QueryDiff QueryFlag = QueryRemoved | QueryNew | QueryChanged
+	QueryAll  QueryFlag = QueryInstant | QueryRemoved | QueryNew | QueryChanged | QueryUnchanged
+	QueryDiff QueryFlag = QueryInstant | QueryRemoved | QueryNew | QueryChanged
 )
 
 type Type uint
 
 const (
 	TypeRemoved Type = iota
+	TypeInstant
 	TypeNew
 	TypeChanged
 	TypeUnchanged
@@ -37,6 +39,7 @@ var allTypes = [SizeType]struct {
 	QueryFlag
 	Type
 }{
+	{QueryInstant, TypeInstant},
 	{QueryRemoved, TypeRemoved},
 	{QueryNew, TypeNew},
 	{QueryChanged, TypeChanged},
