@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/ghthor/filu/rpg2d/coord"
-	"github.com/ghthor/filu/rpg2d/entity"
 )
 
 type Quad interface {
@@ -178,14 +177,7 @@ func (q leaf) QueryBounds(bounds coord.Bounds, acc Accumulator, types QueryFlag)
 
 func filterBounds(acc Accumulator, src []*Entity, t Type, bounds coord.Bounds) {
 	for i, _ := range src {
-		if e, hasBounds := src[i].State.(entity.HasBounds); hasBounds {
-			if e.Bounds().Overlaps(bounds) {
-				acc.Add(src[i])
-			}
-			continue
-		}
-
-		if bounds.Contains(src[i].EntityCell()) {
+		if bounds.Contains(src[i].Cell) {
 			acc.Add(src[i])
 		}
 	}

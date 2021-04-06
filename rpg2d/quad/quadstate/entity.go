@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/ghthor/filu/rpg2d/coord"
 	"github.com/ghthor/filu/rpg2d/entity"
 )
 
@@ -46,14 +47,23 @@ var allTypes = [SizeType]struct {
 	{QueryUnchanged, TypeUnchanged},
 }
 
+// TODO Factor out a file split for wasm/other build targets
 type Entity struct {
-	entity.State
 	Type
+	entity.Id
+	coord.Cell
+	entity.State
 	cachedEncoding []byte
 }
 
-type EntityEncodedType struct {
-	entity.State
+func NewEntity(state entity.State, t Type) *Entity {
+	return &Entity{
+		t,
+		state.EntityId(),
+		state.EntityCell(),
+		state,
+		nil,
+	}
 }
 
 type ByType [SizeType][]*Entity

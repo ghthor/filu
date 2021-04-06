@@ -118,44 +118,33 @@ func (world *World) ToQuadState(encoder *quadstate.EntityEncoder) (nextState qua
 		entityState := e.ToState()
 
 		if flags&entity.FlagInstant != 0 {
-			nextState = nextState.Insert(&quadstate.Entity{
-				State: entityState,
-				Type:  quadstate.TypeInstant,
-			})
+			nextState = nextState.Insert(quadstate.NewEntity(entityState, quadstate.TypeInstant))
 			continue
 		}
 
 		if flags&entity.FlagRemoved != 0 {
 			if e.(entity.Removed).RemovedAt == now {
 				encoder.FreeBufferFor(e.Id())
-				nextState = nextState.Insert(&quadstate.Entity{
-					State: entityState,
-					Type:  quadstate.TypeRemoved})
+				nextState = nextState.Insert(quadstate.NewEntity(entityState, quadstate.TypeRemoved))
 			}
 			continue
 		}
 
 		if flags&entity.FlagNew != 0 {
 			encoder.FreeBufferFor(e.Id())
-			nextState = nextState.Insert(&quadstate.Entity{
-				State: entityState,
-				Type:  quadstate.TypeNew})
+			nextState = nextState.Insert(quadstate.NewEntity(entityState, quadstate.TypeNew))
 			continue
 		}
 
 		if ee, canChange := e.(entity.CanChange); canChange {
 			if ee.HasChanged(entityState, now) {
 				encoder.FreeBufferFor(e.Id())
-				nextState = nextState.Insert(&quadstate.Entity{
-					State: entityState,
-					Type:  quadstate.TypeChanged})
+				nextState = nextState.Insert(quadstate.NewEntity(entityState, quadstate.TypeChanged))
 				continue
 			}
 		}
 
-		nextState = nextState.Insert(&quadstate.Entity{
-			State: entityState,
-			Type:  quadstate.TypeUnchanged})
+		nextState = nextState.Insert(quadstate.NewEntity(entityState, quadstate.TypeUnchanged))
 	}
 
 	return nextState
