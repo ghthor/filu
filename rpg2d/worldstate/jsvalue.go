@@ -5,7 +5,7 @@ package worldstate
 import (
 	"syscall/js"
 
-	"github.com/ghthor/filu/rpg2d/quad/quadstate"
+	"github.com/ghthor/filu/rpg2d/quadstate"
 )
 
 func (s *Snapshot) JSValue() js.Value {

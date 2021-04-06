@@ -2,7 +2,7 @@ package worldstate
 
 import (
 	"github.com/ghthor/filu/rpg2d/entity"
-	"github.com/ghthor/filu/rpg2d/quad/quadstate"
+	"github.com/ghthor/filu/rpg2d/quadstate"
 )
 
 var _ EntityInverseBloom = &InverseBloom{}
