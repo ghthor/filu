@@ -5,6 +5,7 @@ import (
 	"github.com/ghthor/filu/rpg2d/coord"
 	"github.com/ghthor/filu/rpg2d/entity"
 	"github.com/ghthor/filu/rpg2d/quad"
+	"github.com/ghthor/filu/rpg2d/quadstate"
 	"github.com/ghthor/filu/rpg2d/worldterrain"
 	"github.com/ghthor/filu/sim/stime"
 
@@ -24,9 +25,10 @@ type mockActor struct {
 }
 
 // Implement Actor
-func (a mockActor) Id() rpg2d.ActorId         { return a.id }
-func (a mockActor) Entity() entity.Entity     { return a.mockActorEntity }
-func (mockActor) WriteState(rpg2d.WorldState) {}
+func (a mockActor) Id() rpg2d.ActorId     { return a.id }
+func (a mockActor) Entity() entity.Entity { return a.mockActorEntity }
+func (mockActor) WriteStateNext(stime.Time, quadstate.Quad, *worldterrain.MapState, chan<- quadstate.EncodingRequest) {
+}
 
 // Implement entity.Entity
 func (a mockActorEntity) Id() entity.Id          { return a.id }

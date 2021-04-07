@@ -22,12 +22,6 @@ type Actor interface {
 	// actor in the simulation's world.
 	Entity() entity.Entity
 
-	// Enables the simulation to send the
-	// state of the world to the actor
-	WriteState(WorldState)
-}
-
-type ActorNext interface {
 	WriteStateNext(stime.Time, quadstate.Quad, *worldterrain.MapState, chan<- quadstate.EncodingRequest)
 }
 
@@ -327,7 +321,6 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 		clock = clock.Tick()
 		world.stepTo(clock.Now(), runTick)
 
-		//world.state = world.ToState()
 		world.quadState = world.ToQuadState(entityEncoder)
 		world.terrainState = world.ToTerrainState()
 
@@ -336,14 +329,10 @@ func (s *runningSimulation) startLoop(initialState initialWorldState, settings s
 
 		multiWrite.Add(len(actors))
 		for _, a := range actors {
-			if aa, updated := a.(ActorNext); updated {
-				go func(aa ActorNext) {
-					aa.WriteStateNext(world.time, world.quadState, world.terrainState, encodingCh)
-					multiWrite.Done()
-				}(aa)
-
-				continue
-			}
+			go func(a Actor) {
+				a.WriteStateNext(world.time, world.quadState, world.terrainState, encodingCh)
+				multiWrite.Done()
+			}(a)
 		}
 		multiWrite.Wait()
 		stopEncoder()
