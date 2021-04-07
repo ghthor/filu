@@ -83,7 +83,7 @@ func (q leaf) Insert(e *Entity) Quad {
 
 	//fmt.Printf("actual size: %d maxSize: %d\n", len(q.entities), q.maxSize)
 
-	q.Entities.Insert(e)
+	q.Entities.Add(e)
 	q.size++
 
 	return q

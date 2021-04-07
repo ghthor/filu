@@ -80,11 +80,6 @@ func NewEntities(size int) *Entities {
 	return &Entities{arr}
 }
 
-// TODO Merge this with Add implementation
-func (entities *Entities) Insert(e *Entity) {
-	entities.ByType[e.Type] = append(entities.ByType[e.Type], e)
-}
-
 func (e *Entities) Clear() {
 	for t := range e.ByType {
 		e.ByType[t] = e.ByType[t][:0]
