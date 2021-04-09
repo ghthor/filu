@@ -89,7 +89,7 @@ func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityI
 	nextBloom.AddEntities(next.Entities.ByType[quadstate.TypeChanged])
 	nextBloom.AddEntities(next.Entities.ByType[quadstate.TypeNew])
 	for _, e := range next.Entities.ByType[quadstate.TypeUnchanged] {
-		id := e.EntityId()
+		id := e.Id
 		nextBloom.AddId(id)
 		if !prevBloom.Exists(id) {
 			u.Entities = append(u.Entities, e)
@@ -103,7 +103,7 @@ func (u *Update) FromSnapshot(prev, next *Snapshot, prevBloom, nextBloom EntityI
 		prev.Entities.ByType[quadstate.TypeUnchanged],
 	} {
 		for _, e := range array {
-			id := e.EntityId()
+			id := e.Id
 			if !nextBloom.Exists(id) {
 				u.RemovedIds = append(u.RemovedIds, id)
 			}
